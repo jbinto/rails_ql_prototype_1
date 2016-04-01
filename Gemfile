@@ -1,0 +1,1 @@
+gemspec #path: "./rails_ql.gemspec"
