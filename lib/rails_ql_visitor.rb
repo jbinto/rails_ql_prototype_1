@@ -5,12 +5,12 @@ class RailsQLVisitor < GraphQL::Visitor
 
   attr_accessor :node_stack
   attr_reader :data_type_stack
-  attr_reader :schema
+  attr_reader :root
 
-  def initialize(top_level_data_type)
-    @top_level_data_type = top_level_data_type
+  def initialize(root)
+    @root = root
     @fragments = {}
-    @data_type_stack = [@top_level_data_type]
+    @data_type_stack = [root]
     @node_stack = []
   end
 
@@ -86,7 +86,8 @@ class RailsQLVisitor < GraphQL::Visitor
   def end_visit_node(sym, node)
     node_stack.pop
     (@current_visitors||[]).each do |visitor|
-      visitor.send(:"end_visit_#{sym}", node)}
+      visitor.send(:"end_visit_#{sym}", node)
+    end
   end
 
 end
