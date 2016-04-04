@@ -4,8 +4,11 @@ PATH
     rails_ql (0.0.1)
 
 GEM
+  remote: https://rubygems.org/
   specs:
+    awesome_print (1.6.1)
     diff-lcs (1.2.5)
+    graphql-parser (0.0.2)
     rspec (3.4.0)
       rspec-core (~> 3.4.0)
       rspec-expectations (~> 3.4.0)
@@ -24,5 +27,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  awesome_print (>= 1.6.1)
+  graphql-parser
   rails_ql!
-  rspec (>= 0.0.2)
+  rspec (>= 3.4.0)

@@ -1,10 +1,12 @@
 query HeroNameAndFriendsQuery {
   hero {
-    id
     name
     friends {
-      id
       name
     }
+  }
+
+  hero(id: 10) {
+    name
   }
 }
