@@ -53,6 +53,19 @@ describe RailsQLVisitor do
     expect(children[:hero].children[:friends].class).to eq HeroType
   end
 
+  it "calls create_child for each field node" do
+    expect(visitor.root).to receive(:create_child).with(:hero)
+    visit_graphql "query { hero }"
+  end
+
+  it "passes args into data types" do
+    expect(visitor.root).to receive(:update_child).with(:hero, args: {id: 3})
+    visit_graphql "query { hero(id: 3) { name } }"
+
+    # test in Base DataType
+    # expect(children[:hero].query_args).to eq({id: 3})
+  end
+
   # it "parses queries with fragments into data types" do
   #   visit_graphql "
   #     query { hero { ...heroFriendsFragment } }

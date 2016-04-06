@@ -1,9 +1,8 @@
 require 'rubygems'
 require 'awesome_print'
-require 'graphql/parser'
+require "./lib/rails_ql"
 
 RSpec.configure do |config|
-  Dir[File.expand_path('../lib/*', File.dirname(__FILE__))].each {|f| require f }
 
   config.before :all do
   end

@@ -29,19 +29,15 @@ class RailsQLVisitor < GraphQL::Visitor
     when :field then visit_field_name node
     when :fragment_spread then visit_fragment_spread_name node
     when :fragment_definition then visit_fragment_definition_name node
+    # when :arg then visit_arg_name
     end
     visit_node :name, node
   end
 
   def visit_field_name(node)
     name = node.value
-    field_definition = current_data_type.field_definitions[name]
-    raise "Invalid field #{name}" if field_definition == nil
-    next_klass = field_definition[:klass]
-    next_data_type = current_data_type.children[name.to_sym]
-    next_data_type ||= next_klass.new(parent: current_data_type)
-    current_data_type.children[name.to_sym] = next_data_type
-    @data_type_stack.push(next_data_type)
+    next_data_type = current_data_type.get_child name
+    @data_type_stack.push next_data_type
   end
 
   def visit_fragment_spread_name(node)
