@@ -1,13 +1,10 @@
 require "spec_helper"
 
-class ChildDataType < RailsQL::DataType::Base
-end
-
 describe RailsQL::DataType::Builder do
   before :each do
-    @mocked_data_type = double("DataType", field_definitions: {
-        child_data_type: {data_type: ChildDataType}
-      }
+    @mocked_data_type = double("DataType")
+    allow(@mocked_data_type).to receive(:field_definitions).and_return(
+      child_data_type: {data_type: @mocked_data_type}
     )
     @builder = RailsQL::DataType::Builder.new(@mocked_data_type)
   end
@@ -19,30 +16,26 @@ describe RailsQL::DataType::Builder do
     end
   end
 
-  describe "#initialize_child" do
+  describe "#add_child" do
     context "when association field exists" do
-      context "when no child builder exists" do
-        it "intantiates the child builder" do
-          @builder.get_child :child_data_type
+      it "intantiates the child builder" do
+        @builder.add_child :child_data_type
 
-          child_builder = @builder.child_builders[:child_data_type]
-          expect(child_builder.class).to eq RailsQL::DataType::Builder
-          expect(child_builder.data_type_klass).to eq ChildDataType
-        end
+        child_builder = @builder.child_builders[:child_data_type]
+        expect(child_builder.class).to eq RailsQL::DataType::Builder
+        expect(child_builder.data_type_klass).to eq @mocked_data_type
       end
 
-      context "when child builder exists" do
-        it "does not instantiate another child builder" do
-          child_builder = @builder.get_child(:child_data_type)
+      it "is idempotent" do
+        child_builder = @builder.add_child(:child_data_type)
 
-          expect(@builder.get_child(:child_data_type)).to eq child_builder
-        end
+        expect(@builder.add_child(:child_data_type)).to eq child_builder
       end
     end
 
     context "when association field does not exist" do
       it "raises invalid field error" do
-        expect{@builder.get_child :invalid_data_type}.to raise_error(
+        expect{@builder.add_child :invalid_data_type}.to raise_error(
           "Invalid field invalid_data_type"
         )
       end

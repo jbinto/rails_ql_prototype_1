@@ -14,11 +14,6 @@ module RailsQL
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
       end
 
-      # after_parse do
-      #   traverse(direction: :top_to_bottom, &:query)
-      #   traverse(direction: :bottom_to_top, &:resolve)
-      # end
-
       def query
         initial_query = self.class.call_initial_query
         fields.reduce(initial_query) do |query, name, child_data_type|
