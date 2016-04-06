@@ -21,8 +21,6 @@ module RailsQL
       end
 
       def field_definitions
-        p data_type_klass
-        p data_type_klass.field_definitions
         data_type_klass.field_definitions
       end
 

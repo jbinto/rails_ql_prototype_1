@@ -5,25 +5,19 @@ end
 
 describe RailsQL::DataType::Builder do
   before :each do
-    # @base = RailsQL::DataType::Base.new(
-      # field_definitions: {
-      #   data_type: :child_data_type,
-      #   args: [:id],
-      #   resolve: ->(args, child_query) { model.send(:my_association_name) },
-      #   query: ->(args, child_query) { return query.where(id: args[:id]) },
-      #   description: "my association description",
-      #   nullable: true
-      # }
-    # )
-    mocked_data_type = double("DataType", field_definitions: {
-        data_type: :child_data_type
+    @mocked_data_type = double("DataType", field_definitions: {
+        child_data_type: {data_type: ChildDataType}
       }
     )
-    @builder = RailsQL::DataType::Builder.new(mocked_data_type)
-    p @builder
+    @builder = RailsQL::DataType::Builder.new(@mocked_data_type)
   end
 
-  describe "#"
+  describe "#data_type" do
+    it "instantiates a data_type" do
+      expect(@mocked_data_type).to receive(:new).with(args: {}, fields: [])
+      data_type = @builder.data_type
+    end
+  end
 
   describe "#initialize_child" do
     context "when association field exists" do
@@ -31,7 +25,7 @@ describe RailsQL::DataType::Builder do
         it "intantiates the child builder" do
           @builder.get_child :child_data_type
 
-          child_builder = @builder.children[:child_data_type]
+          child_builder = @builder.child_builders[:child_data_type]
           expect(child_builder.class).to eq RailsQL::DataType::Builder
           expect(child_builder.data_type_klass).to eq ChildDataType
         end
