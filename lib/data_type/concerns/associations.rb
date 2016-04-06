@@ -15,24 +15,17 @@ module RailsQL
     module Associations
       extend ActiveSupport::Concern
 
-      class_methods do
-        def has_many(name, opts)
-          # add to field definitions
-          defaults = {
-            data_type: opts[:data_type] || name,
-            args: [],
-            resolve: ->(args, child_query) { model.send(data_type.to_s) },
-            query: nil
-          }
-          (field_definitions[name] ||= defaults).merge! opts
+      included do
+        # def has_many(name, opts)
+        #   add_field_definition(name, opts)
+        #   # TODO: Move this to where you make use of the definition
+        #   # if [Symbol, String].includes? opts[:data_type].class
+        #   #   opts[:data_type] = opts[:data_type].to_s.classify.constantize
+        #   # end
+        # end
 
-          # TODO: Move this to where you make use of the definition
-          # if [Symbol, String].includes? opts[:data_type].class
-          #   opts[:data_type] = opts[:data_type].to_s.classify.constantize
-          # end
-        end
-
-        alias_method :has_one, :has_many
+        alias_method :has_many, :add_field_definition
+        alias_method :has_one, :add_field_definition
 
       end
 

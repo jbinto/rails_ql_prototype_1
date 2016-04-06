@@ -1,6 +1,7 @@
 module RailsQL
   module DataType
     class Base
+      PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
       attr_reader :args
 
       @field_definitions = HashWithIndifferentAccess.new
@@ -28,6 +29,15 @@ module RailsQL
       end
 
       def resolve
+        fields.each do |name, data_type|
+          child_resolve = data_type[:resolve] || ->{
+            # call the method on the data_type if the user defined it there,
+            # else directly call the method on the model
+            (self.respond_to?(name) ? self : model).send name
+          }
+          child_resolve.call()
+        end
+
       end
 
       class << self
@@ -40,6 +50,65 @@ module RailsQL
         def call_initial_query
           return @initial_query.call
         end
+
+        # Adds a field definition to the data type
+        #
+        #   class UserType < RailsQL::DataType::Base
+        #
+        #     field(:email,
+        #       data_type: RailsQL::DataType::String
+        #     )
+        #   end
+        #
+        # Options:
+        # * <tt>:data_type</tt> - Specifies the primtive data_type
+        # * <tt>:description</tt> - A description of the field
+        # * <tt>:args</tt> - Arguments to be passed to the resolve method
+        # * <tt>:nullable</tt> -
+        def field(name, opts={})
+          # Overwrite resolve and query with nil. These options are not exposed
+          # for non-association fields. Use .has_many or .has_one fo
+          # associations.
+          opts = opts.merge(
+            resolve: nil,
+            query: nil
+          )
+
+          unless PRIMITIVE_DATA_TYPES.include? opts[:data_type].to_s
+            raise "Invalid field #{to_s}##{name}: #{
+              opts[:data_type]
+            } is not a valid data_type"
+          end
+
+          add_field_definition name, opts
+        end
+
+        protected
+
+        def add_field_definition(name, opts={})
+          opts = {
+            data_type: nil,
+            description: nil,
+            args: [],
+            nullable: true,
+            resolve: nil,
+            query: nil
+          }.merge opts
+
+          if opts[:data_type].blank?
+            raise "Invalid field #{to_s}##{name}: requires a :data_type option"
+          end
+
+          # add to field definitions
+          defaults = {
+            data_type: opts[:data_type] || name,
+            args: [],
+            resolve: ->(args, child_query) { model.send(data_type.to_s) },
+            query: nil
+          }
+          (field_definitions[name] ||= defaults).merge! opts
+        end
+
       end
     end
 
