@@ -63,7 +63,7 @@ describe RailsQLVisitor do
     visit_graphql "query { hero(id: 3) { name } }"
 
     # test in Base DataType
-    # expect(children[:hero].query_args).to eq({id: 3})
+    expect(children[:hero].query_args).to eq({id: 3})
   end
 
   # it "parses queries with fragments into data types" do
@@ -76,13 +76,5 @@ describe RailsQLVisitor do
 
   #   expect(children[:hero].children[:friends].class).to eq HeroType
   # end
-
-  it "raises an error if query types do not match the schema data types" do
-    expect{
-      visit_graphql("query { invalid_data_type }")
-    }.to raise_error(
-      "Invalid field invalid_data_type"
-    )
-  end
 end
 

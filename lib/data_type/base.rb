@@ -29,15 +29,30 @@ module RailsQL
       end
 
       def resolve
-        fields.each do |name, data_type|
-          child_resolve = data_type[:resolve] || ->{
-            # call the method on the data_type if the user defined it there,
-            # else directly call the method on the model
-            (self.respond_to?(name) ? self : model).send name
-          }
-          child_resolve.call()
+        @fields.each do |name, data_type|
+          # child_resolve = data_type[:resolve] || ->{
+          #   # call the method on the data_type if the user defined it there,
+          #   # else directly call the method on the model
+          #   (self.respond_to?(name) ? self : model).send name
+          # }
+          data_type.model = data_type[:resolve].call()
         end
+      end
 
+      def to_h
+        @fields.map do |name, data_type|
+          {
+            name => data_type.to_h
+          }
+        end
+      end
+
+      def to_json
+        @fields.map do |name, data_type|
+          {
+            name => data_type.to_json
+          }
+        end
       end
 
       class << self

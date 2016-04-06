@@ -8,6 +8,16 @@ describe RailsQL::DataType::Base do
   end
 
   describe ".call_initial_query" do
+    it "calls the initial_query proc" do
+      initial_query = double()
+      RailsQL::DataType::Base.instance_variable_set(
+        :@initial_query, initial_query
+      )
+      expect(initial_query).to receive(:call)
+
+      RailsQL::DataType::Base.call_initial_query
+    end
+
   end
 
   describe ".field" do
@@ -43,5 +53,21 @@ describe RailsQL::DataType::Base do
   end
 
   describe "#to_json" do
+    before :each do
+      @base = RailsQL::DataType::Base.new(
+        fields: {
+          base_1: RailsQL::DataType::Base.new(
+            fields: {name: {data_type: RailsQL::DataType::String, model: "name_1"}}
+          ),
+          base_2: RailsQL::DataType::Base.new(
+            fields: {name: {data_type: RailsQL::DataType::String, model: "name_2"}}
+          )
+        }
+      )
+    end
+
+    it "recursively calls to_json on all fields" do
+      @base.to_json
+    end
   end
 end
