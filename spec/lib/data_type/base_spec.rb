@@ -47,27 +47,33 @@ describe RailsQL::DataType::Base do
   end
 
   describe "#query" do
+    pending
+    fail
   end
 
   describe "#resolve" do
+    pending
+    fail
   end
 
   describe "#to_json" do
     before :each do
-      @base = RailsQL::DataType::Base.new(
-        fields: {
-          base_1: RailsQL::DataType::Base.new(
-            fields: {name: {data_type: RailsQL::DataType::String, model: "name_1"}}
-          ),
-          base_2: RailsQL::DataType::Base.new(
-            fields: {name: {data_type: RailsQL::DataType::String, model: "name_2"}}
-          )
-        }
-      )
+      # @base = RailsQL::DataType::Base.new(
+      #   fields: {
+      #     base_1: RailsQL::DataType::Base.new(
+      #       fields: {name: {data_type: RailsQL::DataType::String, model: "name_1"}}
+      #     ),
+      #     base_2: RailsQL::DataType::Base.new(
+      #       fields: {name: {data_type: RailsQL::DataType::String, model: "name_2"}}
+      #     )
+      #   }
+      # )
     end
 
     it "recursively calls to_json on all fields" do
-      @base.to_json
+      pending
+      fail
+      # @base.to_json
     end
   end
 end

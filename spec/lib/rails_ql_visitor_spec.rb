@@ -1,11 +1,7 @@
 require "spec_helper"
 
 describe RailsQL::Visitor do
-  let(:root_builder) {
-    builder = double
-    allow(builder).to receive(:add_arg)
-    builder
-  }
+  let(:root_builder) { instance_double "RailsQL::DataType::Builder" }
   let(:visitor) {RailsQL::Visitor.new(root_builder)}
 
   def visit_graphql(graphql)

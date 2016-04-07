@@ -98,7 +98,7 @@ module RailsQL
           add_field_definition name, opts
         end
 
-        protected
+        private
 
         def add_field_definition(name, opts={})
           opts = {
@@ -123,6 +123,9 @@ module RailsQL
           }
           (field_definitions[name] ||= defaults).merge! opts
         end
+
+        alias_method :has_many, :add_field_definition
+        alias_method :has_one, :add_field_definition
 
       end
     end
