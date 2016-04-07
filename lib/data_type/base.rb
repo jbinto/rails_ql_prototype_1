@@ -5,7 +5,7 @@ module RailsQL
       attr_reader :args
       attr_accessor :model
 
-      def initialize(opts)
+      def initialize(opts={})
         opts = {
           fields: {},
           args: {}
@@ -16,8 +16,8 @@ module RailsQL
 
       def query
         initial_query = self.class.call_initial_query
-        fields.reduce(initial_query) do |query, name, child_data_type|
-          definition = self.class.field_definitions[name].add_to_parent_query(
+        @fields.reduce(initial_query) do |query, (name, child_data_type)|
+          definition = self.class.field_definitions[name.to_sym].add_to_parent_query(
             args: child_data_type.args,
             parent_query: query,
             child_query: child_data_type.query
