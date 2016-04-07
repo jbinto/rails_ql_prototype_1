@@ -3,7 +3,6 @@ require "spec_helper"
 describe RailsQL::Visitor do
   let(:root_builder) {
     builder = double
-    allow(builder).to receive(:add_child)
     allow(builder).to receive(:add_arg)
     builder
   }
@@ -17,11 +16,15 @@ describe RailsQL::Visitor do
   describe "#accept" do
     it "calls builder#add_child for each child field node" do
       expect(root_builder).to receive(:add_child).with('hero')
+
       visit_graphql "query { hero }"
     end
 
     it "calls builder#add_arg for each arg" do
-      expect(root_builder).to receive(:add_arg).with(:id, 3)
+      hero_builder = double
+      allow(root_builder).to receive(:add_child).and_return hero_builder
+      expect(hero_builder).to receive(:add_arg).with('id', 3)
+
       visit_graphql "query { hero(id: 3) }"
     end
 

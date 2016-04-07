@@ -28,11 +28,11 @@ module RailsQL
     end
 
     def visit_name(node)
+      @current_name = node.value
       case node_stack.last
       when :field then visit_field_name node
       when :fragment_spread then visit_fragment_spread_name node
       when :fragment_definition then visit_fragment_definition_name node
-      # when :arg then visit_arg_name
       end
       visit_node :name, node
     end
@@ -41,6 +41,14 @@ module RailsQL
       name = node.value
       next_data_type_builder = current_data_type_builder.add_child name
       @data_type_builder_stack.push next_data_type_builder
+    end
+
+    def visit_int_value(node)
+      visit_arg_value node.value.to_i
+    end
+
+    def visit_arg_value(value)
+      current_data_type_builder.add_arg @current_name, value
     end
 
     def visit_fragment_spread_name(node)
@@ -65,6 +73,7 @@ module RailsQL
       super *args if args.length != 2
       sym, node = args
       name = sym.to_s
+      p name
       if name.match /^visit_/
         visit_node name.gsub("visit_", "").to_sym, node
       elsif name.match /^end_visit_/
