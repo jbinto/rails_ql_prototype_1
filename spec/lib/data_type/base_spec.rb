@@ -99,22 +99,14 @@ describe RailsQL::DataType::Base do
   end
 
   describe "#resolve_child_data_types" do
-    context "when it has no child data_types" do
-      it "it does nothing" do
-        pending
-        fail
-      end
+    it "calls the FieldDefinition's resolve method with the model" do
+      data_types.resolve_child_data_types
     end
 
-    context "when it has child data_types" do
-      it "calls the type definition's :resolve lambda with the model" do
-      end
+    it "sets the child DataType's model to the result of the FieldDefinition's resolve method" do
+    end
 
-      it "sets the child datat type's model to the result of the type definition's :revolve lambda" do
-      end
-
-      it "skips over type definitions without resolve lambdas in the reducer" do
-      end
+    it "skips over FieldDefinition without resolve lambdas in the reducer" do
     end
   end
 

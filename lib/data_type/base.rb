@@ -32,7 +32,10 @@ module RailsQL
           #   # else directly call the method on the model
           #   (self.respond_to?(name) ? self : model).send name
           # }
-          data_type.model = data_type[:resolve].call()
+          data_type.model = data_type.resolve(
+            parent_data_type: self,
+            parent_model: model
+          )
         end
       end
 

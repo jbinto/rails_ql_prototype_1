@@ -47,6 +47,16 @@ module RailsQL
         end
       end
 
+      def resolve(opts)
+        if @resolve.present?
+          @resolve.call opts[:parent_model]
+        elsif opts[:parent_data_type].respond_to? @name
+          opts[:parent_data_type].send @name
+        else
+          opts[:parent_model].send @name
+        end
+      end
+
     end
   end
 end
