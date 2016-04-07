@@ -3,8 +3,7 @@ module RailsQL
     class Base
       PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
       attr_reader :args
-
-      @field_definitions = HashWithIndifferentAccess.new
+      attr_accessor :model
 
       def initialize(opts)
         opts = {
@@ -18,17 +17,15 @@ module RailsQL
       def query
         initial_query = self.class.call_initial_query
         fields.reduce(initial_query) do |query, name, child_data_type|
-          definition = self.class.field_definitions[name]
-          next unless definition[:query].present?
-          definition[:query].call(
-            child_data_type.args,
-            query,
-            child_data_type.query
+          definition = self.class.field_definitions[name].add_to_parent_query(
+            args: child_data_type.args,
+            parent_query: query,
+            child_query: child_data_type.query
           )
         end
       end
 
-      def resolve
+      def resolve_child_data_types
         @fields.each do |name, data_type|
           # child_resolve = data_type[:resolve] || ->{
           #   # call the method on the data_type if the user defined it there,
@@ -66,7 +63,7 @@ module RailsQL
           return @initial_query.call
         end
 
-        # Adds a field definition to the data type
+        # Adds a FieldDefinition to the data type
         #
         #   class UserType < RailsQL::DataType::Base
         #
@@ -101,27 +98,8 @@ module RailsQL
         private
 
         def add_field_definition(name, opts={})
-          opts = {
-            data_type: nil,
-            description: nil,
-            args: [],
-            nullable: true,
-            resolve: nil,
-            query: nil
-          }.merge opts
-
-          if opts[:data_type].blank?
-            raise "Invalid field #{to_s}##{name}: requires a :data_type option"
-          end
-
-          # add to field definitions
-          defaults = {
-            data_type: opts[:data_type] || name,
-            args: [],
-            resolve: ->(args, child_query) { model.send(data_type.to_s) },
-            query: nil
-          }
-          (field_definitions[name] ||= defaults).merge! opts
+          @field_definitions ||= HashWithIndifferentAccess.new
+          @field_definitions[name] = FieldDefinition.new name, opts
         end
 
         alias_method :has_many, :add_field_definition

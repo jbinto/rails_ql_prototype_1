@@ -1,6 +1,5 @@
 require "spec_helper"
 
-
 describe RailsQL::DataType::Builder do
   before :each do
     stub_const "MockedDataType", Class.new(RailsQL::DataType::Base)
