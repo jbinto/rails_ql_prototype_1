@@ -17,7 +17,8 @@ module RailsQL
       def query
         initial_query = self.class.call_initial_query
         @fields.reduce(initial_query) do |query, (name, child_data_type)|
-          definition = self.class.field_definitions[name.to_sym].add_to_parent_query(
+          definition = self.class.field_definitions[name.to_sym]
+          definition.add_to_parent_query(
             args: child_data_type.args,
             parent_query: query,
             child_query: child_data_type.query
@@ -27,15 +28,12 @@ module RailsQL
 
       def resolve_child_data_types
         @fields.each do |name, data_type|
-          # child_resolve = data_type[:resolve] || ->{
-          #   # call the method on the data_type if the user defined it there,
-          #   # else directly call the method on the model
-          #   (self.respond_to?(name) ? self : model).send name
-          # }
-          data_type.model = data_type.resolve(
+          definition = self.class.field_definitions[name.to_sym]
+          data_type.model = definition.resolve(
             parent_data_type: self,
             parent_model: model
           )
+          data_type.resolve_child_data_types
         end
       end
 
@@ -101,8 +99,8 @@ module RailsQL
         private
 
         def add_field_definition(name, opts={})
-          @field_definitions ||= HashWithIndifferentAccess.new
-          @field_definitions[name] = FieldDefinition.new name, opts
+          @field_definitions ||= {}
+          @field_definitions[name] = FieldDefinition.new name.to_sym, opts
         end
 
         alias_method :has_many, :add_field_definition
