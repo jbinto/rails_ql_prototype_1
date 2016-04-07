@@ -9,6 +9,8 @@ module RailsQL
           args: {}
         }.merge opts
         @data_type_klass = data_type_klass
+        p 'new'
+        p data_type_klass
         @child_builders = HashWithIndifferentAccess.new(opts[:child_builders])
         @args = HashWithIndifferentAccess.new(opts[:args])
       end
