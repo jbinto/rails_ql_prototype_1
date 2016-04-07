@@ -3,16 +3,10 @@ module RailsQL
     class Builder
       attr_reader :data_type_klass
 
-      def initialize(data_type_klass, opts = {})
-        opts = {
-          child_builders: {},
-          args: {}
-        }.merge opts
+      def initialize(data_type_klass)
         @data_type_klass = data_type_klass
-        p 'new'
-        p data_type_klass
-        @child_builders = HashWithIndifferentAccess.new(opts[:child_builders])
-        @args = HashWithIndifferentAccess.new(opts[:args])
+        @child_builders = {}
+        @args = {}
       end
 
       def data_type
@@ -23,7 +17,7 @@ module RailsQL
       end
 
       # idempotent
-      def add_child(name)
+      def add_child_builder(name)
         raise "Invalid field #{name}" if field_definitions[name] == nil
         return @child_builders[name] if @child_builders[name].present?
         child_klass = field_definitions[name][:data_type]
@@ -34,15 +28,15 @@ module RailsQL
       end
 
       def child_builders
-        HashWithIndifferentAccess.new @child_builders
+        Hash.new @child_builders
       end
 
       def add_arg(name, value)
-        @args[name] = value
+        @args[name.to_s] = value
       end
 
       def args
-        HashWithIndifferentAccess.new @args
+        Hash.new @args
       end
 
       private

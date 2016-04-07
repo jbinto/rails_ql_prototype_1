@@ -39,7 +39,7 @@ module RailsQL
 
     def visit_field_name(node)
       name = node.value
-      next_data_type_builder = current_data_type_builder.add_child name
+      next_data_type_builder = current_data_type_builder.add_child_builder name
       @data_type_builder_stack.push next_data_type_builder
     end
 
