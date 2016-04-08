@@ -1,6 +1,11 @@
+require "active_model/callbacks"
+
 module RailsQL
   module DataType
     class Base
+      extend ActiveModel::Callbacks
+      define_model_callbacks :resolve
+
       PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
       attr_reader :args
       attr_accessor :model
@@ -27,29 +32,23 @@ module RailsQL
       end
 
       def resolve_child_data_types
-        @fields.each do |name, data_type|
-          definition = self.class.field_definitions[name.to_sym]
-          data_type.model = definition.resolve(
-            parent_data_type: self,
-            parent_model: model
+        run_callbacks :resolve do
+          @fields.each do |name, data_type|
+            definition = self.class.field_definitions[name.to_sym]
+            data_type.model = definition.resolve(
+              parent_data_type: self,
+              parent_model: model
+            )
+            data_type.resolve_child_data_types
+          end
+        end
+      end
+
+      def as_json
+        @fields.reduce({}) do |json, (name, data_type)|
+          json.merge(
+            name.to_sym => data_type.as_json
           )
-          data_type.resolve_child_data_types
-        end
-      end
-
-      def to_h
-        @fields.map do |name, data_type|
-          {
-            name => data_type.to_h
-          }
-        end
-      end
-
-      def to_json
-        @fields.map do |name, data_type|
-          {
-            name => data_type.to_json
-          }
         end
       end
 
@@ -79,32 +78,20 @@ module RailsQL
         # * <tt>:args</tt> - Arguments to be passed to the resolve method
         # * <tt>:nullable</tt> -
         def field(name, opts={})
-          # Overwrite resolve and query with nil. These options are not exposed
-          # for non-association fields. Use .has_many or .has_one fo
-          # associations.
-          opts = opts.merge(
-            resolve: nil,
-            query: nil
+          instance_methods = (
+            RailsQL::DataType::Base.instance_methods - Object.instance_methods
           )
 
-          unless PRIMITIVE_DATA_TYPES.include? opts[:data_type].to_s
-            raise "Invalid field #{to_s}##{name}: #{
-              opts[:data_type]
-            } is not a valid data_type"
+          if (instance_methods).include? name
+            raise "Reserved word: Can not use #{name} as a field name"
           end
 
-          add_field_definition name, opts
-        end
-
-        private
-
-        def add_field_definition(name, opts={})
           @field_definitions ||= {}
           @field_definitions[name] = FieldDefinition.new name.to_sym, opts
         end
 
-        alias_method :has_many, :add_field_definition
-        alias_method :has_one, :add_field_definition
+        alias_method :has_many, :field
+        alias_method :has_one, :field
 
       end
     end

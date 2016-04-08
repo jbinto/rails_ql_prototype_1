@@ -2,7 +2,7 @@ module RailsQL
   module DataType
     class Primative
       attr_accessor :model
-      alias_method :to_json, :model
+      alias_method :as_json, :model
 
       def query
         nil

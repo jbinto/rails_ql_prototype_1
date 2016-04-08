@@ -7,6 +7,8 @@ Gem::Specification.new do |s|
     [">= 3.4.0"]
   s.add_development_dependency "activesupport",
     [">= 4.0.0"]
+  s.add_development_dependency "activemodel",
+    [">= 4.0.0"]
   s.add_development_dependency "awesome_print",
     [">= 1.6.1"]
   s.add_development_dependency "graphql-parser" #,

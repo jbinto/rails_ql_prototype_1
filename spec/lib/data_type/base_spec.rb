@@ -14,35 +14,82 @@ describe RailsQL::DataType::Base do
 
   end
 
-  describe ".field" do
-    context "when data_type exists" do
-      it "adds a FieldDefinition to every instance field_definitions" do
-        data_type_klass.field(:added_field,
-          data_type: RailsQL::DataType::String
-        )
+  describe ".field_definitions" do
+    it "returns a list of field definitions" do
+      pending
+      fail
+    end
+  end
 
-        expect(
-          data_type_klass.field_definitions[:added_field].class
-        ).to eq(
-          RailsQL::DataType::FieldDefinition
-        )
-        expect(
-          data_type_klass.field_definitions[:added_field].data_type
-        ).to eq(
-          RailsQL::DataType::String
+  describe ".field" do
+    context "when a data_type option is passed" do
+      it "adds a FieldDefinition" do
+        child_data_type = instance_double described_class
+        field_def_klass = class_double("RailsQL::DataType::FieldDefinition")
+          .as_stubbed_const
+        field_definition = double
+
+        expect(field_def_klass).to receive(:new).with(:added_field,
+          data_type: child_data_type
+        ).and_return field_definition
+
+        data_type_klass.field :added_field, data_type: child_data_type
+
+        expect(data_type_klass.field_definitions[:added_field]).to eq(
+          field_definition
         )
       end
     end
 
-    context "when data_type does not exist" do
-      it "raises invalid field error" do
+    context "when data_type is nil" do
+      it "raises an error" do
         expect{
           data_type_klass.field(:invalid_field,
-            data_type: :invalid
+            data_type: nil
           )
         }.to raise_error
       end
     end
+
+    context "when name is reserved" do
+      it "raises an error" do
+        expect{
+          data_type_klass.field(:query,
+            data_type: double
+          )
+        }.to raise_error
+      end
+    end
+
+    context "when a name is defined on the DataType subclass" do
+      it "does not raise an error" do
+        data_type_klass.class_eval do
+          def example_field
+          end
+        end
+
+        expect{
+          data_type_klass.field(:example_field,
+            data_type: double
+          )
+        }.to_not raise_error
+      end
+    end
+  end
+
+  shared_examples "data_type_association" do |method_sym|
+    it "aliases .field" do
+      expect(data_type_klass).to receive :field
+      data_type_klass.send method_sym, :cows_and_stuff, data_type: :reasons
+    end
+  end
+
+  describe ".has_many" do
+    it_behaves_like "data_type_association", :has_many
+  end
+
+  describe ".has_one" do
+    it_behaves_like "data_type_association", :has_one
   end
 
   describe "#query" do
@@ -113,26 +160,33 @@ describe RailsQL::DataType::Base do
       expect(child_data_type).to receive(:model=).with :like_whatever
       data_type.resolve_child_data_types
     end
-  end
 
-  describe "#to_json" do
-    before :each do
-      # @base = data_type.new(
-      #   fields: {
-      #     base_1: data_type.new(
-      #       fields: {name: {data_type: RailsQL::DataType::String, model: "name_1"}}
-      #     ),
-      #     base_2: data_type.new(
-      #       fields: {name: {data_type: RailsQL::DataType::String, model: "name_2"}}
-      #     )
-      #   }
-      # )
+    it "runs resolve callbacks" do
+      data_type = data_type_klass.new
+
+      expect do |b|
+        data_type_klass.before_resolve &b
+        data_type.resolve_child_data_types
+      end.to yield_control
     end
 
-    it "recursively calls to_json on all fields" do
-      pending
-      fail
-      # @base.to_json
+  end
+
+  describe "#as_json" do
+    it "reduces over #as_json on fields" do
+      child_data_type = instance_double described_class
+      data_type = data_type_klass.new fields: {
+        fake_field_1: child_data_type,
+        fake_field_2: child_data_type
+      }
+
+      expect(child_data_type).to receive(:as_json).and_return(
+        hello: "world"
+      ).twice
+      expect(data_type.as_json).to eq(
+        fake_field_1: {hello: "world"},
+        fake_field_2: {hello: "world"}
+      )
     end
   end
 end
