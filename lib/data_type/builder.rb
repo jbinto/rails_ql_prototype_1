@@ -1,9 +1,11 @@
 module RailsQL
   module DataType
     class Builder
-      def initialize(data_type_name)
-        @data_type_name = data_type_name
+      def initialize(opts)
+        @data_type_name = opts[:data_type_name]
         @child_builders = {}
+        @context = opts[:context]
+        @root = opts[:root]
         @args = {}
       end
 
@@ -17,7 +19,9 @@ module RailsQL
         # end
         @data_type ||= data_type_klass.new(
           args: @args,
-          fields: @child_builders.map {|type, builder| builder.data_type }
+          fields: @child_builders.map {|type, builder| builder.data_type },
+          context: @context,
+          root: @root
         )
       end
 
@@ -27,7 +31,11 @@ module RailsQL
         return @child_builders[name] if @child_builders[name].present?
 
         data_type_name = field_definitions[name][:data_type]
-        child_builder = Builder.new(data_type_name)
+        child_builder = Builder.new(
+          data_type_name: data_type_name,
+          context: @context,
+          root: false
+        )
         @child_builders[name] = child_builder
         return child_builder
       end

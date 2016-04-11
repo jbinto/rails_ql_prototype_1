@@ -17,6 +17,12 @@ module RailsQL
         }.merge opts
         @fields = HashWithIndifferentAccess.new(opts[:fields]).freeze
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
+        @context = HashWithIndifferentAccess.new(opts[:context]).freeze
+        @root = opts[:root]
+      end
+
+      def root?
+        @root
       end
 
       def query

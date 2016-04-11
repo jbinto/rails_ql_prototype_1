@@ -11,7 +11,7 @@ describe RailsQL::Visitor do
 
   describe "#accept" do
     it "calls builder#add_child_builder for each child field node" do
-      expect(root_builder).to receive(:add_child_builder).with('hero')
+      expect(root_builder).to receive(:add_child_builder).with 'hero'
 
       visit_graphql "query { hero }"
     end
