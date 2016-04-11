@@ -61,14 +61,11 @@ module RailsQL
         @read_permission = lambda
       end
 
-      def readable?
-        @readable ||=
-          if @read_permission
-            @read_permission.call
-          else
-            false
-          end
+      def readable_for?(parent_data_type)
+        permission = @read_permission || ->{false}
+        parent_data_type.instance_eval &permission
       end
+
     end
   end
 end

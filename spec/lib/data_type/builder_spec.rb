@@ -6,7 +6,7 @@ describe RailsQL::DataType::Builder do
     @mocked_data_type = class_double("MockedDataType")
     @builder = RailsQL::DataType::Builder.new(
       data_type_name: "mocked_data_type",
-      context: {},
+      ctx: {},
       root: true
     )
   end
@@ -22,8 +22,8 @@ describe RailsQL::DataType::Builder do
       allow(@builder).to receive(:data_type_klass).and_return @mocked_data_type
       expect(@mocked_data_type).to receive(:new).with(
         args: {},
-        fields: [],
-        context: {},
+        fields: {},
+        ctx: {},
         root: true
       )
       data_type = @builder.data_type
@@ -45,7 +45,7 @@ describe RailsQL::DataType::Builder do
         expect(child_builder.class).to eq RailsQL::DataType::Builder
         expect(child_builder.data_type_klass).to eq MockedDataType
         expect(child_builder.instance_variable_get("@root")).to eq false
-        expect(child_builder.instance_variable_get("@context")).to eq({})
+        expect(child_builder.instance_variable_get("@ctx")).to eq({})
       end
 
       it "is idempotent" do

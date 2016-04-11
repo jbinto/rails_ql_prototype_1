@@ -74,13 +74,6 @@ describe RailsQL::DataType::Can do
           "example_field",
           "child_data_type" => ["example_field"]
         ])
-
-        # expect(unauthorized_query_fields[:example_field]).to eq(
-        #   data_type.fields(:example_field)
-        # )
-        # expect(unauthorized_query_fields[:child_data_type]).to eq(
-        #   data_type.fields(:examplechild_data_type_field)
-        # )
       end
     end
 

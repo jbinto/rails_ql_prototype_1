@@ -4,7 +4,7 @@ module RailsQL
       def initialize(opts)
         @data_type_name = opts[:data_type_name]
         @child_builders = {}
-        @context = opts[:context]
+        @ctx = opts[:ctx]
         @root = opts[:root]
         @args = {}
       end
@@ -19,11 +19,10 @@ module RailsQL
         # end
         @data_type ||= data_type_klass.new(
           args: @args,
-          fields: @child_builders.reduce({}) {|fields, type, builder|
-            ap type
+          fields: @child_builders.reduce({}) {|fields, (type, builder)|
             fields[type] = builder.data_type
           },
-          context: @context,
+          ctx: @ctx,
           root: @root
         )
       end
@@ -36,7 +35,7 @@ module RailsQL
         data_type_name = field_definitions[name][:data_type]
         child_builder = Builder.new(
           data_type_name: data_type_name,
-          context: @context,
+          ctx: @ctx,
           root: false
         )
         @child_builders[name] = child_builder

@@ -9,7 +9,7 @@ module RailsQL
       include Can
 
       PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
-      attr_reader :args, :context, :fields
+      attr_reader :args, :ctx, :fields
       attr_accessor :model
 
       def initialize(opts={})
@@ -19,7 +19,7 @@ module RailsQL
         }.merge opts
         @fields = HashWithIndifferentAccess.new(opts[:fields]).freeze
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
-        @context = HashWithIndifferentAccess.new(opts[:context]).freeze
+        @ctx = HashWithIndifferentAccess.new(opts[:ctx]).freeze
         @root = opts[:root]
       end
 
