@@ -57,6 +57,18 @@ module RailsQL
         end
       end
 
+      def add_read_permission(lambda)
+        @read_permission = lambda
+      end
+
+      def readable?
+        @readable ||=
+          if @read_permission
+            @read_permission.call
+          else
+            false
+          end
+      end
     end
   end
 end

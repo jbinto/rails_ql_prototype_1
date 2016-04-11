@@ -19,7 +19,10 @@ module RailsQL
         # end
         @data_type ||= data_type_klass.new(
           args: @args,
-          fields: @child_builders.map {|type, builder| builder.data_type },
+          fields: @child_builders.reduce({}) {|fields, type, builder|
+            ap type
+            fields[type] = builder.data_type
+          },
           context: @context,
           root: @root
         )
@@ -40,12 +43,13 @@ module RailsQL
         return child_builder
       end
 
-      def child_builders
-        @child_builders.clone
-      end
-
+      # idempotent
       def add_arg(name, value)
         @args[name.to_s] = value
+      end
+
+      def child_builders
+        @child_builders.clone
       end
 
       def args

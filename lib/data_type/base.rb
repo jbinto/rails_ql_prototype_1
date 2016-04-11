@@ -6,8 +6,10 @@ module RailsQL
       extend ActiveModel::Callbacks
       define_model_callbacks :resolve
 
+      include Can
+
       PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
-      attr_reader :args
+      attr_reader :args, :context, :fields
       attr_accessor :model
 
       def initialize(opts={})

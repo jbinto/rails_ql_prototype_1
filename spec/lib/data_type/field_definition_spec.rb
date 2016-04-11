@@ -13,7 +13,18 @@ describe RailsQL::DataType::FieldDefinition do
         described_class.new("fake_field_name", {data_type: double})
       }.not_to raise_error
     end
+  end
 
+  describe "#add_read_permission and #readable" do
+    it "saves the passed lambda and calls it" do
+      field_definition = described_class.new "fake_field_name", data_type: double
+      permission = ->{}
+      field_definition.add_read_permission permission
+
+      expect(permission).to receive :call
+
+      field_definition.readable?
+    end
   end
 
   describe "#add_to_parent_query" do
