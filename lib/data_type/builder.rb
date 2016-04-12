@@ -1,27 +1,31 @@
 module RailsQL
   module DataType
     class Builder
+      attr_reader :data_type_klass
+
       def initialize(opts)
-        @data_type_name = opts[:data_type_name]
+        if opts[:data_type_klass].blank?
+          raise "requires a :data_type_klass option"
+        @data_type_klass =
+          if [Symbol, String].includes? opts[:data_type_klass].class
+            opts[:data_type_klass].to_s.classify.constantize
+          else
+            opts[:data_type_klass]
+          end
         @child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]
         @args = {}
       end
 
-      def data_type_klass
-        @data_type_klass ||= @data_type_name.classify.constantize
-      end
-
       def data_type
-        # if [Symbol, String].includes? opts[:data_type].class
-        #   opts[:data_type] = opts[:data_type].to_s.classify.constantize
-        # end
+        children = @child_builders.reduce({}) do |types, (type, builder)|
+          types[type] = builder.data_type
+          types
+        end
         @data_type ||= data_type_klass.new(
           args: @args,
-          fields: @child_builders.reduce({}) {|fields, (type, builder)|
-            fields[type] = builder.data_type
-          },
+          child_data_types: children,
           ctx: @ctx,
           root: @root
         )
@@ -32,9 +36,9 @@ module RailsQL
         raise "Invalid field #{name}" if field_definitions[name] == nil
         return @child_builders[name] if @child_builders[name].present?
 
-        data_type_name = field_definitions[name][:data_type]
+        data_type_klass = field_definitions[name][:data_type]
         child_builder = Builder.new(
-          data_type_name: data_type_name,
+          data_type_klass: data_type_klass,
           ctx: @ctx,
           root: false
         )

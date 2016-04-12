@@ -9,15 +9,26 @@ module RailsQL
       include Can
 
       PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
-      attr_reader :args, :ctx, :fields
+      attr_reader :args, :ctx, :fields, :query
       attr_accessor :model
 
       def initialize(opts={})
         opts = {
-          fields: {},
-          args: {}
+          child_data_types: {},
+          args: {},
+          ctx: {},
+          root: false
         }.merge opts
-        @fields = HashWithIndifferentAccess.new(opts[:fields]).freeze
+        @fields = HashWithIndifferentAccess.new
+        opts[:child_data_types].each do |name, data_type|
+          @fields[name] = Field.new(
+            name: name
+            field_definition: self.class.field_definitions[name],
+            parent_data_type: self,
+            data_type: data_type
+          )
+        end
+        @fields.freeze
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
         @ctx = HashWithIndifferentAccess.new(opts[:ctx]).freeze
         @root = opts[:root]
@@ -27,28 +38,16 @@ module RailsQL
         @root
       end
 
-      def query
-        initial_query = self.class.call_initial_query
-        @fields.reduce(initial_query) do |query, (name, child_data_type)|
-          definition = self.class.field_definitions[name.to_sym]
-          definition.add_to_parent_query(
-            args: child_data_type.args,
-            parent_query: query,
-            child_query: child_data_type.query
-          )
+      def build_query!
+        @query = self.class.call_initial_query
+        @fields.each do |name, field|
+          @query = field.add_to_parent_query!
         end
       end
 
-      def resolve_child_data_types
+      def resolve_child_data_types!
         run_callbacks :resolve do
-          @fields.each do |name, data_type|
-            definition = self.class.field_definitions[name.to_sym]
-            data_type.model = definition.resolve(
-              parent_data_type: self,
-              parent_model: model
-            )
-            data_type.resolve_child_data_types
-          end
+          @fields.each {|name, field| field.resolve!}
         end
       end
 
@@ -94,7 +93,7 @@ module RailsQL
             raise "Reserved word: Can not use #{name} as a field name"
           end
 
-          @field_definitions ||= {}
+          @field_definitions ||= HashWithIndifferentAccess.new
           @field_definitions[name] = FieldDefinition.new name.to_sym, opts
         end
 

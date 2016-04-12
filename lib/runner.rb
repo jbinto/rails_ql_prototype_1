@@ -15,26 +15,33 @@
 
 module RailsQL
   class Runner
-    attr_reader :root
-
-    def initialize(root)
-      @root = root
+    def initialize(schema)
+      @schema = schema
     end
 
-    def execute!
-      root.query
-      root.resolve
-      # top_to_bottom_traversal
-      # bottom_to_top_traversal
+    def execute!(opts)
+      opts = {
+        query: nil,
+        ctx: {}
+      }.merge opts
+      if query.nil? raise "RailsQL::Runner.execute! requires a :query option"
+
+      root_builder = Builder.new(
+        data_type_klass: @schema,
+        ctx: ctx,
+        root: true
+      )
+
+      visitor = RailsQL::Visitor.new root_builder
+      ast = GraphQL::Parser.parse opts[:query]
+      visitor.accept ast
+
+      root = root_builder.data_type
+      root.build_query!
+      root.resolve_child_data_types!
+
+      return root
     end
 
-    # protected
-
-    # def top_to_bottom_traversal
-    #   root.query
-    # end
-
-    # def bottom_to_top_traversal
-    # end
   end
 end
