@@ -79,7 +79,12 @@ describe RailsQL::DataType::Base do
 
   shared_examples "data_type_association" do |method_sym|
     it "aliases .field" do
-      expect(data_type_klass).to receive :field
+      field_def_klass = class_double("RailsQL::DataType::FieldDefinition")
+        .as_stubbed_const
+      field_definition = double
+      expect(field_def_klass).to receive(:new).with(:cows_and_stuff,
+        data_type: :reasons
+      ).and_return field_definition
       data_type_klass.send method_sym, :cows_and_stuff, data_type: :reasons
     end
   end
