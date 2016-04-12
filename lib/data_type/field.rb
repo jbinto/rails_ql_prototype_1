@@ -10,8 +10,14 @@ module RailsQL
       end
 
       def add_to_parent_query!
+        @data_type.build_query!
         if @field_definition.query.present?
-          @parent_data_type.instance_exec(@data_type.args, @data_type.query, &@field_definition.query)
+          p @data_type.query
+          @parent_data_type.instance_exec(
+            @data_type.args,
+            @data_type.query,
+            &@field_definition.query
+          )
         else
           @parent_data_type.query
         end
