@@ -97,55 +97,40 @@ describe RailsQL::DataType::Base do
     it_behaves_like "data_type_association", :has_one
   end
 
-  describe "#query" do
+  describe "#build_query!" do
     context "when it has no child data_types" do
       it "returns the initial query" do
         data_type_klass.stub(:call_initial_query).and_return :best_query_ever
-        expect(data_type_klass.new.query).to eq :best_query_ever
+        expect(data_type_klass.new.build_query!).to eq :best_query_ever
       end
     end
 
-    context "when it has child data_types" do
-      it "calls the FieldDefinition#add_to_parent_query" do
-        data_type = data_type_klass.new fields: {
-          fake_field: data_type_klass.new(args: {id: 3}),
-        }
-        field_definition = double
-        initial_query = double
-        data_type_klass.stub(:call_initial_query).and_return initial_query
-        allow(data_type_klass).to(
-          receive(:field_definitions).and_return fake_field: field_definition
-        )
+    context "when it has fields" do
+      it "calls Field#add_to_parent_query!" do
+        field = instance_double RailsQL::DataType::Field
+        data_type = data_type_klass.new
+        data_type.stub(:fields).and_return(fake_field: field)
+        data_type_klass.stub(:call_initial_query).and_return double
 
-        expect(field_definition).to(
-          receive(:add_to_parent_query).with(
-            args: {id: 3},
-            parent_query: initial_query,
-            child_query: initial_query
-          )
-        )
-        data_type.query
+        expect(field).to receive :add_to_parent_query!
+        data_type.build_query!
       end
 
-      it "reduces over the FieldDefinition#add_to_parent_query results" do
-        data_type = data_type_klass.new fields: {
-          fake_field_1: data_type_klass.new,
-          fake_field_2: data_type_klass.new
+      it "reduces over the Field#add_to_parent_query! results" do
+        fields = {
+          fake_field_1: instance_double(RailsQL::DataType::Field),
+          fake_field_2: instance_double(RailsQL::DataType::Field)
         }
-        field_definition = double
-        initial_query = double
+        data_type = data_type_klass.new
+        data_type.stub(:fields).and_return(fields)
         data_type_klass.stub(:call_initial_query).and_return "the cow says"
-        allow(data_type_klass).to(
-          receive(:field_definitions).and_return(
-            fake_field_1: field_definition,
-            fake_field_2: field_definition
-          )
-        )
 
-        expect(field_definition).to receive(:add_to_parent_query) do |opts|
-          opts[:parent_query] + " moo"
-        end.twice
-        expect(data_type.query).to eq "the cow says moo moo"
+        fields.each do |k, field|
+          expect(field).to receive(:add_to_parent_query!) do
+            data_type.query + " moo"
+          end.once
+        end
+        expect(data_type.build_query!).to eq "the cow says moo moo"
       end
     end
   end

@@ -40,19 +40,20 @@ module RailsQL
 
       def build_query!
         @query = self.class.call_initial_query
-        @fields.each do |name, field|
+        fields.each do |name, field|
           @query = field.add_to_parent_query!
         end
+        return @query
       end
 
       def resolve_child_data_types!
         run_callbacks :resolve do
-          @fields.each {|name, field| field.resolve!}
+          fields.values.each &:resolve!
         end
       end
 
       def as_json
-        @fields.reduce({}) do |json, (name, data_type)|
+        fields.reduce({}) do |json, (name, data_type)|
           json.merge(
             name.to_sym => data_type.as_json
           )

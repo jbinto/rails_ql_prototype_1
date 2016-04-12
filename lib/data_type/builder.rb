@@ -8,7 +8,6 @@ module RailsQL
           raise "requires a :data_type_klass option"
         end
         @data_type_klass = KlassFactory.find opts[:data_type_klass]
-        @data_type_klass = ::String
         @child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]
