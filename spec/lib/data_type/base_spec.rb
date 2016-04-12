@@ -135,20 +135,14 @@ describe RailsQL::DataType::Base do
     end
   end
 
-  describe "#resolve_child_data_types" do
-    it "sets the child DataType's model to the result of the FieldDefinition's resolve method" do
-      child_data_type = data_type_klass.new
-      data_type = data_type_klass.new fields: {
-        fake_field: child_data_type,
-      }
-      field_definition = double
-      allow(data_type_klass).to(
-        receive(:field_definitions).and_return(fake_field: field_definition)
-      )
+  describe "#resolve_child_data_types!" do
+    it "calls Field#resolve! for each field" do
+      field = instance_double RailsQL::DataType::Field
+      data_type = data_type_klass.new
+      data_type.stub(:fields).and_return(fake_field: field)
 
-      expect(field_definition).to receive(:resolve).and_return :like_whatever
-      expect(child_data_type).to receive(:model=).with :like_whatever
-      data_type.resolve_child_data_types
+      expect(field).to receive(:resolve!)
+      data_type.resolve_child_data_types!
     end
 
     it "runs resolve callbacks" do
@@ -156,7 +150,7 @@ describe RailsQL::DataType::Base do
 
       expect do |b|
         data_type_klass.before_resolve &b
-        data_type.resolve_child_data_types
+        data_type.resolve_child_data_types!
       end.to yield_control
     end
 
