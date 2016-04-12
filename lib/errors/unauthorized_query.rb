@@ -1,4 +1,4 @@
 module RailsQL
-  class UnauthorizedQuery < Error
+  class UnauthorizedQuery < Exception
   end
 end

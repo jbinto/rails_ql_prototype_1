@@ -1,29 +1,40 @@
 module RailsQL
   module DataType
-    class Primative
-      attr_accessor :model
-      alias_method :as_json, :model
+    module Primative
+      def self.data_type_names
+        Primative.constants.select do |c|
+          Primative.const_get(c).is_a? Class
+        end
+      end
 
-      def query
-        nil
+      class Base
+        attr_accessor :model
+        alias_method :as_json, :model
+
+        def query
+          nil
+        end
+
+        def self.data_type?
+          true
+        end
+      end
+
+      class String < Base
+      end
+
+      class Integer < Base
+      end
+
+      class Float < Base
+      end
+
+      class Boolean < Base
+      end
+
+      class JSON < Base
       end
 
     end
-
-    class String < Primative
-    end
-
-    class Integer < Primative
-    end
-
-    class Float < Primative
-    end
-
-    class Boolean < Primative
-    end
-
-    class JSON < Primative
-    end
-
   end
 end

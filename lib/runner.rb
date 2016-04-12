@@ -24,7 +24,9 @@ module RailsQL
         query: nil,
         ctx: {}
       }.merge opts
-      if query.nil? raise "RailsQL::Runner.execute! requires a :query option"
+      if query.nil?
+        raise "RailsQL::Runner.execute! requires a :query option"
+      end
 
       root_builder = Builder.new(
         data_type_klass: @schema,

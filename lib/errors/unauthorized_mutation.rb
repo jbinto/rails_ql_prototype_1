@@ -1,4 +1,4 @@
 module RailsQL
-  class UnauthorizedMutation < Error
+  class UnauthorizedMutation < Exception
   end
 end

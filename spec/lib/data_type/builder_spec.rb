@@ -5,14 +5,14 @@ describe RailsQL::DataType::Builder do
     stub_const "MockedDataType", Class.new(RailsQL::DataType::Base)
     @mocked_data_type = class_double("MockedDataType")
     @builder = RailsQL::DataType::Builder.new(
-      data_type_name: "mocked_data_type",
+      data_type_klass: "mocked_data_type",
       ctx: {},
       root: true
     )
   end
 
   describe "#data_type_klass" do
-    it "constantizes the data_type name" do
+    it "constantizes the data_type_klass option" do
       expect(@builder.data_type_klass).to eq MockedDataType
     end
   end
@@ -22,7 +22,7 @@ describe RailsQL::DataType::Builder do
       allow(@builder).to receive(:data_type_klass).and_return @mocked_data_type
       expect(@mocked_data_type).to receive(:new).with(
         args: {},
-        fields: {},
+        child_data_types: {},
         ctx: {},
         root: true
       )

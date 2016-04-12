@@ -22,7 +22,7 @@ module RailsQL
         @fields = HashWithIndifferentAccess.new
         opts[:child_data_types].each do |name, data_type|
           @fields[name] = Field.new(
-            name: name
+            name: name,
             field_definition: self.class.field_definitions[name],
             parent_data_type: self,
             data_type: data_type
@@ -61,6 +61,10 @@ module RailsQL
 
       class << self
         attr_reader :field_definitions
+
+        def data_type?
+          true
+        end
 
         def initial_query(initial_query)
           @initial_query = initial_query

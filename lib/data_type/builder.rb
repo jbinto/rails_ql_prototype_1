@@ -6,12 +6,9 @@ module RailsQL
       def initialize(opts)
         if opts[:data_type_klass].blank?
           raise "requires a :data_type_klass option"
-        @data_type_klass =
-          if [Symbol, String].includes? opts[:data_type_klass].class
-            opts[:data_type_klass].to_s.classify.constantize
-          else
-            opts[:data_type_klass]
-          end
+        end
+        @data_type_klass = KlassFactory.find opts[:data_type_klass]
+        @data_type_klass = ::String
         @child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]

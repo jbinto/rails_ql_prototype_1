@@ -11,10 +11,7 @@ module RailsQL
 
       def add_to_parent_query!
         if @field_definition.query.present?
-          @parent_data_type.instance_eval(&@field_definition.query,
-            @data_type.args,
-            @data_type.query
-          )
+          @parent_data_type.instance_exec(@data_type.args, @data_type.query, &@field_definition.query)
         else
           @parent_data_type.query
         end
@@ -23,10 +20,10 @@ module RailsQL
       def resolve!
         @data_type.model =
           if @field_definition.resolve.present?
-            @parent_data_type.instance_eval(&@field_definition.resolve,
-              @data_type.args,
-              @data_type.query
-            )
+            # @parent_data_type.instance_eval(&@field_definition.resolve,
+            #   @data_type.args,
+            #   @data_type.query
+            # )
           elsif @parent_data_type.respond_to? @name
             @parent_data_type.send @name
           else
