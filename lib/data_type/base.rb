@@ -19,6 +19,7 @@ module RailsQL
           ctx: {},
           root: false
         }.merge opts
+
         @fields = HashWithIndifferentAccess.new
         opts[:child_data_types].each do |name, data_type|
           @fields[name] = Field.new(
@@ -28,11 +29,14 @@ module RailsQL
             data_type: data_type
           )
         end
+
         @fields.freeze
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
         @ctx = HashWithIndifferentAccess.new(opts[:ctx]).freeze
         @root = opts[:root]
-        @query = instance_eval self.class.get_initial_query
+        if self.class.get_initial_query.present?
+          @query = instance_exec &self.class.get_initial_query
+        end
       end
 
       def root?

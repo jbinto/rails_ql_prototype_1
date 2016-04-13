@@ -1,6 +1,7 @@
 module RailsQL
   module DataType
     class Field
+      attr_reader :data_type
 
       def initialize(opts)
         @field_definition = opts[:field_definition]
