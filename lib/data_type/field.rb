@@ -37,8 +37,9 @@ module RailsQL
       end
 
       def has_read_permission?
-        permission = @field_definition.read_permission
-        @parent_data_type.instance_eval &permission
+        @field_definition.read_permissions.any? do |permission|
+          @parent_data_type.instance_eval &permission
+        end
       end
 
     end

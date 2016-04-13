@@ -9,6 +9,7 @@ module RailsQL
         end
 
         @name = name
+        @read_permissions = []
 
         defaults = {
           data_type: opts[:data_type] || name,
@@ -24,11 +25,15 @@ module RailsQL
       end
 
       def add_read_permission(lambda)
-        @read_permission = lambda
+        @read_permissions << lambda
       end
 
-      def read_permission
-        @read_permission || ->{false}
+      def read_permissions
+        if @read_permissions.present?
+          @read_permissions.clone
+        else
+          [->{false}]
+        end
       end
 
     end

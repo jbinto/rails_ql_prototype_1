@@ -3,19 +3,21 @@ require "spec_helper"
 describe RailsQL::DataType::Can do
   let(:data_type_klass) {
     klass = Class.new RailsQL::DataType::Base
-    klass.field :example_field, data_type: RailsQL::DataType::String
+    klass.field :example_field, data_type: class_double(RailsQL::DataType::Base)
     klass.has_one :child_data_type, data_type: klass
     klass
   }
 
   describe ".can" do
     context "when :read" do
-      context "with when option" do
-        it "calls field_definition#add_read_permission with when option" do
-          permission = ->{context.current_user.owner? model}
+      context "with :when option" do
+        it "calls field_definition#add_read_permission with :when option" do
+          permission = ->{true}
           field_definition = data_type_klass.field_definitions[:example_field]
 
-          expect(field_definition).to receive(:add_read_permission).with permission
+          expect(field_definition).to(
+            receive(:add_read_permission).with permission
+          )
 
           data_type_klass.can(:read,
             fields: [:example_field],
@@ -24,11 +26,13 @@ describe RailsQL::DataType::Can do
         end
       end
 
-      context "without when option" do
-        it "calls field_definition#add_read_permission with default lambda" do
+      context "without :when option" do
+        it "calls field_definition#add_read_permission with `->{true}`" do
           field_definition = data_type_klass.field_definitions[:example_field]
 
-          expect(field_definition).to receive(:add_read_permission).with ->{true}
+          expect(field_definition).to receive(:add_read_permission) do |lambda|
+            expect(lambda.call).to eq true
+          end
 
           data_type_klass.can :read, fields: [:example_field]
         end
@@ -48,41 +52,45 @@ describe RailsQL::DataType::Can do
   end
 
   describe "instance methods" do
-    let(:data_type) { data_type_klass.new fields: {
-        example_field: RailsQL::DataType::String.new,
-        child_data_type: data_type_klass.new(fields: {
-          example_field: RailsQL::DataType::String.new
-        })
-      }}
+    let(:data_type) {data_type_klass.new(field: {})}
+    let(:field) {instance_double RailsQL::DataType::Field}
 
     describe "#unauthorized_query_fields" do
-      it "returns a subset of fields which cannot be read, including children" do
-        field_definition = data_type_klass.field_definitions[:example_field]
-        child_field_definition = data_type_klass.field_definitions[
-          :child_data_type
-        ]
-        child_example_field_definition = child_field_definition
-          .data_type.field_definitions[:example_field]
+      context "when there are unauthorized fields" do
+        it "returns a hash in the form {field_name => true}" do
+          allow(data_type).to receive(:fields).and_return stuff: field
 
-        expect(field_definition).to receive(:readable?).and_return false
-        expect(child_field_definition).to receive(:readable?).and_return true
-        expect(child_example_field_definition).to receive(:readable?).and_return false
+          expect(field).to receive(:has_read_permission?).and_return false
 
-        unauthorized_query_fields = data_type.unauthorized_query_fields
+          unauthorized_query_fields = data_type.unauthorized_query_fields
 
-        expect(unauthorized_query_fields).to eq([
-          "example_field",
-          "child_data_type" => ["example_field"]
-        ])
+          expect(unauthorized_query_fields).to eq("stuff" => true)
+        end
       end
+
+      context "when there are nested unauthorized fields" do
+        it "returns a nested hash" do
+          allow(data_type).to receive(:fields).and_return stuff: field
+
+          expect(field).to receive(:has_read_permission?).and_return true
+          expect(field).to(
+            receive_message_chain(:data_type, :unauthorized_query_fields)
+              .and_return(things: true)
+          )
+
+          expect(data_type.unauthorized_query_fields).to eq(
+            "stuff" => {"things" => true}
+          )
+        end
+      end
+
     end
 
     describe "#authorize_query!" do
       context "when unauthorized_query_fields is not empty" do
         it "raises UnauthorizedQuery error" do
           allow(data_type).to receive(:unauthorized_query_fields).and_return(
-            # HashWithIndifferentAccess.new
-            [:example_field]
+            example_field: true
           )
 
           expect{data_type.authorize_query!}.to raise_error
@@ -90,13 +98,12 @@ describe RailsQL::DataType::Can do
       end
 
       context "when unauthorized_query_fields is empty" do
-        it "returns true" do
+        it "does not raise an error" do
           allow(data_type).to receive(:unauthorized_query_fields).and_return(
-            # HashWithIndifferentAccess.new
-            []
+            HashWithIndifferentAccess.new
           )
 
-          expect(data_type.authorize_query!).to eq true
+          expect{data_type.authorize_query!}.not_to raise_error
         end
       end
     end

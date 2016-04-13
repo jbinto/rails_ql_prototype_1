@@ -1,1 +1,5 @@
-runner_spec.rb
+require "spec_helper"
+
+describe RailsQL::Runner do
+
+end
