@@ -177,17 +177,16 @@ describe RailsQL::DataType::Base do
 
   describe "#as_json" do
     it "reduces over #as_json on fields" do
-      pending
-      skip
-      child_data_type = instance_double described_class
-      data_type = data_type_klass.new fields: {
-        fake_field_1: child_data_type,
-        fake_field_2: child_data_type
-      }
-
-      expect(child_data_type).to receive(:as_json).and_return(
+      field = instance_double RailsQL::DataType::Field
+      data_type = data_type_klass.new
+      allow(data_type).to receive(:fields).and_return(
+        fake_field_1: field,
+        fake_field_2: field
+      )
+      allow(field).to receive_message_chain(:data_type, :as_json).and_return(
         hello: "world"
-      ).twice
+      )
+
       expect(data_type.as_json).to eq(
         fake_field_1: {hello: "world"},
         fake_field_2: {hello: "world"}

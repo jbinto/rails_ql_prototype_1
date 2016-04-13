@@ -73,7 +73,7 @@ module RailsQL
       super *args if args.length != 2
       sym, node = args
       name = sym.to_s
-      p name
+      # puts name
       if name.match /^visit_/
         visit_node name.gsub("visit_", "").to_sym, node
       elsif name.match /^end_visit_/
@@ -84,7 +84,7 @@ module RailsQL
     end
 
     def visit_node(sym, node)
-      puts sym
+      # puts sym
       node_stack.push(sym)
       (@current_visitors||[]).each do |visitor|
         visitor.send(:"visit_#{sym}", node)
