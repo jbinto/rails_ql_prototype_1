@@ -1,7 +1,7 @@
 module RailsQL
   module DataType
     class FieldDefinition
-      attr_reader :data_type, :args, :description, :nullable, :query
+      attr_reader :data_type, :args, :description, :nullable, :query, :resolve
 
       def initialize(name, opts)
         if opts[:data_type].blank?
