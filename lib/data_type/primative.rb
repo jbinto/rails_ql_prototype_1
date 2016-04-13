@@ -11,6 +11,10 @@ module RailsQL
         attr_accessor :model
         alias_method :as_json, :model
 
+        def build_query!
+          nil
+        end
+
         def query
           nil
         end

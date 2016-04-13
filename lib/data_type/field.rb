@@ -9,10 +9,8 @@ module RailsQL
         @name = opts[:name]
       end
 
-      def add_to_parent_query!
-        @data_type.build_query!
+      def appended_parent_query
         if @field_definition.query.present?
-          p @data_type.query
           @parent_data_type.instance_exec(
             @data_type.args,
             @data_type.query,
@@ -23,19 +21,18 @@ module RailsQL
         end
       end
 
-      def resolve!
-        @data_type.model =
-          if @field_definition.resolve.present?
-            # @parent_data_type.instance_eval(&@field_definition.resolve,
-            #   @data_type.args,
-            #   @data_type.query
-            # )
-          elsif @parent_data_type.respond_to? @name
-            @parent_data_type.send @name
-          else
-            @parent_data_type.model.send @name
-          end
-        @data_type.resolve_child_data_types!
+      def resolved_model
+        if @field_definition.resolve.present?
+          @parent_data_type.instance_exec(
+            @data_type.args,
+            @data_type.query,
+            &@field_definition.resolve
+          )
+        elsif @parent_data_type.respond_to? @name
+          @parent_data_type.send @name
+        else
+          @parent_data_type.model.send @name
+        end
       end
 
       def has_read_permission?

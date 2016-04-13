@@ -32,6 +32,7 @@ module RailsQL
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
         @ctx = HashWithIndifferentAccess.new(opts[:ctx]).freeze
         @root = opts[:root]
+        @query = instance_eval self.class.get_initial_query
       end
 
       def root?
@@ -39,16 +40,21 @@ module RailsQL
       end
 
       def build_query!
-        @query = self.class.call_initial_query
-        fields.each do |name, field|
-          @query = field.add_to_parent_query!
+        # Bottom to top recursion
+        fields.each do |k, field|
+          field.data_type.build_query!
+          @query = field.appended_parent_query
         end
-        return @query
+        return query
       end
 
       def resolve_child_data_types!
         run_callbacks :resolve do
-          fields.values.each &:resolve!
+          # Top to bottom recursion
+          fields.each do |k, field|
+            field.data_type.model = field.resolved_model
+            field.data_type.resolve_child_data_types!
+          end
         end
       end
 
@@ -71,8 +77,8 @@ module RailsQL
           @initial_query = initial_query
         end
 
-        def call_initial_query
-          return @initial_query.call
+        def get_initial_query
+          @initial_query
         end
 
         # Adds a FieldDefinition to the data type
