@@ -65,7 +65,7 @@ module RailsQL
       def as_json
         fields.reduce({}) do |json, (k, field)|
           json.merge(
-            k.to_sym => field.data_type.as_json
+            k.to_s => field.data_type.as_json
           )
         end
       end

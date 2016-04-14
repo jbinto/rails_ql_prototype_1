@@ -7,6 +7,7 @@ class QueriesController < ApplicationController
       ctx: ctx,
       query: params[:query]
     )
+
     render json: Oj.dump(root.as_json)
   end
 

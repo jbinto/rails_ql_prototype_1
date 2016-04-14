@@ -23,16 +23,6 @@ describe RailsQL::DataType::Base do
       end
     end
 
-    context "when data_type is nil" do
-      it "raises an error" do
-        expect{
-          data_type_klass.field(:invalid_field,
-            data_type: nil
-          )
-        }.to raise_error
-      end
-    end
-
     context "when name is reserved" do
       it "raises an error" do
         expect{
@@ -184,12 +174,12 @@ describe RailsQL::DataType::Base do
         fake_field_2: field
       )
       allow(field).to receive_message_chain(:data_type, :as_json).and_return(
-        hello: "world"
+        "hello" => "world"
       )
 
       expect(data_type.as_json).to eq(
-        fake_field_1: {hello: "world"},
-        fake_field_2: {hello: "world"}
+        "fake_field_1" => {"hello" => "world"},
+        "fake_field_2" => {"hello" => "world"}
       )
     end
   end
