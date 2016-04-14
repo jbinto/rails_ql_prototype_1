@@ -4,15 +4,11 @@ module RailsQL
       attr_reader :data_type, :args, :description, :nullable, :query, :resolve
 
       def initialize(name, opts)
-        if opts[:data_type].blank?
-          raise "Invalid field #{name}: requires a :data_type option"
-        end
-
         @name = name
         @read_permissions = []
 
         defaults = {
-          data_type: opts[:data_type] || name,
+          data_type: "#{name.to_s.singularize.classify}DataType",
           description: nil,
           args: [],
           nullable: true,
