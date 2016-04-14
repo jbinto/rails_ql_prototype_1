@@ -100,6 +100,46 @@ describe RailsQL::DataType::Field do
   end
 
   describe "#has_read_permission?" do
+    it "instance_evals the lambdas of FieldDefinition#read_permissions in the context of the parent_data_type" do
+      self_in_lambda = nil
+      permission = ->{
+        self_in_lambda = self
+      }
+      expect(field_definition).to receive(:read_permissions).and_return [
+        permission
+      ]
+      field.has_read_permission?
+      expect(self_in_lambda).to eq parent_data_type
+    end
+
+    context "when any permission evaluates to true" do
+      it "returns true" do
+          expect(field_definition).to receive(:read_permissions).and_return [
+            ->{false},
+            ->{true},
+            ->{false}
+          ]
+          expect(field.has_read_permission?).to eq true
+      end
+    end
+
+    context "when all permissions evaluates to false" do
+      it "returns false" do
+          expect(field_definition).to receive(:read_permissions).and_return [
+            ->{false}
+          ]
+          expect(field.has_read_permission?).to eq false
+      end
+    end
+
+    context "when there are no permissions" do
+      it "returns false" do
+          expect(field_definition).to receive(:read_permissions).and_return [
+          ]
+          expect(field.has_read_permission?).to eq false
+      end
+    end
+
   end
 
 end
