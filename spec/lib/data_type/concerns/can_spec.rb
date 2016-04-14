@@ -58,9 +58,20 @@ describe RailsQL::DataType::Can do
     describe "#unauthorized_query_fields" do
       context "when there are unauthorized fields" do
         it "returns a hash in the form {field_name => true}" do
-          allow(data_type).to receive(:fields).and_return stuff: field
+          field_2 = instance_double RailsQL::DataType::Field
+          allow(data_type).to receive(:fields).and_return(
+            stuff: field,
+            other_stuff: field_2
+          )
 
-          expect(field).to receive(:has_read_permission?).and_return false
+          allow(field).to receive(:has_read_permission?).and_return false
+          allow(field_2).to receive(:has_read_permission?).and_return true
+          data_type.fields.each do |k, field|
+            allow(field).to(
+              receive_message_chain(:data_type, :unauthorized_query_fields)
+                .and_return HashWithIndifferentAccess.new
+            )
+          end
 
           unauthorized_query_fields = data_type.unauthorized_query_fields
 
@@ -72,8 +83,8 @@ describe RailsQL::DataType::Can do
         it "returns a nested hash" do
           allow(data_type).to receive(:fields).and_return stuff: field
 
-          expect(field).to receive(:has_read_permission?).and_return true
-          expect(field).to(
+          allow(field).to receive(:has_read_permission?).and_return true
+          allow(field).to(
             receive_message_chain(:data_type, :unauthorized_query_fields)
               .and_return(things: true)
           )

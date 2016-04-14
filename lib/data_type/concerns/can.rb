@@ -13,14 +13,18 @@ module RailsQL
       def unauthorized_query_fields
         fields.reduce(HashWithIndifferentAccess.new) do |h, (k, field)|
           h[k] = true unless field.has_read_permission?
-          h[k] ||= field.data_type.unauthorized_query_fields
+          if field.data_type.unauthorized_query_fields.present?
+            h[k] ||= field.data_type.unauthorized_query_fields
+          end
           h
         end
       end
 
       def authorize_query!
         unless unauthorized_query_fields.empty?
-          raise UnauthorizedQuery, unauthorized_query_fields
+          raise(UnauthorizedQuery,
+            "unauthorized fields: #{unauthorized_query_fields.to_json}"
+          )
         end
       end
 

@@ -1,3 +1,11 @@
+PATH
+  remote: ../
+  specs:
+    rails_ql (0.1.0)
+      activemodel (>= 4.0.0)
+      activesupport (>= 4.0.0)
+      graphql-parser
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -55,6 +63,7 @@ GEM
     ffi (1.9.10)
     globalid (0.3.6)
       activesupport (>= 4.1.0)
+    graphql-parser (0.0.2)
     i18n (0.7.0)
     jbuilder (2.4.1)
       activesupport (>= 3.0.0, < 5.1)
@@ -81,6 +90,7 @@ GEM
     nio4r (1.2.1)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
+    oj (2.15.0)
     puma (3.4.0)
     rack (2.0.0.alpha)
       json
@@ -162,8 +172,10 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   listen (~> 3.0.5)
+  oj
   puma
   rails (>= 5.0.0.beta3, < 5.1)
+  rails_ql!
   sass-rails (~> 5.0)
   spring
   spring-watcher-listen (~> 2.0.0)

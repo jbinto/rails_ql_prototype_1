@@ -1,6 +1,9 @@
+require "active_model/callbacks"
+
 module RailsQL
   module DataType
     module Primative
+
       def self.data_type_names
         Primative.constants.select do |c|
           Primative.const_get(c).is_a? Class
@@ -8,15 +11,29 @@ module RailsQL
       end
 
       class Base
+        attr_reader :args, :ctx, :fields, :query
         attr_accessor :model
+
         alias_method :as_json, :model
 
-        def build_query!
-          nil
+        extend ActiveModel::Callbacks
+        define_model_callbacks :resolve
+
+        include Can
+
+        def initialize(opts)
+          @fields = {}
+          @args = {}
         end
 
-        def query
-          nil
+        def root?
+          false
+        end
+
+        def build_query!
+        end
+
+        def resolve_child_data_types!
         end
 
         def self.data_type?

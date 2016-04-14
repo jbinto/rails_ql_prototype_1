@@ -8,6 +8,7 @@ describe RailsQL::DataType::FieldDefinition do
         described_class.new("fake_field_name", {})
       }.to raise_error
     end
+
     it "does not raise an error if the :data_type is defined" do
       expect{
         described_class.new("fake_field_name", {data_type: double})
