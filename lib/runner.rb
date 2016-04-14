@@ -1,18 +1,3 @@
-  # class Runner
-  #   def initialize(schema_klass)
-  #     @schema_klass = schema_klass
-  #   end
-
-  #   def parse!(graphql)
-  #     visitor = RailsQLVisitor.new(@schema_klass.new(parent: nil))
-  #     ast = GraphQL::Parser.parse(graphql)
-  #     visitor.accept(ast)
-  #     # idea: multi-thread for multiple roots
-  #     runner = RailsQL::Runner.new(visitor.root)
-  #     runner.execute!
-  #   end
-  # end
-
 module RailsQL
   class Runner
     def initialize(schema)
