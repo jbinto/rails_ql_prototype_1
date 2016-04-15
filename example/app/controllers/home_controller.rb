@@ -7,14 +7,10 @@ class HomeController < ApplicationController
         my {
           user {
             email
-            to_dos {
+            to_dos(status: "complete") {
               content
               status
             }
-          }
-          to_dos {
-            content
-            status
           }
         }
       }

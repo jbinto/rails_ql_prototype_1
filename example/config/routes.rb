@@ -5,5 +5,7 @@ Rails.application.routes.draw do
   # mount ActionCable.server => '/cable'
 
   resource :query, only: [:create]
+
   root to: "home#index"
+  match "*path", to: "home#index", via: :all
 end
