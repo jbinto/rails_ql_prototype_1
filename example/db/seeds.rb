@@ -14,6 +14,7 @@ User.create! admin: false, email: "average_joe@test.com"
 
 i = 0
 User.all.each do |user|
+  user.users_friends.create! friend: (User.all - [user]).first
   5.times do
     user.to_dos.create!(
       content: "lorem ipsum and stuff #{i += 1}",

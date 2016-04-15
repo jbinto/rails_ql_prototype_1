@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160414182448) do
+ActiveRecord::Schema.define(version: 20160415153458) do
 
   create_table "to_dos", force: :cascade do |t|
     t.integer "user_id"
@@ -25,5 +25,13 @@ ActiveRecord::Schema.define(version: 20160414182448) do
     t.boolean "admin"
     t.string  "email"
   end
+
+  create_table "users_friends", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "friend_id"
+  end
+
+  add_index "users_friends", ["friend_id"], name: "index_users_friends_on_friend_id"
+  add_index "users_friends", ["user_id"], name: "index_users_friends_on_user_id"
 
 end
