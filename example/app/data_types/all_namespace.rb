@@ -3,7 +3,7 @@ class AllNamespace < RailsQL::DataType::Base
   has_many(:users,
     args: [:admin],
     resolve: ->(args, child_query) {
-      child_query.where(args)
+      child_query.where(args).to_a
     }
   )
 
@@ -17,7 +17,7 @@ class AllNamespace < RailsQL::DataType::Base
   has_many(:to_dos,
     args: [:status],
     resolve: ->(args, child_query) {
-      child_query.where(args).to_a.first
+      child_query.where(args).to_a
     }
   )
 
