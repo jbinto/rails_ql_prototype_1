@@ -56,16 +56,17 @@ module RailsQL
         run_callbacks :resolve do
           # Top to bottom recursion
           fields.each do |k, field|
-            field.data_type.model = field.resolved_model
-            field.data_type.resolve_child_data_types!
+            field.dup_data_type_for! self
+            field.data_types.each &:resolve_child_data_types!
           end
         end
       end
 
       def as_json
         fields.reduce({}) do |json, (k, field)|
+          child_json = field.data_types.as_json
           json.merge(
-            k.to_s => field.data_type.as_json
+            k.to_s => field.singular? ? child_json.first : child_json
           )
         end
       end
@@ -120,5 +121,3 @@ module RailsQL
 
   end
 end
-
-

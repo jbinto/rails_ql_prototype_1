@@ -12,6 +12,7 @@ module RailsQL
           description: nil,
           args: [],
           nullable: true,
+          # singular: true,
           resolve: nil,
           query: nil
         }
