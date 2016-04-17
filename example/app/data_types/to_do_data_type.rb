@@ -3,7 +3,7 @@ class ToDoDataType < RailsQL::DataType::Base
 
   has_one(:user,
     query: ->(args, child_query) {
-      query.eager_load(:to_dos).merge(child_query.where(args))
+      query.eager_load(:users).merge(child_query.where(args))
     },
     resolve: ->(args, child_query) {model.user}
   )
