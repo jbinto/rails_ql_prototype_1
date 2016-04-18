@@ -22,6 +22,21 @@ describe RailsQL::DataType::Field do
     )
   end
 
+  describe "#resolve_models_and_dup_data_type!" do
+    it "clones the data_type #resolve_models.count times" do
+      expect(data_type).to receive(:deep_dup).exactly(3).times.and_return(
+        data_type
+      )
+      allow(data_type).to receive(:model=)
+      expect(field).to receive(:resolved_models).and_return [1, 2, 3]
+
+      field.resolve_models_and_dup_data_type!
+
+      expect(field.data_types.count).to eq 3
+      expect(field.data_types.first.class).to eq data_type.class
+    end
+  end
+
   describe "#appended_parent_query" do
     context "when field_definition has a query defined" do
       it "instance execs the field_definition#query in the context of the parent data type" do
@@ -50,7 +65,11 @@ describe RailsQL::DataType::Field do
     end
   end
 
-  describe "#resolved_model" do
+  describe "#resolved_models" do
+    before :each do
+      field.parent_data_type = parent_data_type
+    end
+
     context "when field_definition has a resolve defined" do
       it "instance execs the field_definition#resolve in the context of the parent data type" do
         args = double
@@ -65,7 +84,7 @@ describe RailsQL::DataType::Field do
           field_definition_resolve
         )
 
-        expect(field.resolved_model).to eq [args, query, parent_data_type]
+        expect(field.resolved_models).to eq [args, query, parent_data_type]
       end
     end
 
@@ -75,11 +94,11 @@ describe RailsQL::DataType::Field do
           # don't use stubs because base does not define field_name
           parent_data_type.instance_eval do
             def field_name
-              "parent_model"
+              ["parent_model"]
             end
           end
           expect(field_definition).to receive(:resolve).and_return nil
-          expect(field.resolved_model).to eq "parent_model"
+          expect(field.resolved_models).to eq ["parent_model"]
         end
       end
 
@@ -87,14 +106,26 @@ describe RailsQL::DataType::Field do
         it "returns parent_data_type.model#field_name" do
           parent_model = double
           expect(parent_model).to receive(:field_name).and_return(
-            "parent_model"
+            ["parent_model"]
           )
           expect(parent_data_type).to receive(:model).and_return(
             parent_model
           )
           expect(field_definition).to receive(:resolve).and_return nil
-          expect(field.resolved_model).to eq "parent_model"
+          expect(field.resolved_models).to eq ["parent_model"]
         end
+      end
+    end
+
+    context "when the resolution method does not return an array" do
+      it "wraps the result in an array" do
+        parent_data_type.instance_eval do
+          def field_name
+            "parent_model"
+          end
+        end
+        expect(field_definition).to receive(:resolve).and_return nil
+        expect(field.resolved_models).to eq ["parent_model"]
       end
     end
   end

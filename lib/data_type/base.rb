@@ -56,7 +56,8 @@ module RailsQL
         run_callbacks :resolve do
           # Top to bottom recursion
           fields.each do |k, field|
-            field.dup_data_type_for! self
+            field.parent_data_type = self
+            field.resolve_models_and_dup_data_type!
             field.data_types.each &:resolve_child_data_types!
           end
         end
