@@ -49,24 +49,25 @@ describe RailsQL::DataType::Base do
     end
   end
 
-  shared_examples "data_type_association" do |method_sym|
+  shared_examples "data_type_association" do |method_sym, singular|
     it "aliases .field" do
       field_def_klass = class_double("RailsQL::DataType::FieldDefinition")
         .as_stubbed_const
       field_definition = double
       expect(field_def_klass).to receive(:new).with(:cows_and_stuff,
-        data_type: :reasons
+        data_type: :reasons,
+        singular: singular
       ).and_return field_definition
       data_type_klass.send method_sym, :cows_and_stuff, data_type: :reasons
     end
   end
 
   describe ".has_many" do
-    it_behaves_like "data_type_association", :has_many
+    it_behaves_like "data_type_association", :has_many, false
   end
 
   describe ".has_one" do
-    it_behaves_like "data_type_association", :has_one
+    it_behaves_like "data_type_association", :has_one, true
   end
 
   describe "#build_query!" do

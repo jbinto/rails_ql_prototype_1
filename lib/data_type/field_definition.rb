@@ -12,7 +12,7 @@ module RailsQL
           description: nil,
           args: [],
           nullable: true,
-          # singular: true,
+          singular: true,
           resolve: nil,
           query: nil
         }
@@ -23,6 +23,14 @@ module RailsQL
 
       def add_read_permission(lambda)
         @read_permissions << lambda
+      end
+
+      def nullable?
+        @nullable
+      end
+
+      def singular?
+        @singular
       end
 
       def read_permissions

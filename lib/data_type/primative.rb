@@ -11,8 +11,8 @@ module RailsQL
       end
 
       class Base
-        attr_reader :args, :ctx, :fields, :query
-        attr_accessor :model
+        attr_reader :args, :ctx, :query
+        attr_accessor :model, :fields
 
         alias_method :as_json, :model
 

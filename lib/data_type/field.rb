@@ -1,19 +1,22 @@
 module RailsQL
   module DataType
     class Field
-      attr_reader :prototype_data_type, :data_types
+      attr_reader :prototype_data_type, :data_types, :field_definition
       attr_accessor :parent_data_type
 
       def initialize(opts)
         @field_definition = opts[:field_definition]
         @parent_data_type = opts[:parent_data_type]
         @prototype_data_type = opts[:data_type]
-        @singular = opts[:singular]
         @name = opts[:name]
       end
 
+      def nullable?
+        @field_definition.nullable?
+      end
+
       def singular?
-        @singular
+        @field_definition.singular?
       end
 
       def appended_parent_query
@@ -39,7 +42,7 @@ module RailsQL
           elsif @parent_data_type.respond_to? @name
             @parent_data_type.send @name
           else
-            @parent_data_type.model.send @name
+            @parent_data_type.model.try @name
           end
         return models.is_a?(Array) ? models : [models]
       end
@@ -47,6 +50,7 @@ module RailsQL
       def resolve_models_and_dup_data_type!
         @data_types = resolved_models.map do |model|
           data_type = prototype_data_type.deep_dup
+          data_type.fields = prototype_data_type.fields.deep_dup
           data_type.model = model
           data_type
         end

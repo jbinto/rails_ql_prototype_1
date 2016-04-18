@@ -9,8 +9,8 @@ module RailsQL
       include Can
 
       PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
-      attr_reader :args, :ctx, :fields, :query
-      attr_accessor :model
+      attr_reader :args, :ctx, :query
+      attr_accessor :model, :fields
 
       def initialize(opts={})
         opts = {
@@ -99,7 +99,7 @@ module RailsQL
         # Options:
         # * <tt>:data_type</tt> - Specifies the primtive data_type
         # * <tt>:description</tt> - A description of the field
-        # * <tt>:args</tt> - Arguments to be passed to the resolve method
+        # * <tt>:accessible_args</tt> - Arguments that can be passed to the resolve method
         # * <tt>:nullable</tt> -
         def field(name, opts={})
           instance_methods = (
@@ -114,8 +114,13 @@ module RailsQL
           @field_definitions[name] = FieldDefinition.new name.to_sym, opts
         end
 
-        alias_method :has_many, :field
-        alias_method :has_one, :field
+        def has_one(name, opts={})
+          field name, opts.merge(singular: true)
+        end
+
+        def has_many(name, opts={})
+          field name, opts.merge(singular: false)
+        end
 
       end
     end
