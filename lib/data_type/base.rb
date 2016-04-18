@@ -46,7 +46,7 @@ module RailsQL
       def build_query!
         # Bottom to top recursion
         fields.each do |k, field|
-          field.data_type.build_query!
+          field.prototype_data_type.build_query!
           @query = field.appended_parent_query
         end
         return query

@@ -68,7 +68,7 @@ describe RailsQL::DataType::Can do
           allow(field_2).to receive(:has_read_permission?).and_return true
           data_type.fields.each do |k, field|
             allow(field).to(
-              receive_message_chain(:data_type, :unauthorized_query_fields)
+              receive_message_chain(:data_types, :first, :unauthorized_query_fields)
                 .and_return HashWithIndifferentAccess.new
             )
           end
@@ -85,7 +85,7 @@ describe RailsQL::DataType::Can do
 
           allow(field).to receive(:has_read_permission?).and_return true
           allow(field).to(
-            receive_message_chain(:data_type, :unauthorized_query_fields)
+            receive_message_chain(:data_types, :first, :unauthorized_query_fields)
               .and_return(things: true)
           )
 

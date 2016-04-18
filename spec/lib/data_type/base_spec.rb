@@ -85,7 +85,7 @@ describe RailsQL::DataType::Base do
         data_type = data_type_klass.new
         allow(data_type).to receive(:fields).and_return(fake_field: field)
         child_data_type = instance_double described_class
-        allow(field).to receive(:data_type).and_return(
+        allow(field).to receive(:prototype_data_type).and_return(
           child_data_type
         )
         allow(child_data_type).to receive :build_query!
@@ -109,7 +109,7 @@ describe RailsQL::DataType::Base do
 
         fields.each do |k, field|
           allow(field).to(
-            receive_message_chain(:data_type, :build_query!).and_return(
+            receive_message_chain(:prototype_data_type, :build_query!).and_return(
               double
             )
           )
@@ -123,43 +123,40 @@ describe RailsQL::DataType::Base do
   end
 
   describe "#resolve_child_data_types!" do
-    it "calls Field#resolved_model for each field and saves the model to the field" do
-      field = instance_double RailsQL::DataType::Field
-      data_type = data_type_klass.new
-      allow(data_type).to receive(:fields).and_return(fake_field: field)
+    before :each do
+      @data_type = data_type_klass.new
+      @field = instance_double RailsQL::DataType::Field
+      allow(@data_type).to receive(:fields).and_return(fake_field: @field)
+      allow(@field).to receive :parent_data_type=
+      allow(@field).to receive :resolve_models_and_dup_data_type!
+      allow(@field).to receive(:data_types).and_return []
+    end
 
-      field_data_type = instance_double described_class
-      allow(field_data_type).to receive :resolve_child_data_types!
-      allow(field).to receive(:data_type).and_return field_data_type
+    it "assigns self as the parent_data_type to each field" do
+      expect(@field).to receive(:parent_data_type=).with @data_type
 
-      expect(field).to receive(:resolved_model).and_return :the_pope
-      expect(field.data_type).to receive(:model=).with(
-        :the_pope
-      )
-      data_type.resolve_child_data_types!
+      @data_type.resolve_child_data_types!
+    end
+
+    it "calls Field#resolve_models_and_dup_data_type! for each field" do
+      expect(@field).to receive :resolve_models_and_dup_data_type!
+      @data_type.resolve_child_data_types!
     end
 
     it "calls resolve_child_data_types! on child_data_types" do
-      field = instance_double RailsQL::DataType::Field
-      data_type = data_type_klass.new
-      allow(data_type).to receive(:fields).and_return(fake_field: field)
       field_data_type = instance_double described_class
-      allow(field).to receive(:data_type).and_return field_data_type
-      allow(field).to receive :resolved_model
-      allow(field.data_type).to receive :model=
+      allow(@field).to receive(:data_types).and_return [field_data_type]
 
       expect(field_data_type).to receive :resolve_child_data_types!
 
 
-      data_type.resolve_child_data_types!
+      @data_type.resolve_child_data_types!
     end
 
     it "runs resolve callbacks" do
-      data_type = data_type_klass.new
-
       expect do |b|
         data_type_klass.before_resolve &b
-        data_type.resolve_child_data_types!
+        @data_type.resolve_child_data_types!
       end.to yield_control
     end
 
@@ -168,13 +165,14 @@ describe RailsQL::DataType::Base do
   describe "#as_json" do
     it "reduces over #as_json on fields" do
       field = instance_double RailsQL::DataType::Field
+      allow(field).to receive(:singular?).and_return true
       data_type = data_type_klass.new
       allow(data_type).to receive(:fields).and_return(
         fake_field_1: field,
         fake_field_2: field
       )
-      allow(field).to receive_message_chain(:data_type, :as_json).and_return(
-        "hello" => "world"
+      allow(field).to receive_message_chain(:data_types, :as_json).and_return(
+        ["hello" => "world"]
       )
 
       expect(data_type.as_json).to eq(
