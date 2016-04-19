@@ -13,12 +13,27 @@ module RailsQL
         validate_args!
       end
 
+      def data_type_args
+        @data_type_args ||= @prototype_data_type.args.symbolize_keys
+      end
+
       def validate_args!
-        arg_whitelist = @field_definition.arg_whitelist.map &:to_sym
-        arg_keys = @prototype_data_type.args.symbolize_keys.keys
+        required_args = @field_definition.required_args.symbolize_keys
+        arg_whitelist = @field_definition.arg_whitelist
+        arg_keys = data_type_args.keys
 
         unless (forbidden_args = arg_keys - arg_whitelist).empty?
           raise ForbiddenArg, "Invalid args: #{forbidden_args} for #{@name}"
+        end
+
+        unless (missing_required_args = required_args.keys - arg_keys).empty?
+          raise(
+            ArgMissing,
+            "Missing required args: #{missing_required_args} for #{@name}"
+          )
+        end
+
+        data_type_args.each do |k, v|
         end
       end
 
@@ -33,7 +48,7 @@ module RailsQL
       def appended_parent_query
         if @field_definition.query.present?
           @parent_data_type.instance_exec(
-            @prototype_data_type.args,
+            data_type_args,
             @prototype_data_type.query,
             &@field_definition.query
           )

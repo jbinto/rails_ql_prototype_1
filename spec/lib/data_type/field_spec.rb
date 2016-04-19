@@ -4,6 +4,8 @@ describe RailsQL::DataType::Field do
   let(:field_definition) do
     definition = instance_double RailsQL::DataType::FieldDefinition
     allow(definition).to receive(:arg_whitelist).and_return []
+    allow(definition).to receive(:required_args).and_return({})
+    allow(definition).to receive(:optional_args).and_return({})
     definition
   end
 
@@ -28,18 +30,43 @@ describe RailsQL::DataType::Field do
 
   describe "#validate_args!" do
     before :each do
-      expect(data_type).to receive(:args).and_return('id' => 3)
+      allow(data_type).to receive(:args).and_return('id' => 3)
+      allow(field_definition).to receive(:arg_whitelist).and_return [:id, :stuff]
+      allow(field_definition).to receive(:required_args).and_return(
+        id: "IntValue"
+      )
+      allow(field_definition).to receive(:optional_args).and_return(
+        stuff: "StringValue"
+      )
     end
 
     context "when the data_type#arg keys are included in the FieldDefinition#arg_whitelist" do
-      it "does not raise an error" do
-        expect(field_definition).to receive(:arg_whitelist).and_return [:id]
-        expect{field.validate_args!}.to_not raise_error
+      context "when the data_type#arg keys match the FieldDefinition#required_args keys" do
+        context "when the data_type#arg values match the type specified in the field_definition" do
+          it "does not raise an error" do
+            expect{field.validate_args!}.to_not raise_error
+          end
+        end
+
+        context "when the data_type#arg values do not match the type specified in the field_definition" do
+          it "raises an error" do
+            expect(data_type).to receive(:args).and_return('id' => '3')
+            expect{field.validate_args!}.to raise_error
+          end
+        end
+      end
+
+      context "when the data_type#arg keys do not match the FieldDefinition#required_args keys" do
+        it "raises an error" do
+            expect(data_type).to receive(:args).and_return('stuff' => '3')
+            expect{field.validate_args!}.to raise_error
+          end
       end
     end
 
     context "when the data_type#arg keys are not included in the FieldDefinition#arg_whitelist" do
       it "raises an error" do
+        expect(data_type).to receive(:args).and_return('cow' => 3)
         expect{field.validate_args!}.to raise_error
       end
     end
