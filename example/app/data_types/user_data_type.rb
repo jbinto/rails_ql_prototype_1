@@ -2,7 +2,7 @@ class UserDataType < RailsQL::DataType::Base
   initial_query ->{User.all}
 
   has_many(:to_dos,
-    args: [:status],
+    arg_whitelist: [:status],
     query: ->(args, child_query) {
       query.eager_load(:to_dos).merge(child_query.where(args))
     },

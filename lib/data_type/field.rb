@@ -9,6 +9,17 @@ module RailsQL
         @parent_data_type = opts[:parent_data_type]
         @prototype_data_type = opts[:data_type]
         @name = opts[:name]
+
+        validate_args!
+      end
+
+      def validate_args!
+        arg_whitelist = @field_definition.arg_whitelist.map &:to_sym
+        arg_keys = @prototype_data_type.args.symbolize_keys.keys
+
+        unless (forbidden_args = arg_keys - arg_whitelist).empty?
+          raise ForbiddenArg, "Invalid args: #{forbidden_args} for #{@name}"
+        end
       end
 
       def nullable?

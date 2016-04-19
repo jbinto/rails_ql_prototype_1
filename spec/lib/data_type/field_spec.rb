@@ -2,11 +2,15 @@ require "spec_helper"
 
 describe RailsQL::DataType::Field do
   let(:field_definition) do
-    instance_double RailsQL::DataType::FieldDefinition
+    definition = instance_double RailsQL::DataType::FieldDefinition
+    allow(definition).to receive(:arg_whitelist).and_return []
+    definition
   end
 
   let(:data_type) do
-    instance_double RailsQL::DataType::Base
+    data_type = instance_double RailsQL::DataType::Base
+    allow(data_type).to receive(:args).and_return({})
+    data_type
   end
 
   let(:parent_data_type) do
@@ -20,6 +24,25 @@ describe RailsQL::DataType::Field do
       parent_data_type: parent_data_type,
       name: "field_name"
     )
+  end
+
+  describe "#validate_args!" do
+    before :each do
+      expect(data_type).to receive(:args).and_return('id' => 3)
+    end
+
+    context "when the data_type#arg keys are included in the FieldDefinition#arg_whitelist" do
+      it "does not raise an error" do
+        expect(field_definition).to receive(:arg_whitelist).and_return [:id]
+        expect{field.validate_args!}.to_not raise_error
+      end
+    end
+
+    context "when the data_type#arg keys are not included in the FieldDefinition#arg_whitelist" do
+      it "raises an error" do
+        expect{field.validate_args!}.to raise_error
+      end
+    end
   end
 
   describe "#resolve_models_and_dup_data_type!" do
@@ -68,7 +91,7 @@ describe RailsQL::DataType::Field do
   describe "#appended_parent_query" do
     context "when field_definition has a query defined" do
       it "instance execs the field_definition#query in the context of the parent data type" do
-        args = double
+        args = {}
         query = double
 
         expect(data_type).to receive(:args).and_return args

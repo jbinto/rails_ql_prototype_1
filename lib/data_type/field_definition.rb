@@ -1,7 +1,7 @@
 module RailsQL
   module DataType
     class FieldDefinition
-      attr_reader :data_type, :args, :description, :nullable, :query, :resolve,
+      attr_reader :data_type, :arg_whitelist, :description, :nullable, :query, :resolve,
         :child_ctx
 
       def initialize(name, opts)
@@ -11,7 +11,7 @@ module RailsQL
         defaults = {
           data_type: "#{name.to_s.singularize.classify}DataType",
           description: nil,
-          args: [],
+          arg_whitelist: [],
           nullable: true,
           singular: true,
           child_ctx: {},

@@ -1,28 +1,28 @@
 class AllNamespace < RailsQL::DataType::Base
 
   has_many(:users,
-    args: [:admin],
+    arg_whitlist: [:admin],
     resolve: ->(args, child_query) {
       child_query.where(args).to_a
     }
   )
 
   has_many(:user,
-    args: [:id, :email],
+    arg_whitlist: [:id, :email],
     resolve: ->(args, child_query) {
       child_query.where(args).first!
     }
   )
 
   has_many(:to_dos,
-    args: [:status],
+    arg_whitlist: [:status],
     resolve: ->(args, child_query) {
       child_query.where(args).to_a
     }
   )
 
   has_one(:to_do,
-    args: [:id],
+    arg_whitlist: [:id],
     resolve: ->(args, child_query) {
       child_query.where(args).first!
     }
