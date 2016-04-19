@@ -1,7 +1,8 @@
 module RailsQL
   module DataType
     class FieldDefinition
-      attr_reader :data_type, :args, :description, :nullable, :query, :resolve
+      attr_reader :data_type, :args, :description, :nullable, :query, :resolve,
+        :child_ctx
 
       def initialize(name, opts)
         @name = name
@@ -13,6 +14,7 @@ module RailsQL
           args: [],
           nullable: true,
           singular: true,
+          child_ctx: {},
           resolve: nil,
           query: nil
         }

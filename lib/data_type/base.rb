@@ -32,7 +32,7 @@ module RailsQL
 
         @fields.freeze
         @args = HashWithIndifferentAccess.new(opts[:args]).freeze
-        @ctx = HashWithIndifferentAccess.new(opts[:ctx]).freeze
+        @ctx = HashWithIndifferentAccess.new opts[:ctx]
         @root = opts[:root]
         if self.class.get_initial_query.present?
           @query = instance_exec &self.class.get_initial_query

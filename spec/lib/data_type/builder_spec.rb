@@ -33,10 +33,11 @@ describe RailsQL::DataType::Builder do
   describe "#add_child_builder" do
     before :each do
       allow(@builder).to receive(:data_type_klass).and_return @mocked_data_type
-      field_definition = instance_double RailsQL::DataType::FieldDefinition
-      allow(field_definition).to receive(:data_type).and_return "mocked_data_type"
+      @field_definition = instance_double RailsQL::DataType::FieldDefinition
+      allow(@field_definition).to receive(:data_type).and_return "mocked_data_type"
+      allow(@field_definition).to receive(:child_ctx).and_return({})
       allow(@mocked_data_type).to receive(:field_definitions).and_return(
-        'child_data_type' => field_definition
+        'child_data_type' => @field_definition
       )
     end
     context "when association field exists" do
@@ -48,6 +49,18 @@ describe RailsQL::DataType::Builder do
         expect(child_builder.data_type_klass).to eq MockedDataType
         expect(child_builder.instance_variable_get("@root")).to eq false
         expect(child_builder.instance_variable_get("@ctx")).to eq({})
+      end
+
+      it "merges child_ctx with ctx and passes down to children" do
+        expect(@field_definition).to receive(:child_ctx).and_return(
+          child_ctx_key: "child_ctx_value"
+        )
+
+        child_builder = @builder.add_child_builder "child_data_type"
+
+        expect(child_builder.instance_variable_get(:@ctx)[:child_ctx_key]).to eq(
+          "child_ctx_value"
+        )
       end
 
       it "is idempotent" do

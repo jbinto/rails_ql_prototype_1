@@ -32,10 +32,11 @@ module RailsQL
         raise "Invalid field #{name}" if field_definitions[name] == nil
         return @child_builders[name] if @child_builders[name].present?
 
-        data_type_klass = field_definitions[name].data_type
+        field_definition = field_definitions[name]
+        data_type_klass = field_definition.data_type
         child_builder = Builder.new(
           data_type_klass: data_type_klass,
-          ctx: @ctx,
+          ctx: @ctx.merge(field_definition.child_ctx),
           root: false
         )
         @child_builders[name] = child_builder
