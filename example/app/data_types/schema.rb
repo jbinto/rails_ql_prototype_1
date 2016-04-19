@@ -2,12 +2,12 @@ class Schema < RailsQL::DataType::Base
 
   has_one(:my,
     data_type: "MyNamespace",
-    resolve: ->(args, child_query) {nil}
+    resolve: ->(args, child_query) {:my}
   )
 
   has_one(:all,
     data_type: "AllNamespace",
-    resolve: ->(args, child_query) {nil}
+    resolve: ->(args, child_query) {:all}
   )
 
   can :read, fields: [:my]

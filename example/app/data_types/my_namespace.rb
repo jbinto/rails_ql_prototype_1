@@ -2,8 +2,6 @@ class MyNamespace < RailsQL::DataType::Base
 
   has_one(:user,
     resolve: ->(args, child_query) {
-      p 'hi'
-      p child_query.where(id: ctx[:current_user].id).first
       child_query.where(id: ctx[:current_user].id).first
     }
   )

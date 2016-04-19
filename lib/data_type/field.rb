@@ -44,11 +44,24 @@ module RailsQL
           else
             @parent_data_type.model.try @name
           end
+
+        return [] if models.nil?
         return models.is_a?(Array) ? models : [models]
       end
 
       def resolve_models_and_dup_data_type!
-        @data_types = resolved_models.map do |model|
+        models = resolved_models
+
+        if models.blank?
+          if nullable? || !singular?
+            return @data_types = []
+          else
+            raise NullField, @name
+          end
+
+        end
+
+        @data_types = models.map do |model|
           data_type = prototype_data_type.deep_dup
           data_type.fields = prototype_data_type.fields.deep_dup
           data_type.model = model
