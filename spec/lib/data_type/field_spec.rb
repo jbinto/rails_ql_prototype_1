@@ -38,6 +38,9 @@ describe RailsQL::DataType::Field do
       allow(field_definition).to receive(:optional_args).and_return(
         stuff: "StringValue"
       )
+      allow(field_definition).to receive(:arg_value_matches_type?).and_return(
+        true
+      )
     end
 
     context "when the data_type#arg keys are included in the FieldDefinition#arg_whitelist" do
@@ -51,6 +54,11 @@ describe RailsQL::DataType::Field do
         context "when the data_type#arg values do not match the type specified in the field_definition" do
           it "raises an error" do
             expect(data_type).to receive(:args).and_return('id' => '3')
+            expect(field_definition).to receive(:arg_value_matches_type?).with(
+              :id, '3'
+            ).and_return(
+              false
+            )
             expect{field.validate_args!}.to raise_error
           end
         end

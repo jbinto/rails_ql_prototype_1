@@ -34,6 +34,12 @@ module RailsQL
         end
 
         data_type_args.each do |k, v|
+          unless @field_definition.arg_value_matches_type? k, v
+            raise(
+              ArgTypeError,
+              "#{k} => #{v} (#{v.class}) is not a valid input value for #{@name}"
+            )
+          end
         end
       end
 

@@ -4,15 +4,17 @@ module RailsQL
       attr_reader :data_type, :required_args, :optional_args, :description,
         :nullable, :query, :resolve, :child_ctx
 
-      ARG_TYPES = %w(
-        IntValue
-        FloatValue
-        StringValue
-        BooleanValue
-        EnumValue
-        ListValueConst
-        ObjectValueConst
-      )
+      ARG_TYPE_TO_RUBY_CLASSES = {
+        "IntValue" => [Fixnum],
+        "FloatValue" => [Float],
+        "StringValue" => [String],
+        "BooleanValue" => [TrueClass, FalseClass],
+        "EnumValue" => [String, Fixnum],
+        "ListValue" => [Array],
+        "ObjectValue" => [Hash]
+      }
+
+      ARG_TYPES = ARG_TYPE_TO_RUBY_CLASSES.keys
 
       def initialize(name, opts)
         @name = name
@@ -45,6 +47,12 @@ module RailsQL
             "#{invalid_arg_types} on #{@name} are not valid arg types"
           )
         end
+      end
+
+      def arg_value_matches_type?(k, v)
+        arg_type = optional_args.merge(required_args).symbolize_keys[k.to_sym]
+
+        ARG_TYPE_TO_RUBY_CLASSES[arg_type].include? v.class
       end
 
       def arg_whitelist
