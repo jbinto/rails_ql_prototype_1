@@ -1,5 +1,4 @@
 require 'graphql/parser'
-puts GraphQL::Visitor
 
 module RailsQL
   class Visitor < GraphQL::Visitor
