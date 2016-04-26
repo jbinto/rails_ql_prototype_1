@@ -11,18 +11,30 @@ describe RailsQL::DataType::Can do
   describe ".can" do
     context "when :read" do
       context "with :when option" do
-        it "calls field_definition#add_read_permission with :when option" do
-          permission = ->{true}
-          field_definition = data_type_klass.field_definitions[:example_field]
+        context "when the field definition for that field exists" do
+          it "calls field_definition#add_read_permission with :when option" do
+            permission = ->{true}
+            field_definition = data_type_klass.field_definitions[:example_field]
 
-          expect(field_definition).to(
-            receive(:add_read_permission).with permission
-          )
+            expect(field_definition).to(
+              receive(:add_read_permission).with permission
+            )
 
-          data_type_klass.can(:read,
-            fields: [:example_field],
-            when: permission
-          )
+            data_type_klass.can(:read,
+              fields: [:example_field],
+              when: permission
+            )
+          end
+        end
+      end
+
+      context "when the field definition for that field does not exist" do
+        it "raises error" do
+          expect{
+            data_type_klass.can(:read,
+              fields: [:fake_field]
+            )
+          }.to raise_error
         end
       end
 

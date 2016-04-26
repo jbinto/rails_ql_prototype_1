@@ -24,6 +24,18 @@ describe RailsQL::Visitor do
       visit_graphql "query { hero(id: 3) }"
     end
 
+    it "calls for each subscription" do
+      visit_graphql "subscription heroQuery{ hero }"
+    end
+
+    it "calls for each mutation" do
+      visit_graphql "mutation updateHero{ hero }"
+    end
+
+    it "calls for each __type" do
+      visit_graphql "__type{ name: \"hero\" }"
+    end
+
   # it "parses queries with fragments into data types" do
   #   visit_graphql "
   #     query { hero { ...heroFriendsFragment } }

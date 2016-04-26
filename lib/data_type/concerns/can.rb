@@ -39,7 +39,11 @@ module RailsQL
 
           opts[:fields].each do |field|
             if operations.include? :read
-              field_definitions[field].add_read_permission opts[:when]
+              if field_definitions[field]
+                field_definitions[field].add_read_permission opts[:when]
+              else
+                raise FieldMissing, "The field #{field} was not defined on #{self}"
+              end
             end
             # if permissions.include? :write
             #   field_definitions[field].add_write_permission permission
