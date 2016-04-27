@@ -29,7 +29,9 @@ module RailsQL
 
       # idempotent
       def add_child_builder(name)
-        raise "Invalid field #{name}" if field_definitions[name] == nil
+        if field_definitions[name] == nil
+          raise "Invalid field #{name} on #{@data_type_klass}"
+        end
         return @child_builders[name] if @child_builders[name].present?
 
         field_definition = field_definitions[name]
