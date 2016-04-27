@@ -7,7 +7,12 @@ module RailsQL
         if opts[:data_type_klass].blank?
           raise "requires a :data_type_klass option"
         end
-        @data_type_klass = KlassFactory.find opts[:data_type_klass]
+        begin
+          @data_type_klass = KlassFactory.find opts[:data_type_klass]
+        rescue Exception => e
+          message = "In #{opts[:data_type_klass]}: #{e.message}"
+          raise e, message, e.backtrace
+        end
         @child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]
