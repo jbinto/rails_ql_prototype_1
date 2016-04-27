@@ -73,7 +73,9 @@ module RailsQL
       end
 
       class << self
-        attr_reader :field_definitions
+        def field_definitions
+          @field_definitions ||= HashWithIndifferentAccess.new
+        end
 
         def data_type?
           true
@@ -110,8 +112,7 @@ module RailsQL
             raise "Reserved word: Can not use #{name} as a field name"
           end
 
-          @field_definitions ||= HashWithIndifferentAccess.new
-          @field_definitions[name] = FieldDefinition.new name.to_sym, opts
+          field_definitions[name] = FieldDefinition.new name.to_sym, opts
         end
 
         def has_one(name, opts={})
