@@ -53,14 +53,13 @@ describe RailsQL::DataType::Builder do
 
       it "merges child_ctx with ctx and passes down to children" do
         expect(@field_definition).to receive(:child_ctx).and_return(
-          child_ctx_key: "child_ctx_value"
+          mega_lasers: :very_yes
         )
 
         child_builder = @builder.add_child_builder "child_data_type"
+        ctx = child_builder.instance_variable_get(:@ctx)
 
-        expect(child_builder.instance_variable_get(:@ctx)[:child_ctx_key]).to eq(
-          "child_ctx_value"
-        )
+        expect(ctx[:mega_lasers]).to eq :very_yes
       end
 
       it "is idempotent" do
