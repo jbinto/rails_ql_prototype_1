@@ -7,12 +7,7 @@ module RailsQL
         if opts[:data_type_klass].blank?
           raise "requires a :data_type_klass option"
         end
-        begin
-          @data_type_klass = KlassFactory.find opts[:data_type_klass]
-        rescue Exception => e
-          message = "In #{opts[:data_type_klass]}: #{e.message}"
-          raise e, message, e.backtrace
-        end
+        @data_type_klass = KlassFactory.find opts[:data_type_klass]
         @child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]
@@ -41,11 +36,18 @@ module RailsQL
 
         field_definition = field_definitions[name]
         data_type_klass = field_definition.data_type
-        child_builder = Builder.new(
-          data_type_klass: data_type_klass,
-          ctx: @ctx.merge(field_definition.child_ctx),
-          root: false
-        )
+
+        begin
+          child_builder = Builder.new(
+            data_type_klass: data_type_klass,
+            ctx: @ctx.merge(field_definition.child_ctx),
+            root: false
+          )
+        rescue Exception => e
+          message = "In #{opts[:data_type_klass]}: #{e.message}"
+          raise e, message, e.backtrace
+        end
+
         @child_builders[name] = child_builder
         return child_builder
       end
