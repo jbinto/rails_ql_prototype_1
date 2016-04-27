@@ -44,7 +44,7 @@ module RailsQL
             root: false
           )
         rescue Exception => e
-          message = "In #{opts[:data_type_klass]}: #{e.message}"
+          message = "In #{@data_type_klass}: #{e.message}"
           raise e, message, e.backtrace
         end
 
