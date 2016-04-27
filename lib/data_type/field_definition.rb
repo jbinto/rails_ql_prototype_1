@@ -20,6 +20,15 @@ module RailsQL
         @name = name
         @read_permissions = []
 
+        opts.slice(:required_args, :optional_args, :child_ctx).each do |k, v|
+          next if v.blank? || v.respond_to?(:keys)
+          raise ":#{k} must be a Hash"
+        end
+        opts.slice(:resolve, :query).each do |k, v|
+          next if v.blank? || v.respond_to?(:call)
+          raise ":#{k} must be either nil or a Lambda"
+        end
+
         defaults = {
           data_type: "#{name.to_s.singularize.classify}DataType",
           description: nil,
@@ -31,7 +40,8 @@ module RailsQL
           resolve: nil,
           query: nil
         }
-        defaults.merge(opts.slice *defaults.keys).each do |key, value|
+        opts = defaults.merge(opts.slice *defaults.keys)
+        opts.each do |key, value|
           instance_variable_set "@#{key}", value
         end
 

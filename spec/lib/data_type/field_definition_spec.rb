@@ -1,6 +1,24 @@
 require "spec_helper"
 
 describe RailsQL::DataType::FieldDefinition do
+  describe "#initialize" do
+
+    {
+      required_args: :hash,
+      optional_args: :hash,
+      child_ctx: :hash,
+      resolve: :lambda,
+      query: :lambda
+    }.each do |opt_name, type|
+      it "throws an error if :#{opt_name} is not a #{type}" do
+        expect{
+          described_class.new "things", data_type: double, opt_name => "dinosaur"
+        }.to raise_error
+      end
+    end
+
+  end
+
   describe "#read_permission_lambda" do
     context "when permissions have been added" do
       it "returns the list of read permissions" do
