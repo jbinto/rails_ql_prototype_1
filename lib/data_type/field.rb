@@ -1,7 +1,7 @@
 module RailsQL
   module DataType
     class Field
-      attr_reader :prototype_data_type, :data_types, :field_definition, :name
+      attr_reader :prototype_data_type, :data_types, :field_definition
       attr_accessor :parent_data_type
 
       def initialize(opts)

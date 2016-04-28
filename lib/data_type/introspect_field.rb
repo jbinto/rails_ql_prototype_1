@@ -4,6 +4,11 @@
 module RailsQL
   module DataType
     class IntrospectField < Base
+      description(
+        "Object and Interface types are described by a list of Fields, each of " +
+        " which has a name, potentially a list of arguments, and a return type."
+      )
+
       field :name, data_type: :String
       field :args, data_type: :JSON, resolve: ->(args, child_query){field_args}
       field :description, data_type: :String

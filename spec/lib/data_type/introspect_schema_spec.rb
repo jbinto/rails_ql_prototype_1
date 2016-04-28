@@ -5,7 +5,6 @@ describe RailsQL::DataType::IntrospectSchema do
 
   let(:schema) do
     klass = Class.new RailsQL::DataType::Base
-    klass.description "Schema"
     klass.field :user_count, data_type: :Integer
     klass.field :user, data_type: :user_data_type
     klass
