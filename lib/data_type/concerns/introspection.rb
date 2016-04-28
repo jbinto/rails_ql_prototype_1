@@ -10,11 +10,16 @@ module RailsQL
           required_args: {name: "StringValue"},
           data_type: "RailsQL::DataType::IntrospectType",
           singular: true,
-          query: nil,
           resolve: ->(args, child_query){__type_resolve(args)}
         )
 
-        can :read, fields: [:__type]
+        field(:__schema,
+          data_type: "RailsQL::DataType::IntrospectSchema",
+          singular: true,
+          resolve: ->(args, child_query){self.class}
+        )
+
+        can :read, fields: [:__type, :__schema]
       end
 
       def __type_resolve(args)

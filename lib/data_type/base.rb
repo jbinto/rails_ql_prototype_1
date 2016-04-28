@@ -75,6 +75,10 @@ module RailsQL
       class << self
         attr_reader :field_definitions
 
+        def description(description=nil)
+          @description ||= description
+        end
+
         def data_type?
           true
         end
