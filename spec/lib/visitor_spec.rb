@@ -25,15 +25,15 @@ describe RailsQL::Visitor do
     end
 
     it "calls for each subscription" do
+      pending
+      fail
       visit_graphql "subscription heroQuery{ hero }"
     end
 
     it "calls for each mutation" do
+      pending
+      fail
       visit_graphql "mutation updateHero{ hero }"
-    end
-
-    it "calls for each __type" do
-      visit_graphql "__type{ name: \"hero\" }"
     end
 
   # it "parses queries with fragments into data types" do

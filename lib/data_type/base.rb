@@ -97,7 +97,7 @@ module RailsQL
         #   end
         #
         # Options:
-        # * <tt>:data_type</tt> - Specifies the primtive data_type
+        # * <tt>:data_type</tt> - Specifies the data_type
         # * <tt>:description</tt> - A description of the field
         # * <tt>:accessible_args</tt> - Arguments that can be passed to the resolve method
         # * <tt>:nullable</tt> -
@@ -106,7 +106,7 @@ module RailsQL
             RailsQL::DataType::Base.instance_methods - Object.instance_methods
           )
 
-          if (instance_methods).include? name
+          if (instance_methods).include?(name) && opts[:resolve].nil?
             raise "Reserved word: Can not use #{name} as a field name"
           end
 
