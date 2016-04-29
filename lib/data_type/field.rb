@@ -52,30 +52,19 @@ module RailsQL
       end
 
       def appended_parent_query
-        if @field_definition.query.present?
-          @parent_data_type.instance_exec(
-            data_type_args,
-            @prototype_data_type.query,
-            &@field_definition.query
-          )
-        else
-          @parent_data_type.query
-        end
+        @field_definition.append_to_query(
+          parent_data_type: @parent_data_type,
+          args: data_type_args,
+          child_query: @prototype_data_type.query
+        )
       end
 
       def resolved_models
-        models =
-          if @field_definition.resolve.present?
-            @parent_data_type.instance_exec(
-              @prototype_data_type.args,
-              @prototype_data_type.query,
-              &@field_definition.resolve
-            )
-          elsif @parent_data_type.respond_to? @name
-            @parent_data_type.send @name
-          else
-            @parent_data_type.model.try @name
-          end
+        models = @field_definition.resolve(
+          parent_data_type: @parent_data_type,
+          args: data_type_args,
+          child_query: @prototype_data_type.query
+        )
 
         return [] if models.nil?
         return models.is_a?(Array) ? models : [models]

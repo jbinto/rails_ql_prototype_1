@@ -124,30 +124,23 @@ describe RailsQL::DataType::Field do
   end
 
   describe "#appended_parent_query" do
-    context "when field_definition has a query defined" do
-      it "instance execs the field_definition#query in the context of the parent data type" do
-        args = {}
-        query = double
-
-        expect(data_type).to receive(:args).and_return args
-        expect(data_type).to receive(:query).and_return query
-        field_definition_query = ->(actual_args, actual_query){
-          [actual_args, actual_query, self]
-        }
-        expect(field_definition).to receive(:query).twice.and_return(
-          field_definition_query
-        )
-
-        expect(field.appended_parent_query).to eq [args, query, parent_data_type]
-      end
+    before :each do
+      field.parent_data_type = parent_data_type
     end
 
-    context "when field_definition does not have a query defined" do
-      it "returns the parent_query untouched" do
-        expect(parent_data_type).to receive(:query).and_return "parent_query"
-        expect(field_definition).to receive(:query).and_return nil
-        expect(field.appended_parent_query).to eq "parent_query"
-      end
+    it "calls field_definition#append_to_query" do
+      args = double
+      query = double
+
+      expect(field).to receive(:data_type_args).and_return args
+      expect(data_type).to receive(:query).and_return query
+      expect(field_definition).to receive(:append_to_query).with(
+        parent_data_type: data_type,
+        args: args,
+        child_query: query
+      )
+
+      field.appended_parent_query
     end
   end
 
@@ -156,61 +149,29 @@ describe RailsQL::DataType::Field do
       field.parent_data_type = parent_data_type
     end
 
-    context "when field_definition has a resolve defined" do
-      it "instance execs the field_definition#resolve in the context of the parent data type" do
-        args = double
-        query = double
+    it "calls field_definition#resolve" do
+      args = double
+      query = double
 
-        expect(data_type).to receive(:args).and_return args
-        expect(data_type).to receive(:query).and_return query
-        field_definition_resolve = ->(actual_args, actual_query){
-          [actual_args, actual_query, self]
-        }
-        expect(field_definition).to receive(:resolve).twice.and_return(
-          field_definition_resolve
-        )
+      expect(field).to receive(:data_type_args).and_return args
+      expect(data_type).to receive(:query).and_return query
+      expect(field_definition).to receive(:resolve).with(
+        parent_data_type: data_type,
+        args: args,
+        child_query: query
+      )
 
-        expect(field.resolved_models).to eq [args, query, parent_data_type]
-      end
-    end
-
-    context "when field_definition does not have a resolve defined" do
-      context "when parent_data_type has the field name defined as a method" do
-        it "returns parent_data_type#field_name" do
-          # don't use stubs because base does not define field_name
-          parent_data_type.instance_eval do
-            def field_name
-              ["parent_model"]
-            end
-          end
-          expect(field_definition).to receive(:resolve).and_return nil
-          expect(field.resolved_models).to eq ["parent_model"]
-        end
-      end
-
-      context "when parent_data_type does not have the field name defined as a method" do
-        it "returns parent_data_type.model#field_name" do
-          parent_model = double
-          expect(parent_model).to receive(:field_name).and_return(
-            ["parent_model"]
-          )
-          expect(parent_data_type).to receive(:model).and_return(
-            parent_model
-          )
-          expect(field_definition).to receive(:resolve).and_return nil
-          expect(field.resolved_models).to eq ["parent_model"]
-        end
-      end
+      field.resolved_models
     end
 
     context "when the resolution method does not return an array" do
       it "wraps the result in an array" do
-        parent_data_type.instance_eval do
-          def field_name
-            "parent_model"
-          end
-        end
-        expect(field_definition).to receive(:resolve).and_return nil
+        args = double
+        query = double
+        allow(field).to receive(:data_type_args).and_return args
+        allow(data_type).to receive(:query).and_return query
+        allow(field_definition).to receive(:resolve).and_return "parent_model"
+
         expect(field.resolved_models).to eq ["parent_model"]
       end
     end

@@ -28,9 +28,6 @@ module RailsQL
         end.values.first.try :data_type_klass
       end
 
-      module ClassMethods
-      end
-
     end
   end
 end
