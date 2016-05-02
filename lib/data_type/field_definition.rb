@@ -2,7 +2,7 @@ module RailsQL
   module DataType
     class FieldDefinition
       attr_reader :data_type, :required_args, :optional_args, :description,
-        :nullable, :query, :resolve, :child_ctx
+        :nullable, :child_ctx, :name
 
       ARG_TYPE_TO_RUBY_CLASSES = {
         "IntValue" => [Fixnum],
@@ -48,6 +48,10 @@ module RailsQL
         validate_arg_types!
       end
 
+      def data_type_klass
+        KlassFactory.find @data_type
+      end
+
       def validate_arg_types!
         arg_types = optional_args.merge(required_args).values
 
@@ -89,6 +93,31 @@ module RailsQL
         end
       end
 
+      def append_to_query(parent_data_type:, args: {}, child_query: nil)
+        if @query.present?
+          parent_data_type.instance_exec(
+            args,
+            child_query,
+            &@query
+          )
+        else
+          parent_data_type.query
+        end
+      end
+
+      def resolve(parent_data_type:, args: {}, child_query: nil)
+        if @resolve.present?
+          parent_data_type.instance_exec(
+            args,
+            child_query,
+            &@resolve
+          )
+        elsif parent_data_type.respond_to? @name
+          parent_data_type.send @name
+        else
+          parent_data_type.model.try @name
+        end
+      end
     end
   end
 end

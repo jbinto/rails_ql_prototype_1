@@ -39,21 +39,49 @@ module RailsQL
         def self.data_type?
           true
         end
+
+        def self.field_definitions
+          {}
+        end
       end
 
       class String < Base
+        def self.description
+          "The `String` scalar type represents textual data, represented as " +
+          "UTF-8 character sequences. The String type is most often used by " +
+          "GraphQL to represent free-form human-readable text."
+        end
       end
 
       class Integer < Base
+        def self.description
+          "The `Int` scalar type represents non-fractional signed whole numeric " +
+          "values. Int can represent values between -(2^53 - 1) and 2^53 - 1 " +
+          "since represented in JSON as double-precision floating point numbers " +
+          "specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point)."
+        end
       end
 
       class Float < Base
+        def self.description
+          "The `Float` scalar type represents signed double-precision " +
+          "fractional values as specified by " +
+          "[IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
+        end
       end
 
       class Boolean < Base
+        def self.description
+          "The `Boolean` scalar type represents `true` or `false`."
+        end
       end
 
       class JSON < Base
+        def self.description
+          "The `JSON` scalar type represents object data which does not " +
+          "neccessarily need a data type of its own. It can contain any other " +
+          "scalar."
+        end
       end
 
     end
