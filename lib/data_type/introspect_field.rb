@@ -12,6 +12,7 @@ module RailsQL
       field :name, data_type: :String
       field :args, data_type: :JSON, resolve: ->(args, child_query){field_args}
       field :description, data_type: :String
+      field :deprecated, data_type: :Boolean
       field(:type,
         data_type: "RailsQL::DataType::IntrospectType",
         singular: true,
@@ -29,7 +30,7 @@ module RailsQL
         ).stringify_keys
       end
 
-      can :read, fields: [:name, :args, :type, :description]
+      can :read, fields: [:name, :args, :type, :description, :deprecated]
     end
   end
 end

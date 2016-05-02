@@ -21,7 +21,12 @@ module RailsQL
         data_type: "RailsQL::DataType::IntrospectField",
         singular: false,
         resolve: ->(args, child_query){
-          model.field_definitions.values
+          definitions = model.field_definitions
+          p args
+          if args[:include_deprecated] == false
+            definitions = definitions.select {|n, d| p n; p d.deprecated; !d.deprecated}
+          end
+          definitions.values
         }
       )
 

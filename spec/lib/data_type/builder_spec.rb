@@ -71,9 +71,7 @@ describe RailsQL::DataType::Builder do
 
     context "when association field does not exist" do
       it "raises invalid field error" do
-        expect{@builder.add_child_builder 'invalid_data_type'}.to raise_error(
-          "Invalid field invalid_data_type"
-        )
+        expect{@builder.add_child_builder 'invalid_data_type'}.to raise_error
       end
     end
   end

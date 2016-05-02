@@ -50,6 +50,10 @@ module RailsQL
       visit_arg_value node.value.to_s
     end
 
+    def visit_boolean_value(node)
+      visit_arg_value node.value
+    end
+
     def visit_arg_value(value)
       current_data_type_builder.add_arg @current_name, value
     end

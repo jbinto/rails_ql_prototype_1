@@ -2,7 +2,7 @@ module RailsQL
   module DataType
     class FieldDefinition
       attr_reader :data_type, :required_args, :optional_args, :description,
-        :nullable, :child_ctx, :name
+        :nullable, :child_ctx, :name, :deprecated
 
       ARG_TYPE_TO_RUBY_CLASSES = {
         "IntValue" => [Fixnum],
@@ -35,6 +35,7 @@ module RailsQL
           required_args: {},
           optional_args: {},
           nullable: true,
+          deprecated: false,
           singular: true,
           child_ctx: {},
           resolve: nil,

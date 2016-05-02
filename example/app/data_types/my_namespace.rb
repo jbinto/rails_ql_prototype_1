@@ -15,6 +15,7 @@ class MyNamespace < RailsQL::DataType::Base
 
   has_one(:to_do,
     required_args: {id: "IntValue"},
+    deprecated: true,
     resolve: ->(args, child_query) {
       child_query.where(args.merge user_id: ctx[:current_user].id).first
     }
