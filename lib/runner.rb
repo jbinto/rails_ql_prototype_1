@@ -20,8 +20,6 @@ module RailsQL
       )
 
       visitor = RailsQL::Visitor.new root_builder
-      p "query"
-      p opts[:query]
       ast = GraphQL::Parser.parse opts[:query]
       visitor.accept ast
 

@@ -135,7 +135,7 @@ describe RailsQL::DataType::Field do
       expect(field).to receive(:data_type_args).and_return args
       expect(data_type).to receive(:query).and_return query
       expect(field_definition).to receive(:append_to_query).with(
-        parent_data_type: data_type,
+        parent_data_type: parent_data_type,
         args: args,
         child_query: query
       )
@@ -156,7 +156,7 @@ describe RailsQL::DataType::Field do
       expect(field).to receive(:data_type_args).and_return args
       expect(data_type).to receive(:query).and_return query
       expect(field_definition).to receive(:resolve).with(
-        parent_data_type: data_type,
+        parent_data_type: parent_data_type,
         args: args,
         child_query: query
       )

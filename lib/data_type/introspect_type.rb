@@ -22,7 +22,6 @@ module RailsQL
         singular: false,
         resolve: ->(args, child_query){
           definitions = model.field_definitions
-          p args
           if args[:include_deprecated] == false
             definitions = definitions.select {|n, d| p n; p d.deprecated; !d.deprecated}
           end
