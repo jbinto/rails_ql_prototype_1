@@ -112,8 +112,15 @@ module RailsQL
             RailsQL::DataType::Base.instance_methods - Object.instance_methods
           )
 
+          if name.to_s.include? "__"
+            raise(
+              InvalidField, "#{name} is an invalid field; names must not be " +
+              "prefixed with double underscores"
+            )
+          end
+
           if (instance_methods).include?(name) && opts[:resolve].nil?
-            raise "Reserved word: Can not use #{name} as a field name"
+            raise InvalidField, "Reserved word: Can not use #{name} as a field name"
           end
 
           field_definitions[name] = FieldDefinition.new name.to_sym, opts

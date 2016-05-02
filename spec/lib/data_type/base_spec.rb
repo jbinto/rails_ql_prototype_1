@@ -23,6 +23,16 @@ describe RailsQL::DataType::Base do
       end
     end
 
+    context "when name is prefixed by double underscores" do
+      it "raises an error" do
+        expect{
+          data_type_klass.field(:__field_name,
+            data_type: double
+          )
+        }.to raise_error
+      end
+    end
+
     context "when name is reserved" do
       it "raises an error" do
         expect{
