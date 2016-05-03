@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
   s.version = "0.1.0"
   s.summary = "GraphQL for Rails"
   s.authors = ["Rob Gilson", "Stuart Garvagh"]
-  s.add_runtime_dependency "graphql-parser" #,
+  # s.add_runtime_dependency "graphql-parser" #,
     # [">= 0.0.2"]
   s.add_runtime_dependency "activesupport",
     [">= 4.0.0"]

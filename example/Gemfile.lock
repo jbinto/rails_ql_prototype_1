@@ -1,10 +1,16 @@
+GIT
+  remote: https://github.com/D1plo1d/graphql-parser.git
+  revision: 6c502f446b866d2959e9c9bba29f67011ebe677a
+  branch: feature/subscriptions
+  specs:
+    graphql-parser (0.0.2)
+
 PATH
   remote: ../
   specs:
     rails_ql (0.1.0)
       activemodel (>= 4.0.0)
       activesupport (>= 4.0.0)
-      graphql-parser
 
 GEM
   remote: https://rubygems.org/
@@ -63,7 +69,6 @@ GEM
     ffi (1.9.10)
     globalid (0.3.6)
       activesupport (>= 4.1.0)
-    graphql-parser (0.0.2)
     i18n (0.7.0)
     jbuilder (2.4.1)
       activesupport (>= 3.0.0, < 5.1)
@@ -169,6 +174,7 @@ PLATFORMS
 DEPENDENCIES
   byebug
   coffee-rails (~> 4.1.0)
+  graphql-parser!
   jbuilder (~> 2.0)
   jquery-rails
   listen (~> 3.0.5)

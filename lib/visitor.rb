@@ -1,7 +1,7 @@
 require 'graphql/parser'
 
 module RailsQL
-  class Visitor < GraphQL::Visitor
+  class Visitor < GraphQL::Parser::Visitor
 
     attr_accessor :node_stack
     attr_reader :data_type_builder_stack

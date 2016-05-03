@@ -31,6 +31,8 @@ gem 'jbuilder', '~> 2.0'
 # gem 'capistrano-rails', group: :development
 gem "oj"
 gem "rails_ql", :path => "../"
+gem "graphql-parser", git: "https://github.com/D1plo1d/graphql-parser.git", branch: "feature/subscriptions"
+
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
