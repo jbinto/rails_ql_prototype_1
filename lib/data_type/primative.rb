@@ -43,6 +43,10 @@ module RailsQL
         def self.field_definitions
           {}
         end
+
+        def self.name
+          to_s.gsub("RailsQL::DataType::Primative::", "")
+        end
       end
 
       class String < Base

@@ -73,6 +73,10 @@ module RailsQL
       end
 
       class << self
+        def name
+          to_s
+        end
+
         def field_definitions
           @field_definitions ||= HashWithIndifferentAccess.new
         end
