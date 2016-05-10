@@ -35,6 +35,14 @@ describe RailsQL::DataType::Introspection::Schema do
     RailsQL::Runner.new described_class
   }
 
+  describe "[:queryType]" do
+    it "returns the root __Type" do
+      results = runner.execute!(query: "query {queryType {name}}").as_json
+
+      expect(results["queryType"]["name"]).to eq "Root"
+    end
+  end
+
   describe "[:types]" do
     it "returns an array of [__Type]" do
       results = runner.execute!(query: "query {types {name}}").as_json
@@ -47,4 +55,5 @@ describe RailsQL::DataType::Introspection::Schema do
       ].sort
     end
   end
+
 end

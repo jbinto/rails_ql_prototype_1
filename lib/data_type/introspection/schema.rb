@@ -5,6 +5,13 @@ module RailsQL
   module DataType
     module Introspection
       class Schema < Base
+        field(:queryType,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          resolve: ->(args, child_query){
+            model
+          }
+        )
+
         has_many(:types,
           data_type: "RailsQL::DataType::Introspection::Type",
           resolve: ->(args, child_query){
@@ -27,7 +34,7 @@ module RailsQL
             .uniq
         end
 
-        can :read, fields: [:types]
+        can :read, fields: [:queryType, :types]
       end
     end
   end
