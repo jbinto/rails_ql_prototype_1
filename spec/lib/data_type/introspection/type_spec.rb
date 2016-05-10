@@ -22,7 +22,7 @@ describe RailsQL::DataType::Introspection::Type do
   end
 
   let(:runner) {
-    runner = RailsQL::Runner.new described_class
+    RailsQL::Runner.new described_class
   }
 
   describe "[:name]" do
@@ -43,14 +43,10 @@ describe RailsQL::DataType::Introspection::Type do
 
   describe "[:fields]" do
     it "resolves to a list of field definitions" do
-      field_definition = described_class.field_definitions[:fields]
+      results = runner.execute!(query: "query {fields {name}}").as_json
 
-      results = field_definition.resolve(
-        parent_data_type: described_class.new
-      )
-
-      expect(results.length).to eq 2
-      expect(results.map &:name).to eq [
+      expect(results["fields"].length).to eq 2
+      expect(results["fields"].map {|h| h["name"]}).to eq [
         :pandas_are_awesome,
         :because_reasons
       ]

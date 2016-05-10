@@ -1,17 +1,30 @@
 module RailsQL
   module DataType
     class FieldDefinition
-      attr_reader :data_type, :required_args, :optional_args, :description,
-        :nullable, :child_ctx, :name, :deprecated
+      attr_writer(
+        :deprecated
+      )
+      attr_accessor(
+        :deprecation_reason
+      )
+      attr_reader(
+        :data_type,
+        :required_args,
+        :optional_args,
+        :description,
+        :nullable,
+        :child_ctx,
+        :name,
+      )
 
       ARG_TYPE_TO_RUBY_CLASSES = {
-        "IntValue" => [Fixnum],
-        "FloatValue" => [Float],
-        "StringValue" => [String],
-        "BooleanValue" => [TrueClass, FalseClass],
-        "EnumValue" => [String, Fixnum],
-        "ListValue" => [Array],
-        "ObjectValue" => [Hash]
+        IntValue: [Fixnum],
+        FloatValue: [Float],
+        StringValue: [String],
+        BooleanValue: [TrueClass, FalseClass],
+        EnumValue: [String, Fixnum],
+        ListValue: [Array],
+        ObjectValue: [Hash]
       }
 
       ARG_TYPES = ARG_TYPE_TO_RUBY_CLASSES.keys
@@ -53,25 +66,32 @@ module RailsQL
         KlassFactory.find @data_type
       end
 
-      def validate_arg_types!
-        arg_types = optional_args.merge(required_args).values
+      def args
+        args = optional_args.merge required_args
+        args
+          .map{|k, v| [k.to_sym, v.to_sym]}
+          .to_h
+      end
 
-        unless (invalid_arg_types = arg_types - ARG_TYPES).empty?
-          raise(
-            InvalidArgType,
-            "#{invalid_arg_types} on #{@name} are not valid arg types"
-          )
-        end
+      def deprecated?
+        @deprecated
+      end
+
+      def validate_arg_types!
+        invalid_arg_types = args.values - ARG_TYPES
+        return if invalid_arg_types.empty?
+        raise(
+          InvalidArgType,
+          "#{invalid_arg_types} on #{@name} are not valid arg types"
+        )
       end
 
       def arg_value_matches_type?(k, v)
-        arg_type = optional_args.merge(required_args).symbolize_keys[k.to_sym]
-
-        ARG_TYPE_TO_RUBY_CLASSES[arg_type].include? v.class
+        ARG_TYPE_TO_RUBY_CLASSES[args[k.to_sym]].include? v.class
       end
 
       def arg_whitelist
-        optional_args.merge(required_args).keys.map &:to_sym
+        args.keys
       end
 
       def add_read_permission(lambda)

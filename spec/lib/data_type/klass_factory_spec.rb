@@ -2,27 +2,30 @@ require "spec_helper"
 
 describe RailsQL::DataType::KlassFactory do
   describe ".find" do
-    context "when klass is a constant" do
+    context "when klass is a non-primative data type" do
       it "returns the klass untouched" do
-        klass = described_class.find RailsQL::DataType::Base
+        data_type = class_double RailsQL::DataType::Base
+        allow(data_type).to receive(:data_type?).and_return true
 
-        expect(klass).to eq RailsQL::DataType::Base
+        results = described_class.find data_type
+
+        expect(results).to eq data_type
       end
     end
 
     context "when klass is a string or symbol" do
       it "returns a constantized klass" do
-        klass = described_class.find "RailsQL::DataType::Base"
+        results = described_class.find "RailsQL::DataType::Base"
 
-        expect(klass).to eq RailsQL::DataType::Base
+        expect(results).to eq RailsQL::DataType::Base
       end
     end
 
     context "when klass is a primative type without a namespace" do
       it "returnsa primative klass with a namespace" do
-        klass = described_class.find "String"
+        results = described_class.find "String"
 
-        expect(klass).to eq RailsQL::DataType::Primative::String
+        expect(results).to eq RailsQL::DataType::Primative::String
       end
     end
   end

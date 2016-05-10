@@ -19,12 +19,12 @@ module RailsQL
         field :description, data_type: :String
         field(:fields,
           optional_args: {include_deprecated: "BooleanValue"},
-          data_type: "RailsQL::DataType::IntrospectField",
+          data_type: "RailsQL::DataType::Introspection::Field",
           singular: false,
           resolve: ->(args, child_query){
             definitions = model.field_definitions
             if args[:include_deprecated] == false
-              definitions = definitions.select {|n, d| p n; p d.deprecated; !d.deprecated}
+              definitions = definitions.reject &:deprecated?
             end
             definitions.values
           }

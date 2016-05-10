@@ -11,37 +11,43 @@ module RailsQL
         )
 
         field :name, data_type: :String
-        field :args, data_type: :JSON, resolve: ->(args, child_query){field_args}
         field :description, data_type: :String
-        field :deprecated, data_type: :Boolean
+        field(:args,
+          data_type: "RailsQL::DataType::Introspection::InputValue"
+        )
         field(:type,
-          data_type: "RailsQL::DataType::IntrospectType",
+          data_type: "RailsQL::DataType::Introspection::Type",
           singular: true,
           query: nil,
-          resolve: ->(args, child_query){model.data_type_klass}
+          resolve: ->(args, child_query){
+            model.data_type_klass
+          }
+        )
+        field(:isDeprecated,
+          data_type: :Boolean,
+          resolve: ->(args, child_query) {
+            model.deprecated?
+          }
+        )
+        field(:deprecationReason,
+          data_type: :String,
+          resolve: ->(args, child_query) {
+            model.deprecation_reason
+          }
         )
 
         def self.name
           "__Field"
         end
 
-        def name
-          # ap model
-          # klass_name = field_definition.data_type_klass.to_s.gsub(
-          #   "RailsQL::DataType::", ""
-          # ).gsub(
-          #   "Primative::", ""
-          # )
-          model.name.to_s
-        end
-
-        def field_args
-          model.required_args.merge(
-            model.optional_args
-          ).stringify_keys
-        end
-
-        can :read, fields: [:name, :args, :type, :description, :deprecated]
+        can :read, fields: [
+          :name,
+          :description,
+          :args,
+          :type,
+          :isDeprecated,
+          :deprecationReason
+        ]
       end
     end
   end
