@@ -119,13 +119,18 @@ module RailsQL
           name = name.to_s
           if name.include?("__") && name != "__type" && name != "__schema"
             raise(
-              InvalidField, "#{name} is an invalid field; names must not be " +
+              RailsQL::InvalidField,
+              "#{name} is an invalid field; names must not be " +
               "prefixed with double underscores"
             )
           end
 
           if (instance_methods).include?(name.to_sym) && opts[:resolve].nil?
-            raise InvalidField, "Reserved word: Can not use #{name} as a field name"
+            raise(
+              RailsQL::InvalidField,
+              "Reserved word: Can not use #{name} as a field name without a " +
+              ":resolve option"
+            )
           end
 
           field_definitions[name] = FieldDefinition.new name.to_sym, opts

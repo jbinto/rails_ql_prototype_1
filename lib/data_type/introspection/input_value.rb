@@ -12,20 +12,20 @@ module RailsQL
 
         field(:name,
           data_type: :String,
-          resolve: (args, child_query) {
+          resolve: ->(args, child_query) {
             model[:name]
           }
         )
         field(:description,
-          data_type: :String
-          resolve: (args, child_query) {
+          data_type: :String,
+          resolve: ->(args, child_query) {
             nil # TODO
           }
         )
         field(:type,
           data_type: "RailsQL::DataType::Introspection::Type",
           nullable: true, # For now. Should be false.
-          resolve: (args, child_query) {
+          resolve: ->(args, child_query) {
             nil # TODO
           }
         )

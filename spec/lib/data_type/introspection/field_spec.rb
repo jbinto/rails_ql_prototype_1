@@ -49,10 +49,10 @@ describe RailsQL::DataType::Introspection::Field do
   describe "[:args]" do
     it "returns an array of args" do
       results = runner.execute!(query: "query {args {name}}").as_json
-
+      ap results
       expect(results["args"].map{|h| h["name"]}).to eq [
-        :how_many_cows,
-        :allow_future_cows
+        :allow_future_cows,
+        :how_many_cows
       ]
     end
   end

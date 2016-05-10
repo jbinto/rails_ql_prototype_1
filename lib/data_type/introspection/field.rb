@@ -12,8 +12,13 @@ module RailsQL
 
         field :name, data_type: :String
         field :description, data_type: :String
-        field(:args,
-          data_type: "RailsQL::DataType::Introspection::InputValue"
+        has_many(:args,
+          data_type: "RailsQL::DataType::Introspection::InputValue",
+          resolve: ->(args, child_query){
+            model.args.map{|k, v|
+              {name: k}
+            }
+          }
         )
         field(:type,
           data_type: "RailsQL::DataType::Introspection::Type",
