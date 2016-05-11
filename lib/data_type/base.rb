@@ -73,16 +73,16 @@ module RailsQL
       end
 
       class << self
-        def name
-          to_s
+        def name(name=nil)
+          @name ||= name ? name.strip : nil
+        end
+
+        def description(description=nil)
+          @description ||= description ? description.strip : nil
         end
 
         def field_definitions
           @field_definitions ||= HashWithIndifferentAccess.new
-        end
-
-        def description(description=nil)
-          @description ||= description
         end
 
         def data_type?
