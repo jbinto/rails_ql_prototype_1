@@ -23,12 +23,17 @@ module RailsQL
           "__Schema"
         end
 
-        def self.all_type_klasses_in(klass)
-          klass.field_definitions
+        def self.all_type_klasses_in(klass, exclude = [])
+          child_klasses = klass.field_definitions
             .values
             .map(&:data_type_klass)
             .uniq
-            .map {|child_klass| [child_klass, all_type_klasses_in(child_klass)]}
+            .reject{|child_klass| exclude.include? child_klass}
+          all_known_klasses = child_klasses + exclude
+          child_klasses
+            .map {|child_klass|
+              all_type_klasses_in(child_klass, all_known_klasses)
+            }
             .concat([klass])
             .flatten
             .uniq

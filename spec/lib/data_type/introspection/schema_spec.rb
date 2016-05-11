@@ -12,6 +12,8 @@ describe RailsQL::DataType::Introspection::Schema do
     klass = Class.new RailsQL::DataType::Base
     klass.class_eval do
       field :email, data_type: :String
+      # Recursive association
+      field :friends, data_type: klass
       def self.name
         "User"
       end
