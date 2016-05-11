@@ -11,7 +11,7 @@ module RailsQL
           data_type: "RailsQL::DataType::Introspection::Type",
           singular: true,
           resolve: ->(args, child_query){
-            Introspection::__Schema.all_type_klasses_in(model)
+            Introspection::Schema.all_type_klasses_in(model)
               .select {|data_type| data_type.name == args[:name]}
               .first
           }
