@@ -74,11 +74,13 @@ module RailsQL
 
       class << self
         def name(name=nil)
-          @name ||= name ? name.strip : nil
+          @name = name.strip unless name.nil?
+          return @name || to_s
         end
 
         def description(description=nil)
-          @description ||= description ? description.strip : nil
+          @description = description.strip unless description.nil?
+          return @description
         end
 
         def field_definitions
