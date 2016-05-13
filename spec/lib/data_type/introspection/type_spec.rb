@@ -53,4 +53,49 @@ describe RailsQL::DataType::Introspection::Type do
     end
   end
 
+  # TODO: interfaces
+  describe "[:interfaces]" do
+    it "resolves to an empty array" do
+      results = runner.execute!(query: "query {interfaces {name}}").as_json
+
+      expect(results["interfaces"]).to eq []
+    end
+  end
+
+  # TODO: possibleTypes
+  describe "[:possibleTypes]" do
+    it "resolves to an empty array" do
+      results = runner.execute!(query: "query {possibleTypes {name}}").as_json
+
+      expect(results["possibleTypes"]).to eq []
+    end
+  end
+
+  # TODO: enumValues
+  describe "[:enumValues]" do
+    it "resolves to an empty array" do
+      results = runner.execute!(query: "query {enumValues {name}}").as_json
+
+      expect(results["enumValues"]).to eq []
+    end
+  end
+
+  # TODO: inputFields
+  describe "[:inputFields]" do
+    it "resolves to an empty array" do
+      results = runner.execute!(query: "query {inputFields {name}}").as_json
+
+      expect(results["inputFields"]).to eq []
+    end
+  end
+
+  # TODO:
+  describe "[:ofType]" do
+    it "resolves to nil" do
+      results = runner.execute!(query: "query {ofType {name}}").as_json
+
+      expect(results["ofType"]).to eq nil
+    end
+  end
+
 end

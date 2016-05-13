@@ -5,22 +5,28 @@ module RailsQL
   module DataType
     module Introspection
       class Type < Base
-        description(
-          "The fundamental unit of any GraphQL Schema is the type. There are many " +
-          "kinds of types in GraphQL. Depending on the kind of a type, " +
-          "certain fields describe information about that type. Scalar types " +
-          "provide no information beyond a name and description, while Enum types " +
-          "provide their values. Object and Interface types provide the fields " +
-          "they describe. Abstract types, Union and Interface, provide the Object" +
-          " types possible at runtime. List and NonNull types compose other types."
-        )
+        description <<-eos
+          The fundamental unit of any GraphQL Schema is the type. There are many
+          kinds of types in GraphQL. Depending on the kind of a type,
+          certain fields describe information about that type. Scalar types
+          provide no information beyond a name and description, while Enum types
+          provide their values. Object and Interface types provide the fields
+          they describe. Abstract types, Union and Interface, provide the Object
+          types possible at runtime. List and NonNull types compose other types.
+        eos
+
+        # field(:kind,
+        #   data_type: "RailsQL::DataType::Introspection::TypeKind",
+        #   nullable: false
+        # )
 
         field :name, data_type: :String
+
         field :description, data_type: :String
-        field(:fields,
+
+        has_many(:fields,
           optional_args: {include_deprecated: "BooleanValue"},
           data_type: "RailsQL::DataType::Introspection::Field",
-          singular: false,
           resolve: ->(args, child_query){
             definitions = model.field_definitions
             if args[:include_deprecated] == false
@@ -30,11 +36,62 @@ module RailsQL
           }
         )
 
+        # TODO: interfaces
+        has_many(:interfaces,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          resolve: ->(args, child_query) {
+            []
+          }
+        )
+
+
+        # TODO: interfaces and unions
+        has_many(:possibleTypes,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          resolve: ->(args, child_query) {
+            []
+          }
+        )
+
+        # TODO: enums
+        has_many(:enumValues,
+          data_type: "RailsQL::DataType::Introspection::EnumValue",
+          resolve: ->(args, child_query) {
+            []
+          }
+        )
+
+        # TODO: input objects
+        has_many(:inputFields,
+          data_type: "RailsQL::DataType::Introspection::InputValue",
+          resolve: ->(args, child_query) {
+            []
+          }
+        )
+
+        # TODO: non nulls and lists
+        field(:ofType,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          resolve: ->(args, child_query) {
+            nil
+          }
+        )
+
         def self.name
           "__Type"
         end
 
-        can :read, fields: [:name, :fields, :description]
+        can :read, fields: [
+          :name,
+          :fields,
+          :description,
+          :fields,
+          :interfaces,
+          :possibleTypes,
+          :enumValues,
+          :inputFields,
+          :ofType
+        ]
       end
     end
   end

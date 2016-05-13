@@ -46,7 +46,7 @@ module RailsQL
 
         # TODO: directives
         field(:directives,
-          description <<-eos,
+          description: <<-eos,
             A list of all directives supported by this server.
           eos
           data_type: "RailsQL::DataType::Introspection::Type",
