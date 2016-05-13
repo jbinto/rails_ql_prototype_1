@@ -55,6 +55,9 @@ module RailsQL
           query: nil
         }
         opts = defaults.merge(opts.slice *defaults.keys)
+        if opts[:description]
+          opts[:description] = opts[:description].gsub(/\n\s+/, "\n").strip
+        end
         opts.each do |key, value|
           instance_variable_set "@#{key}", value
         end

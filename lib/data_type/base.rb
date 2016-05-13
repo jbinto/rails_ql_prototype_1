@@ -79,7 +79,9 @@ module RailsQL
         end
 
         def description(description=nil)
-          @description = description.strip unless description.nil?
+          unless description.nil?
+            @description = description.gsub(/\n\s+/, "\n").strip
+          end
           return @description
         end
 
