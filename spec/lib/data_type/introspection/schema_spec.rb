@@ -37,14 +37,6 @@ describe RailsQL::DataType::Introspection::Schema do
     RailsQL::Runner.new described_class
   }
 
-  describe "[:queryType]" do
-    it "returns the root __Type" do
-      results = runner.execute!(query: "query {queryType {name}}").as_json
-
-      expect(results["queryType"]["name"]).to eq "Root"
-    end
-  end
-
   describe "[:types]" do
     it "returns an array of [__Type]" do
       results = runner.execute!(query: "query {types {name}}").as_json
@@ -55,6 +47,32 @@ describe RailsQL::DataType::Introspection::Schema do
         "String",
         "Integer"
       ].sort
+    end
+  end
+
+  describe "[:queryType]" do
+    it "returns the root __Type" do
+      results = runner.execute!(query: "query {queryType {name}}").as_json
+
+      expect(results["queryType"]["name"]).to eq "Root"
+    end
+  end
+
+  describe "[:mutationType]" do
+    # TODO: implement mutations
+    it "returns nil" do
+      results = runner.execute!(query: "query {mutationType {name}}").as_json
+
+      expect(results["mutationType"]).to eq nil
+    end
+  end
+
+  describe "[:directives]" do
+    # TODO: implement mutations
+    it "returns an empty array" do
+      results = runner.execute!(query: "query {directives {name}}").as_json
+
+      expect(results["directives"]).to eq []
     end
   end
 

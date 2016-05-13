@@ -5,12 +5,7 @@ module RailsQL
   module DataType
     module Introspection
       class Schema < Base
-        field(:queryType,
-          data_type: "RailsQL::DataType::Introspection::Type",
-          resolve: ->(args, child_query){
-            model
-          }
-        )
+        name "__Schema"
 
         has_many(:types,
           data_type: "RailsQL::DataType::Introspection::Type",
@@ -19,9 +14,29 @@ module RailsQL
           }
         )
 
-        def self.name
-          "__Schema"
-        end
+        field(:queryType,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          resolve: ->(args, child_query){
+            model
+          }
+        )
+
+        # TODO: mutations
+        field(:mutationType,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          resolve: ->(args, child_query){
+            nil
+          }
+        )
+
+        # TODO: directives
+        field(:directives,
+          data_type: "RailsQL::DataType::Introspection::Type",
+          singular: false,
+          resolve: ->(args, child_query){
+            []
+          }
+        )
 
         def self.all_type_klasses_in(klass, exclude = [])
           child_klasses = klass.field_definitions
@@ -39,7 +54,12 @@ module RailsQL
             .uniq
         end
 
-        can :read, fields: [:queryType, :types]
+        can :read, fields: [
+          :types,
+          :queryType,
+          :mutationType,
+          :directives
+        ]
       end
     end
   end
