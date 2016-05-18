@@ -38,8 +38,14 @@ module RailsQL
 
     def visit_field_name(node)
       name = node.value
-      next_data_type_builder = current_data_type_builder.add_child_builder name
-      @data_type_builder_stack.push next_data_type_builder
+      if @current_fragment
+        @current_fragment[:referenced_by].each do |data_type_builder|
+          data_type_builder.add_child_builder name
+        end
+      else
+        next_data_type_builder = current_data_type_builder.add_child_builder name
+        @data_type_builder_stack.push next_data_type_builder
+      end
     end
 
     def visit_int_value(node)
@@ -64,16 +70,21 @@ module RailsQL
     end
 
     def visit_fragment_definition_name(node)
+      name = node.value
+      ap name
+      # next_data_type_builder = current_data_type_builder.add_child_builder name
+      # @data_type_builder_stack.push next_data_type_builder
       @current_fragment = @fragments[node.value]
-      @current_visitors = @current_fragment[:referenced_by].map do |data_type|
-        RailsQLVisitor.new(data_type)
-      end
+      # @current_visitors = @current_fragment[:referenced_by].map do |data_type|
+      #   RailsQLVisitor.new(data_type)
+      # end
     end
 
     def end_visit_fragment_definition(node)
+      ap "ending visit: #{@current_fragment}"
       @current_fragment = nil
-      @current_visitors = nil
-      end_visit_node :fragment_definition, node
+      # @current_visitors = nil
+      # end_visit_node :fragment_definition, node
     end
 
     def method_missing(*args)

@@ -36,16 +36,16 @@ describe RailsQL::Visitor do
       visit_graphql "mutation updateHero{ hero }"
     end
 
-  # it "parses queries with fragments into data types" do
-  #   visit_graphql "
-  #     query { hero { ...heroFriendsFragment } }
-  #     fragment heroFriendsFragment on Hero { friends }
-  #   "
+  it "parses queries with fragments into data types" do
+    hero_builder = double
+    allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+    expect(hero_builder).to receive(:add_child_builder).with 'name'
 
-  #   children = visitor.schema.children
-
-  #   expect(children[:hero].children[:friends].class).to eq HeroType
-  # end
+    visit_graphql "
+      query { hero { ...heroFieldsFragment } }
+      fragment heroFieldsFragment on Hero { name }
+    "
+  end
   end
 end
 
