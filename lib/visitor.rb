@@ -21,6 +21,7 @@ module RailsQL
     end
 
     def end_visit_field(node)
+      @inner_data_type = nil
       node_stack.pop
       data_type_builder_stack.pop
       end_visit_node :field, node
@@ -40,11 +41,12 @@ module RailsQL
       name = node.value
       if @current_fragment
         @current_fragment[:referenced_by].each do |data_type_builder|
-          data_type_builder.add_child_builder name
+          @inner_data_type = data_type_builder.add_child_builder name
         end
       else
-        next_data_type_builder = current_data_type_builder.add_child_builder name
-        @data_type_builder_stack.push next_data_type_builder
+        @data_type_builder_stack.push(
+          current_data_type_builder.add_child_builder(name)
+        )
       end
     end
 
@@ -67,7 +69,11 @@ module RailsQL
     def visit_fragment_spread_name(node)
       fragment = (@fragments[node.value] ||= {referenced_by: []})
       if @current_fragment
-        fragment[:referenced_by] += @current_fragment[:referenced_by]
+        if @inner_data_type
+          fragment[:referenced_by] << @inner_data_type
+        else
+          fragment[:referenced_by] += @current_fragment[:referenced_by]
+        end
       else
         fragment[:referenced_by] << current_data_type_builder
       end
@@ -79,6 +85,7 @@ module RailsQL
     end
 
     def end_visit_fragment_definition(node)
+      @inner_frag = nil
       @current_fragment = nil
     end
 
