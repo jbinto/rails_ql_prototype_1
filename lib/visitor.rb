@@ -80,6 +80,11 @@ module RailsQL
           end
         else
           if @current_fragment.present?
+            if @fragment_definition_name
+              @defined_fragments[@fragment_definition_name] ||= []
+              @defined_fragments[@fragment_definition_name] +=
+                @defined_fragments[node.value]
+            end
             @defined_fragments[node.value].each do |field|
               @current_fragment[:referenced_by].each do |data_type_builder|
                 data_type_builder.add_child_builder(field)
