@@ -81,6 +81,12 @@ module RailsQL
         else
           if @current_fragment.present?
             if @fragment_definition_name
+              # circular reference
+              if @fragment_definition_name == node.value
+                raise InvalidFragment, "Cannot spread fragment #{
+                  node.value
+                } within itself."
+              end
               @defined_fragments[@fragment_definition_name] ||= []
               @defined_fragments[@fragment_definition_name] +=
                 @defined_fragments[node.value]
