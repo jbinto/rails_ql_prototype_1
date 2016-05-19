@@ -10,6 +10,7 @@ module RailsQL
     def initialize(root_builder)
       @root = root_builder
       @fragments = {}
+      @defined_fragments = {}
       @data_type_builder_stack = [root]
       @node_stack = []
     end
@@ -23,7 +24,9 @@ module RailsQL
     def end_visit_field(node)
       @inner_data_type = nil
       node_stack.pop
-      data_type_builder_stack.pop
+      unless @current_fragment
+        data_type_builder_stack.pop
+      end
       end_visit_node :field, node
     end
 
@@ -40,6 +43,7 @@ module RailsQL
     def visit_field_name(node)
       name = node.value
       if @current_fragment
+        @defined_fragments[@fragment_definition_name] << name
         @current_fragment[:referenced_by].each do |data_type_builder|
           @inner_data_type = data_type_builder.add_child_builder name
         end
@@ -68,20 +72,34 @@ module RailsQL
 
     def visit_fragment_spread_name(node)
       fragment = (@fragments[node.value] ||= {referenced_by: []})
-      if @current_fragment
-        if @inner_data_type
+      if @current_fragment.present?
+        if @inner_data_type.present?
           fragment[:referenced_by] << @inner_data_type
         else
           fragment[:referenced_by] += @current_fragment[:referenced_by]
         end
       else
-        fragment[:referenced_by] << current_data_type_builder
+        if @defined_fragments[node.value].present?
+          if @inner_data_type.present?
+            @defined_fragments[node.value].each do |field|
+              @inner_data_type.add_child_builder field
+            end
+          else
+            @defined_fragments[node.value].each do |field|
+              current_data_type_builder.add_child_builder(field)
+            end
+          end
+          @defined_fragments[node.value]
+        else
+          fragment[:referenced_by] << current_data_type_builder
+        end
       end
     end
 
     def visit_fragment_definition_name(node)
-      name = node.value
-      @current_fragment = @fragments[node.value]
+      @fragment_definition_name = node.value
+      @defined_fragments[@fragment_definition_name] = []
+      @current_fragment = @fragments[@fragment_definition_name] || {referenced_by: []}
     end
 
     def end_visit_fragment_definition(node)
