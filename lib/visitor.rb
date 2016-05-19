@@ -72,24 +72,32 @@ module RailsQL
 
     def visit_fragment_spread_name(node)
       fragment = (@fragments[node.value] ||= {referenced_by: []})
-      if @current_fragment.present?
+
+      if @defined_fragments[node.value].present?
         if @inner_data_type.present?
-          fragment[:referenced_by] << @inner_data_type
+          @defined_fragments[node.value].each do |field|
+            @inner_data_type.add_child_builder field
+          end
         else
-          fragment[:referenced_by] += @current_fragment[:referenced_by]
-        end
-      else
-        if @defined_fragments[node.value].present?
-          if @inner_data_type.present?
+          if @current_fragment.present?
             @defined_fragments[node.value].each do |field|
-              @inner_data_type.add_child_builder field
+              @current_fragment[:referenced_by].each do |data_type_builder|
+                data_type_builder.add_child_builder(field)
+              end
             end
           else
             @defined_fragments[node.value].each do |field|
               current_data_type_builder.add_child_builder(field)
             end
           end
-          @defined_fragments[node.value]
+        end
+      else
+        if @current_fragment.present?
+          if @inner_data_type.present?
+            fragment[:referenced_by] << @inner_data_type
+          else
+            fragment[:referenced_by] += @current_fragment[:referenced_by]
+          end
         else
           fragment[:referenced_by] << current_data_type_builder
         end

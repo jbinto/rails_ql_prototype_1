@@ -36,90 +36,116 @@ describe RailsQL::Visitor do
       visit_graphql "mutation updateHero{ hero }"
     end
 
-    context "when the fragment is defined before the spread" do
-      it "parses queries with fragments into data types" do
-        hero_builder = double
-        allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-        expect(hero_builder).to receive(:add_child_builder).with 'name'
+    describe "fragments" do
 
-        visit_graphql "
-          fragment heroFieldsFragment on Hero { name }
-          query { hero { ...heroFieldsFragment } }
-        "
+      context "when the fragment is defined before the spread" do
+        it "parses queries with fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          expect(hero_builder).to receive(:add_child_builder).with 'name'
+
+          visit_graphql "
+            fragment heroFieldsFragment on Hero { name }
+            query { hero { ...heroFieldsFragment } }
+          "
+        end
       end
-    end
 
-    context "when the fragment is defined after the spread" do
-      it "parses queries with fragments into data types" do
-        hero_builder = double
-        allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-        expect(hero_builder).to receive(:add_child_builder).with 'name'
+      context "when the fragment is defined after the spread" do
+        it "parses queries with fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          expect(hero_builder).to receive(:add_child_builder).with 'name'
 
-        visit_graphql "
-          query { hero { ...heroFieldsFragment } }
-          fragment heroFieldsFragment on Hero { name }
-        "
+          visit_graphql "
+            query { hero { ...heroFieldsFragment } }
+            fragment heroFieldsFragment on Hero { name }
+          "
+        end
       end
-    end
 
-    context "when the nested fragment is defined before the nested spread" do
-      it "parses queries with nested fragments into data types" do
-        hero_builder = double
-        allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-        allow(hero_builder).to receive(:add_child_builder).with 'name'
-        expect(hero_builder).to receive(:add_child_builder).with 'description'
+      context "when the nested fragment is defined before the nested spread" do
+        it "parses queries with nested fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          expect(hero_builder).to receive(:add_child_builder).with 'description'
 
-        visit_graphql "
-          fragment extraFieldFragment on Hero { description }
-          query { hero { ...heroFieldsFragment } }
-          fragment heroFieldsFragment on Hero {
-            name
-            ...extraFieldFragment
-          }
-        "
-      end
-    end
-
-    context "when the nested fragment is defined after the nested spread" do
-      it "parses queries with nested fragments into data types" do
-        hero_builder = double
-        allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-        allow(hero_builder).to receive(:add_child_builder).with 'name'
-        expect(hero_builder).to receive(:add_child_builder).with 'description'
-
-        visit_graphql "
-          query { hero { ...heroFieldsFragment } }
-          fragment heroFieldsFragment on Hero {
-            name
-            ...extraFieldFragment
-          }
-          fragment extraFieldFragment on Hero { description }
-        "
-      end
-    end
-
-
-    context "when the nested fragment is not a grandchild of the fragment" do
-      it "parses queries with nested fragments into data types" do
-        hero_builder = double
-        allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-        allow(hero_builder).to receive(:add_child_builder).with 'name'
-        pet_builder = double
-        expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
-          pet_builder
-        )
-        expect(pet_builder).to receive(:add_child_builder).with 'description'
-
-        visit_graphql "
-          query { hero { ...heroFieldsFragment } }
-          fragment heroFieldsFragment on Hero {
-            name
-            pets {
+          visit_graphql "
+            fragment extraFieldFragment on Hero { description }
+            query { hero { ...heroFieldsFragment } }
+            fragment heroFieldsFragment on Hero {
+              name
               ...extraFieldFragment
             }
-          }
-          fragment extraFieldFragment on Pet { description }
-        "
+          "
+        end
+      end
+
+      context "when the nested fragment is defined after the nested spread" do
+        it "parses queries with nested fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          expect(hero_builder).to receive(:add_child_builder).with 'description'
+
+          visit_graphql "
+            query { hero { ...heroFieldsFragment } }
+            fragment heroFieldsFragment on Hero {
+              name
+              ...extraFieldFragment
+            }
+            fragment extraFieldFragment on Hero { description }
+          "
+        end
+      end
+
+      context "when the nested fragment is not a grandchild of the fragment" do
+        it "parses queries with nested fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          pet_builder = double
+          expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
+            pet_builder
+          )
+          expect(pet_builder).to receive(:add_child_builder).with 'description'
+
+          visit_graphql "
+            query { hero { ...heroFieldsFragment } }
+            fragment heroFieldsFragment on Hero {
+              name
+              pets {
+                ...extraFieldFragment
+              }
+            }
+            fragment extraFieldFragment on Pet { description }
+          "
+        end
+      end
+
+      context "when the nested fragment is defined after the nested spread and is not a grandchild of the fragment" do
+        it "parses queries with nested fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          pet_builder = double
+          expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
+            pet_builder
+          )
+          expect(pet_builder).to receive(:add_child_builder).with 'description'
+
+          visit_graphql "
+            fragment extraFieldFragment on Hero { description }
+            query { hero { ...heroFieldsFragment } }
+            fragment heroFieldsFragment on Hero {
+              name
+              pets {
+                ...extraFieldFragment
+              }
+            }
+          "
+        end
       end
     end
 
