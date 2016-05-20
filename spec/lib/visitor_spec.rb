@@ -118,6 +118,58 @@ describe RailsQL::Visitor do
         end
       end
 
+      context "when the nested fragment is defined before the nested spreadz" do
+        it "parses queries with nested fragments into data types" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          expect(hero_builder).to receive(:add_child_builder).with 'description'
+
+          visit_graphql "
+            fragment frag2 on Hero { ...frag3 }
+            fragment frag3 on Hero { description }
+            fragment heroFieldsFragment on Hero {
+              name
+              ...extraFieldFragment
+            }
+            query { hero {
+              ...heroFieldsFragment
+              ...frag2
+            } }
+            fragment extraFieldFragment on Hero { ...frag3 }
+          "
+        end
+      end
+
+      # for each spread
+      #   if within fragment,
+      #     add to fragments tree
+      #   if within data_type
+      #     add to data_type.unresolved_fragments
+      #   if within data_type within fragment
+      #     add to fragment[:fields].select {|f| f[:name] == data_type }.first[:fragments]
+      # for each definition,
+      #   fragments[frag_name] = {
+      #     fields: [],
+      #     fragments: {}
+      #   }
+      # for each field
+      #   if within fragment
+      #     add {name: <field_name>, fields: {}, fragments: {}} to current_fragment[:fields]
+      #   if within data_type
+      #     add_child_builder field_name
+      #   if within data_type within fragment
+      #     add {name: <field_name>, fields: {}, fragments: {}} to parent field in current_fragment[:fields]
+
+      # for each data_type
+      #   add to data_types
+
+      # at document_end
+      #   for each data_type in data_types
+      #     for each unresolved_fragment in data_type.unresolved_fragments
+      #       traverse down fields in each fragment[:fields] and fragment[:fragments].map [:fields], adding children builders as you go
+
+
       context "when a fragment cycle is circular" do
         it "raises InvalidFragment error" do
           hero_builder = double
@@ -147,6 +199,7 @@ describe RailsQL::Visitor do
             pet_builder
           )
           expect(pet_builder).to receive(:add_child_builder).with 'description'
+          expect(pet_builder).to receive(:add_child_builder).with 'other_field'
 
           visit_graphql "
             query { hero { ...heroFieldsFragment } }
@@ -154,6 +207,7 @@ describe RailsQL::Visitor do
               name
               pets {
                 ...extraFieldFragment
+                other_field
               }
             }
             fragment extraFieldFragment on Pet { description }

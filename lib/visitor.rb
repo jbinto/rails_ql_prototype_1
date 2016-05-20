@@ -71,15 +71,20 @@ module RailsQL
     end
 
     def visit_fragment_spread_name(node)
+      ap 'spread'
       fragment = (@fragments[node.value] ||= {referenced_by: []})
 
       if @defined_fragments[node.value].present?
+        ap node.value
+        ap @defined_fragments[node.value]
         if @inner_data_type.present?
           @defined_fragments[node.value].each do |field|
             @inner_data_type.add_child_builder field
           end
         else
           if @current_fragment.present?
+            ap @fragment_definition_name
+            ap @current_fragment
             if @fragment_definition_name
               # circular reference
               if @fragment_definition_name == node.value
@@ -87,6 +92,7 @@ module RailsQL
                   node.value
                 } within itself."
               end
+              ap @defined_fragments[@fragment_definition_name]
               @defined_fragments[@fragment_definition_name] ||= []
               @defined_fragments[@fragment_definition_name] +=
                 @defined_fragments[node.value]
