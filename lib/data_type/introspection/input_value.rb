@@ -5,6 +5,8 @@ module RailsQL
   module DataType
     module Introspection
       class InputValue < Base
+        name "__InputValue"
+
         description <<-eos
           Object and Interface types are described by a list of Fields, each of
           which has a name, potentially a list of arguments, and a return type.
@@ -36,10 +38,6 @@ module RailsQL
             nil # TODO
           }
         )
-
-        def self.name
-          "__InputValue"
-        end
 
         can :read, fields: [
           :name,

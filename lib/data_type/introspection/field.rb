@@ -5,8 +5,10 @@ module RailsQL
   module DataType
     module Introspection
       class Field < Base
+        name "__Field"
+
         description <<-eos
-          Object and Interface types are described by a list of Fields, each of 
+          Object and Interface types are described by a list of Fields, each of
           which has a name, potentially a list of arguments, and a return type.
         eos
 
@@ -40,10 +42,6 @@ module RailsQL
             model.deprecation_reason
           }
         )
-
-        def self.name
-          "__Field"
-        end
 
         can :read, fields: [
           :name,

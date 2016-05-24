@@ -4,6 +4,8 @@ module RailsQL
   module DataType
     module Introspection
       class TypeKind < Base
+        name "__TypeKind"
+
         kind :ENUM
         enum_values *RailsQL::DataType::Kind.enum_values
 

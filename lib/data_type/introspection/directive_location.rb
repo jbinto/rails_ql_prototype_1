@@ -4,6 +4,8 @@ module RailsQL
   module DataType
     module Introspection
       class DirectiveLocation < Base
+        name "__DirectiveLocation"
+
         kind :ENUM
         enum_values(
           :QUERY,

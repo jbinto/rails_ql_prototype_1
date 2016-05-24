@@ -5,6 +5,8 @@ module RailsQL
   module DataType
     module Introspection
       class Directive < Base
+        name "__Directive"
+
         description <<-eos
         eos
 
@@ -31,10 +33,6 @@ module RailsQL
             }
           }
         )
-
-        def self.name
-          "__Directive"
-        end
 
         can :read, fields: [
           :name,

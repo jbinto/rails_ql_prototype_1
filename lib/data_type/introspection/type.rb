@@ -5,6 +5,8 @@ module RailsQL
   module DataType
     module Introspection
       class Type < Base
+        name "__Type"
+
         description <<-eos
           The fundamental unit of any GraphQL Schema is the type. There are many
           kinds of types in GraphQL. Depending on the kind of a type,
@@ -84,10 +86,6 @@ module RailsQL
             nil
           }
         )
-
-        def self.name
-          "__Type"
-        end
 
         can :read, fields: [
           :kind,
