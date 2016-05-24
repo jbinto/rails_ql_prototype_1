@@ -10,6 +10,7 @@ module RailsQL
     def initialize(root_builder)
       @root = root_builder
       @fragments = {}
+      @defined_fragments = {}
       @data_type_builder_stack = [root]
       @node_stack = []
     end
@@ -21,8 +22,11 @@ module RailsQL
     end
 
     def end_visit_field(node)
+      @inner_data_type = nil
       node_stack.pop
-      data_type_builder_stack.pop
+      unless @current_fragment
+        data_type_builder_stack.pop
+      end
       end_visit_node :field, node
     end
 
@@ -38,8 +42,16 @@ module RailsQL
 
     def visit_field_name(node)
       name = node.value
-      next_data_type_builder = current_data_type_builder.add_child_builder name
-      @data_type_builder_stack.push next_data_type_builder
+      if @current_fragment
+        @defined_fragments[@fragment_definition_name] << name
+        @current_fragment[:referenced_by].each do |data_type_builder|
+          @inner_data_type = data_type_builder.add_child_builder name
+        end
+      else
+        @data_type_builder_stack.push(
+          current_data_type_builder.add_child_builder(name)
+        )
+      end
     end
 
     def visit_int_value(node)
@@ -59,21 +71,65 @@ module RailsQL
     end
 
     def visit_fragment_spread_name(node)
+      ap 'spread'
       fragment = (@fragments[node.value] ||= {referenced_by: []})
-      fragment[:referenced_by] << current_data_type_builder
-    end
 
-    def visit_fragment_definition_name(node)
-      @current_fragment = @fragments[node.value]
-      @current_visitors = @current_fragment[:referenced_by].map do |data_type|
-        RailsQLVisitor.new(data_type)
+      if @defined_fragments[node.value].present?
+        ap node.value
+        ap @defined_fragments[node.value]
+        if @inner_data_type.present?
+          @defined_fragments[node.value].each do |field|
+            @inner_data_type.add_child_builder field
+          end
+        else
+          if @current_fragment.present?
+            ap @fragment_definition_name
+            ap @current_fragment
+            if @fragment_definition_name
+              # circular reference
+              if @fragment_definition_name == node.value
+                raise InvalidFragment, "Cannot spread fragment #{
+                  node.value
+                } within itself."
+              end
+              ap @defined_fragments[@fragment_definition_name]
+              @defined_fragments[@fragment_definition_name] ||= []
+              @defined_fragments[@fragment_definition_name] +=
+                @defined_fragments[node.value]
+            end
+            @defined_fragments[node.value].each do |field|
+              @current_fragment[:referenced_by].each do |data_type_builder|
+                data_type_builder.add_child_builder(field)
+              end
+            end
+          else
+            @defined_fragments[node.value].each do |field|
+              current_data_type_builder.add_child_builder(field)
+            end
+          end
+        end
+      else
+        if @current_fragment.present?
+          if @inner_data_type.present?
+            fragment[:referenced_by] << @inner_data_type
+          else
+            fragment[:referenced_by] += @current_fragment[:referenced_by]
+          end
+        else
+          fragment[:referenced_by] << current_data_type_builder
+        end
       end
     end
 
+    def visit_fragment_definition_name(node)
+      @fragment_definition_name = node.value
+      @defined_fragments[@fragment_definition_name] = []
+      @current_fragment = @fragments[@fragment_definition_name] || {referenced_by: []}
+    end
+
     def end_visit_fragment_definition(node)
+      @inner_frag = nil
       @current_fragment = nil
-      @current_visitors = nil
-      end_visit_node :fragment_definition, node
     end
 
     def method_missing(*args)

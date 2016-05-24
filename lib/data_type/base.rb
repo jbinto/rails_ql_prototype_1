@@ -1,4 +1,5 @@
 require "active_model/callbacks"
+require_relative "./field_definition"
 
 module RailsQL
   module DataType
