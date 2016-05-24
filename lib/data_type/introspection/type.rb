@@ -22,7 +22,12 @@ module RailsQL
 
         field :name, data_type: :String
 
-        field :description, data_type: :String
+        field(
+          :description, data_type: :String
+          resolve: ->(args, child_query) {
+            model.type_definition.description
+          }
+        )
 
         has_many(:fields,
           optional_args: {include_deprecated: "BooleanValue"},
