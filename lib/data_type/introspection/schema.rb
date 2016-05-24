@@ -49,7 +49,7 @@ module RailsQL
           description: <<-eos,
             A list of all directives supported by this server.
           eos
-          data_type: "RailsQL::DataType::Introspection::Type",
+          data_type: "RailsQL::DataType::Introspection::Directive",
           singular: false,
           resolve: ->(args, child_query){
             []
