@@ -14,6 +14,7 @@ module RailsQL
 
         field(:name,
           data_type: :String,
+          nullable: false,
           resolve: ->(args, child_query) {
             model[:name]
           }
