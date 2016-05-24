@@ -65,6 +65,13 @@ module RailsQL
         @args.clone
       end
 
+      def unresolved_fragments
+        @unresolved_fragments ||= []
+      end
+
+      # def add_unresolved_fragment
+      # end
+
       private
 
       def field_definitions
