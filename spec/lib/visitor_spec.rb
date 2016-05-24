@@ -127,7 +127,7 @@ describe RailsQL::Visitor do
         end
       end
 
-      context "when the nested fragment is defined before the nested spreadz" do
+      context "when two nested fragments are defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
           hero_builder = double
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
@@ -145,25 +145,6 @@ describe RailsQL::Visitor do
               ...frag2
             } }
           "
-        end
-      end
-
-      context "when a fragment cycle is circular" do
-        it "raises InvalidFragment error" do
-          hero_builder = double
-          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
-          allow(hero_builder).to receive(:add_child_builder).with 'friends'
-
-          expect{visit_graphql("
-            query { hero { ...heroFieldsFragment } }
-            fragment heroFieldsFragment on Hero {
-              name
-              friends {
-                ...heroFieldsFragment
-              }
-            }
-          ")}.to raise_error
         end
       end
 
@@ -214,6 +195,25 @@ describe RailsQL::Visitor do
               }
             }
           "
+        end
+      end
+
+       context "when a fragment cycle is circular" do
+        it "raises InvalidFragment error" do
+          hero_builder = double
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          allow(hero_builder).to receive(:add_child_builder).with 'friends'
+
+          expect{visit_graphql("
+            query { hero { ...heroFieldsFragment } }
+            fragment heroFieldsFragment on Hero {
+              name
+              friends {
+                ...heroFieldsFragment
+              }
+            }
+          ")}.to raise_error
         end
       end
     end
