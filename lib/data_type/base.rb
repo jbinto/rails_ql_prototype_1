@@ -65,12 +65,20 @@ module RailsQL
       end
 
       def as_json
-        fields.reduce({}) do |json, (k, field)|
-          child_json = field.data_types.as_json
-          json.merge(
-            k.to_s => field.singular? ? child_json.first : child_json
-          )
+        kind = self.class.type_definition.kind
+        if kind == :OBJECT
+          json = fields.reduce({}) do |json, (k, field)|
+            child_json = field.data_types.as_json
+            json.merge(
+              k.to_s => field.singular? ? child_json.first : child_json
+            )
+          end
+        elsif kind == :ENUM
+          json = model.as_json
+        else
+          raise "Kind #{kind} is not yet supported :("
         end
+        return json
       end
 
       class << self

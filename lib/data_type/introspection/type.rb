@@ -15,10 +15,13 @@ module RailsQL
           types possible at runtime. List and NonNull types compose other types.
         eos
 
-        # field(:kind,
-        #   data_type: "RailsQL::DataType::Introspection::TypeKind",
-        #   nullable: false
-        # )
+        field(:kind,
+          data_type: "RailsQL::DataType::Introspection::TypeKind",
+          nullable: false,
+          resolve: ->(args, child_query) {
+            model.type_definition.kind
+          }
+        )
 
         field :name, data_type: :String
 
@@ -87,6 +90,7 @@ module RailsQL
         end
 
         can :read, fields: [
+          :kind,
           :name,
           :fields,
           :description,

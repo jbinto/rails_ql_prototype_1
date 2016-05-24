@@ -232,22 +232,34 @@ describe RailsQL::DataType::Base do
   end
 
   describe "#as_json" do
-    it "reduces over #as_json on fields" do
-      field = instance_double RailsQL::DataType::Field
-      allow(field).to receive(:singular?).and_return true
-      data_type = data_type_klass.new
-      allow(data_type).to receive(:fields).and_return(
-        fake_field_1: field,
-        fake_field_2: field
-      )
-      allow(field).to receive_message_chain(:data_types, :as_json).and_return(
-        ["hello" => "world"]
-      )
+    context "when kind is defaulted to :OBJECT" do
+      it "reduces over #as_json on fields" do
+        field = instance_double RailsQL::DataType::Field
+        allow(field).to receive(:singular?).and_return true
+        data_type = data_type_klass.new
+        allow(data_type).to receive(:fields).and_return(
+          fake_field_1: field,
+          fake_field_2: field
+        )
+        allow(field).to receive_message_chain(:data_types, :as_json).and_return(
+          ["hello" => "world"]
+        )
 
-      expect(data_type.as_json).to eq(
-        "fake_field_1" => {"hello" => "world"},
-        "fake_field_2" => {"hello" => "world"}
-      )
+        expect(data_type.as_json).to eq(
+          "fake_field_1" => {"hello" => "world"},
+          "fake_field_2" => {"hello" => "world"}
+        )
+      end
+    end
+
+    context "when kind is set to :ENUM" do
+      it "returns the model" do
+        data_type_klass.kind :ENUM
+        data_type = data_type_klass.new
+        allow(data_type).to receive(:model).and_return "mc hammer"
+
+        expect(data_type.as_json).to eq "mc hammer"
+      end
     end
   end
 end

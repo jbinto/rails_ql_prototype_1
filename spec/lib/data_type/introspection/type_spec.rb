@@ -25,6 +25,14 @@ describe RailsQL::DataType::Introspection::Type do
     RailsQL::Runner.new described_class
   }
 
+  describe "[:kind]" do
+    it "returns the data type's name" do
+      results = runner.execute!(query: "query {kind}").as_json
+
+      expect(results["kind"]).to eq "OBJECT"
+    end
+  end
+
   describe "[:name]" do
     it "returns the data type's name" do
       results = runner.execute!(query: "query {name}").as_json
