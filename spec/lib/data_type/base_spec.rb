@@ -59,6 +59,64 @@ describe RailsQL::DataType::Base do
     end
   end
 
+  describe ".kind" do
+    context "when passed a valid kind symbol" do
+      it "sets the kind" do
+        data_type_klass.kind :OBJECT
+
+        results = data_type_klass.type_definition.kind
+
+        expect(results).to eq :OBJECT
+      end
+    end
+
+    context "when passed an invalid kind" do
+      it "raises an error" do
+        expect{data_type_klass.kind(:MEGA_SHARK)}.to raise_error
+      end
+    end
+
+    context "when kind is not set" do
+      context "without args" do
+        it "returns the OBJECT kind" do
+          results = data_type_klass.type_definition.kind
+
+          expect(results).to eq :OBJECT
+        end
+      end
+    end
+  end
+
+  describe ".type_definition.enum_values" do
+    context "when enum_values is set" do
+      it "sets the enum values" do
+        values = [:monkeys, :potatoes]
+        data_type_klass.enum_values :monkeys, :potatoes
+
+        results = data_type_klass.type_definition.enum_values
+
+        expect(results).to eq(
+          monkeys: OpenStruct.new(
+            is_deprecated: false,
+            deprecation_reason: nil
+          ),
+          potatoes: OpenStruct.new(
+            is_deprecated: false,
+            deprecation_reason: nil
+          ),
+        )
+      end
+    end
+
+    context "when enum_values is not set" do
+      context "without args" do
+        it "returns an empty array" do
+          expect(data_type_klass.type_definition.enum_values).to eq({})
+        end
+      end
+    end
+  end
+
   shared_examples "data_type_association" do |method_sym, singular|
     it "aliases .field" do
       field_def_klass = class_double("RailsQL::DataType::FieldDefinition")

@@ -75,16 +75,62 @@ module RailsQL
 
       class << self
         def name(name=nil)
-          @name = name.strip unless name.nil?
-          return @name || to_s
+          if name.present?
+            @name = name.strip
+          else
+            @name = nil
+          end
         end
 
         def description(description=nil)
-          unless description.nil?
+          if description.present?
             @description = description.gsub(/\n\s+/, "\n").strip
+          else
+            @description = nil
           end
-          return @description
         end
+
+        def kind(kind)
+          kind_values = Kind.enum_values
+          if kind_values.include? kind
+            @kind = kind
+          else
+            raise <<-eos.gsub(/[\s\n]+/, " ")
+              #{kind} is not a valid kind. Must be one of
+              #{kind_values.join ", "}
+            eos
+          end
+        end
+
+        def enum_values(*enum_values, opts)
+          if opts.is_a? Symbol
+            enum_values << opts
+            opts = {}
+          end
+          opts = {
+            is_deprecated: false,
+            deprecation_reason: nil
+          }.merge opts
+          opts = OpenStruct.new opts
+          @enum_values = (@enum_values || {}).merge(
+            Hash[enum_values.map{ |value| [value, opts] }]
+          )
+        end
+
+        def type_definition
+          return OpenStruct.new(
+            name: @name || to_s,
+            kind: @kind || :OBJECT,
+            enum_values: @enum_values || {},
+            description: @description,
+          )
+        end
+
+        # enum_values :a, :b
+        # enum_values []
+        #
+        # Class.enum_values
+        # => []
 
         def field_definitions
           @field_definitions ||= HashWithIndifferentAccess.new

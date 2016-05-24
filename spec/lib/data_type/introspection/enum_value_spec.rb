@@ -13,8 +13,8 @@ describe RailsQL::DataType::Introspection::EnumValue do
     OpenStruct.new(
       name: "Panda",
       description: "https://youtu.be/u155ncSlkCk",
-      isDeprecated: true,
-      deprecationReason: "not enough pandas"
+      is_deprecated: true,
+      deprecation_reason: "not enough pandas"
     )
   end
 

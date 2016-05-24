@@ -4,11 +4,8 @@
 module RailsQL
   module DataType
     module Introspection
-      class EnumValue < Base
+      class Directive < Base
         description <<-eos
-          One possible value for a given Enum. Enum values are unique values,
-          not a placeholder for a string or numeric value. However an Enum value
-          is returned in a JSON response as a string.
         eos
 
         field(:name,
@@ -20,30 +17,29 @@ module RailsQL
           data_type: :String,
         )
 
-        field(:isDeprecated,
+        has_many(:locations,
           data_type: :Boolean,
           nullable: false,
-          resolve: ->(args, child_query){
-            model.is_deprecated
-          }
         )
 
-        field(:deprecationReason,
-          data_type: :String,
+        has_many(:args,
+          data_type: "RailsQL::DataType::Introspection::InputValue",
           resolve: ->(args, child_query){
-            model.deprecation_reason
+            model.args.map{|k, v|
+              {name: k}
+            }
           }
         )
 
         def self.name
-          "__EnumValue"
+          "__Directive"
         end
 
         can :read, fields: [
           :name,
           :description,
-          :isDeprecated,
-          :deprecationReason
+          :locations,
+          :args
         ]
       end
     end
