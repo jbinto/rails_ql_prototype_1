@@ -22,8 +22,8 @@ module RailsQL
 
         field :name, data_type: :String
 
-        field(
-          :description, data_type: :String
+        field(:description,
+          data_type: :String,
           resolve: ->(args, child_query) {
             model.type_definition.description
           }
