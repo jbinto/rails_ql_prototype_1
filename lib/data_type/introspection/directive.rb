@@ -10,20 +10,21 @@ module RailsQL
 
         field(:name,
           data_type: :String,
-          nullable: false,
+          nullable: false
         )
 
         field(:description,
-          data_type: :String,
+          data_type: :String
         )
 
         has_many(:locations,
-          data_type: :Boolean,
-          nullable: false,
+          data_type: "RailsQL::DataType::Introspection::DirectiveLocation",
+          nullable: false
         )
 
         has_many(:args,
           data_type: "RailsQL::DataType::Introspection::InputValue",
+          nullable: false,
           resolve: ->(args, child_query){
             model.args.map{|k, v|
               {name: k}
