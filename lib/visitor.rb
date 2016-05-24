@@ -4,14 +4,13 @@ module RailsQL
   class Visitor < GraphQL::Parser::Visitor
 
     attr_accessor :node_stack
-    attr_reader :data_type_builder_stack
-    attr_reader :root
+    attr_reader :data_type_builder_stack, :root
 
     def initialize(root_builder)
       @root = root_builder
-      @fragments = {}
-      @defined_fragments = {}
       @data_type_builder_stack = [root]
+      @fragments = []
+      @data_type_builders = [root]
       @node_stack = []
     end
 
@@ -22,10 +21,13 @@ module RailsQL
     end
 
     def end_visit_field(node)
-      @inner_data_type = nil
       node_stack.pop
-      unless @current_fragment
+      if within_fragment_definition?
+        @parent_field = nil
+      elsif within_data_type?
         data_type_builder_stack.pop
+      elsif within_data_type_within_fragment_definition?
+        @parent_field = @parent_field[:parent]
       end
       end_visit_node :field, node
     end
@@ -41,16 +43,27 @@ module RailsQL
     end
 
     def visit_field_name(node)
-      name = node.value
-      if @current_fragment
-        @defined_fragments[@fragment_definition_name] << name
-        @current_fragment[:referenced_by].each do |data_type_builder|
-          @inner_data_type = data_type_builder.add_child_builder name
-        end
-      else
-        @data_type_builder_stack.push(
-          current_data_type_builder.add_child_builder(name)
-        )
+      if within_fragment_definition?
+        @parent_field = {
+          name: node.value,
+          fields: [],
+          fragments: [],
+          parent: nil
+        }
+        @current_fragment[:fields] << @parent_field
+      elsif within_data_type?
+        child_data_type = current_data_type_builder.add_child_builder node.value
+        @data_type_builder_stack.push child_data_type
+        @data_type_builders << child_data_type
+      elsif within_data_type_within_fragment_definition?
+        new_parent_field = {
+          name: node.value,
+          fields: [],
+          fragments: [],
+          parent: @parent_field
+        }
+        @parent_field[:fields] << new_parent_field
+        @parent_field = new_parent_field
       end
     end
 
@@ -71,65 +84,30 @@ module RailsQL
     end
 
     def visit_fragment_spread_name(node)
-      ap 'spread'
-      fragment = (@fragments[node.value] ||= {referenced_by: []})
-
-      if @defined_fragments[node.value].present?
-        ap node.value
-        ap @defined_fragments[node.value]
-        if @inner_data_type.present?
-          @defined_fragments[node.value].each do |field|
-            @inner_data_type.add_child_builder field
-          end
-        else
-          if @current_fragment.present?
-            ap @fragment_definition_name
-            ap @current_fragment
-            if @fragment_definition_name
-              # circular reference
-              if @fragment_definition_name == node.value
-                raise InvalidFragment, "Cannot spread fragment #{
-                  node.value
-                } within itself."
-              end
-              ap @defined_fragments[@fragment_definition_name]
-              @defined_fragments[@fragment_definition_name] ||= []
-              @defined_fragments[@fragment_definition_name] +=
-                @defined_fragments[node.value]
-            end
-            @defined_fragments[node.value].each do |field|
-              @current_fragment[:referenced_by].each do |data_type_builder|
-                data_type_builder.add_child_builder(field)
-              end
-            end
-          else
-            @defined_fragments[node.value].each do |field|
-              current_data_type_builder.add_child_builder(field)
-            end
-          end
-        end
-      else
-        if @current_fragment.present?
-          if @inner_data_type.present?
-            fragment[:referenced_by] << @inner_data_type
-          else
-            fragment[:referenced_by] += @current_fragment[:referenced_by]
-          end
-        else
-          fragment[:referenced_by] << current_data_type_builder
-        end
+      if within_fragment_definition?
+        @current_fragment[:fragments] << node.value
+      elsif within_data_type?
+        current_data_type_builder.unresolved_fragments << node.value
+      elsif within_data_type_within_fragment_definition?
+        @parent_field[:fragments] << node.value
       end
     end
 
     def visit_fragment_definition_name(node)
-      @fragment_definition_name = node.value
-      @defined_fragments[@fragment_definition_name] = []
-      @current_fragment = @fragments[@fragment_definition_name] || {referenced_by: []}
+      @current_fragment = {
+        name: node.value,
+        fields: [],
+        fragments: []
+      }
+      @fragments << @current_fragment
     end
 
     def end_visit_fragment_definition(node)
-      @inner_frag = nil
       @current_fragment = nil
+    end
+
+    def end_visit_document(node)
+      resolve_fragments!
     end
 
     def method_missing(*args)
@@ -159,6 +137,48 @@ module RailsQL
       (@current_visitors||[]).each do |visitor|
         visitor.send(:"end_visit_#{sym}", node)
       end
+    end
+
+    private
+
+    def resolve_fragments!
+      @data_type_builders.each do |data_type_builder|
+        @fragments.each do |fragment|
+          if data_type_builder.unresolved_fragments.include?(fragment[:name])
+            apply_fragment_to_data_type_builder fragment, data_type_builder
+          end
+        end
+      end
+    end
+
+    def apply_fragment_to_data_type_builder(fragment, data_type_builder)
+      fields = fragment[:fields]
+      fields += fragment[:fragments].map do |fragment_name|
+        @fragments.select {|f| f[:name] == fragment_name}.first[:fields]
+      end.flatten
+      fields.each do |field|
+        child_data_type_builder = data_type_builder.add_child_builder(
+          field[:name]
+        )
+        apply_fragment_to_data_type_builder field, child_data_type_builder
+      end if fields.any?
+
+    end
+
+    def within_fragment_definition?
+      return false unless @current_fragment.present?
+
+      return !within_data_type_within_fragment_definition?
+    end
+
+    def within_data_type?
+      !@current_fragment.present?
+    end
+
+    def within_data_type_within_fragment_definition?
+      return false unless @current_fragment.present?
+
+      @parent_field.present?
     end
   end
 end
