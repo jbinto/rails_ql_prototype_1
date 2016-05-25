@@ -156,25 +156,45 @@ module RailsQL
       fields += fragment[:fragments].map do |fragment_name|
         @fragments.select {|f| f[:name] == fragment_name}.first[:fields]
       end.flatten
+
       fields.each do |field|
         child_data_type_builder = data_type_builder.add_child_builder(
           field[:name]
         )
         apply_fragment_to_data_type_builder field, child_data_type_builder
       end if fields.any?
-
     end
 
+    # helpers to indicate where in the tree traversal
+    # the visitor is currently at
+
+    # eg: {
+    #   fragment fragName {
+    #     here
+    #   }
+    # }
     def within_fragment_definition?
       return false unless @current_fragment.present?
 
       return !within_data_type_within_fragment_definition?
     end
 
+    # eg: {
+    #   users {
+    #     here
+    #   }
+    # }
     def within_data_type?
       !@current_fragment.present?
     end
 
+    # eg: {
+    #   fragment fragName {
+    #     users {
+    #       here
+    #     }
+    #   }
+    # }
     def within_data_type_within_fragment_definition?
       return false unless @current_fragment.present?
 
