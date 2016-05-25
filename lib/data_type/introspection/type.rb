@@ -25,7 +25,12 @@ module RailsQL
           }
         )
 
-        field :name, data_type: :String
+        field(:name,
+          data_type: :String,
+          resolve: ->(args, child_query) {
+            model.type_definition.name
+          }
+        )
 
         field(:description,
           data_type: :String,

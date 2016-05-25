@@ -44,48 +44,53 @@ module RailsQL
           {}
         end
 
-        def self.name
-          to_s.gsub("RailsQL::DataType::Primative::", "")
+        def self.type_definition(description=nil)
+          @type_definition ||= OpenStruct.new(
+            name: to_s.gsub("RailsQL::DataType::Primative::", ""),
+            kind: :SCALAR,
+            enum_values: nil,
+            description: description
+          )
         end
       end
 
       class String < Base
-        def self.description
+        type_definition(
           "The `String` scalar type represents textual data, represented as " +
           "UTF-8 character sequences. The String type is most often used by " +
           "GraphQL to represent free-form human-readable text."
-        end
+        )
       end
 
       class Integer < Base
-        def self.description
+        type_definition(
           "The `Int` scalar type represents non-fractional signed whole numeric " +
           "values. Int can represent values between -(2^53 - 1) and 2^53 - 1 " +
           "since represented in JSON as double-precision floating point numbers " +
           "specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point)."
-        end
+        )
       end
 
       class Float < Base
-        def self.description
+        type_definition(
           "The `Float` scalar type represents signed double-precision " +
           "fractional values as specified by " +
           "[IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
-        end
+        )
       end
 
       class Boolean < Base
-        def self.description
+        type_definition(
           "The `Boolean` scalar type represents `true` or `false`."
-        end
+        )
       end
 
       class JSON < Base
-        def self.description
+        type_definition(
           "The `JSON` scalar type represents object data which does not " +
           "neccessarily need a data type of its own. It can contain any other " +
           "scalar."
-        end
+        )
       end
 
     end
