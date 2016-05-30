@@ -9,6 +9,7 @@ module RailsQL
     def initialize(root_builder)
       @root = root_builder
       @data_type_builder_stack = [root]
+      @union_type_builder_stack = []
       @fragments = []
       @data_type_builders = [root]
       @node_stack = []
@@ -23,12 +24,8 @@ module RailsQL
     def end_visit_field(node)
       node_stack.pop
       if within_inline_fragment?
-        # ap node.value
-        # if within_fragment_definition?
-          # @parent_field = nil
-        # elsif within_data_type_within_fragment_definition?
-          @parent_field = @parent_field[:parent]
-        # end
+        @parent_field = @parent_field[:parent] if @parent_field
+        @union_type_builder_stack.pop
       elsif within_fragment_definition?
         @parent_field = nil
       elsif within_data_type?
@@ -41,8 +38,6 @@ module RailsQL
 
     def visit_name(node)
       @current_name = node.value
-      # ap 'visit name'
-      # ap node.value
       case node_stack.last
       when :field then visit_field_name node
       when :fragment_spread then visit_fragment_spread_name node
@@ -58,16 +53,9 @@ module RailsQL
     end
 
     def end_visit_inline_fragment(node)
-      ap ' end visit named'
-       ap @parent_field
-       ap within_fragment_definition?
-      # if within_fragment_definition?
-        # if within_data_type_within_fragment_definition?
-        if @parent_field #&& @parent_field[:parent]
-          @parent_field = @parent_field[:parent]
-        end
-      # end
-      ap @parent_field
+      if @parent_field
+        @parent_field = @parent_field[:parent]
+      end
       @inline_fragment = nil
     end
 
@@ -115,11 +103,6 @@ module RailsQL
             parent: @parent_field
           }
         elsif within_data_type_within_fragment_definition?
-          # ap @parent_field
-          # inline_fragment = @parent_field[:inline_fragments].last
-          # ap 'inline frag'
-          # ap inline_fragment
-          # @parent_field[:inline_fragments][node.value][:fields]
           new_parent_field = {
             name: node.value,
             fields: [],
@@ -130,7 +113,19 @@ module RailsQL
           @parent_field[:fields] << new_parent_field
           @parent_field = new_parent_field
         else
-          current_data_type_builder.add_union_child_builder_field node.value
+          if @union_type_builder_stack.any?
+            @union_type_builder_stack.push(
+              @union_type_builder_stack.last.add_child_builder(
+                node.value
+              )
+            )
+          else
+            @union_type_builder_stack.push(
+              current_data_type_builder.add_union_child_builder_field(
+                node.value
+              )
+            )
+          end
         end
       elsif within_fragment_definition?
         @parent_field = {

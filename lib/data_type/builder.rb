@@ -53,9 +53,11 @@ module RailsQL
       end
 
       def add_union_child_builder(name)
+        # does not return a builder
       end
 
       def add_union_child_builder_field(name)
+        # must return a builder
       end
 
       # idempotent
