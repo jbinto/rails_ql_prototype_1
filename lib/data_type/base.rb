@@ -82,9 +82,9 @@ module RailsQL
       end
 
       class << self
-        def name(name=nil)
-          if name.present?
-            @name = name.strip
+        def name(next_name)
+          if next_name.present?
+            @name = next_name.strip
           else
             @name = nil
           end
@@ -119,9 +119,10 @@ module RailsQL
             is_deprecated: false,
             deprecation_reason: nil
           }.merge opts
-          opts = OpenStruct.new opts
           @enum_values = (@enum_values || {}).merge(
-            Hash[enum_values.map{ |value| [value, opts] }]
+            Hash[enum_values.map{|value|
+              [value, OpenStruct.new(opts.merge(name: value))]
+            }]
           )
         end
 
