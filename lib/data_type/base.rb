@@ -82,7 +82,7 @@ module RailsQL
       end
 
       class << self
-        def name(name=nil)
+        def name(name)
           if name.present?
             @name = name.strip
           else
