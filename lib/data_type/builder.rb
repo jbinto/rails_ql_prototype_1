@@ -52,6 +52,12 @@ module RailsQL
         return child_builder
       end
 
+      def add_union_child_builder(name)
+      end
+
+      def add_union_child_builder_field(name)
+      end
+
       # idempotent
       def add_arg(name, value)
         @args[name.to_s] = value

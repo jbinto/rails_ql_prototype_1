@@ -22,7 +22,14 @@ module RailsQL
 
     def end_visit_field(node)
       node_stack.pop
-      if within_fragment_definition?
+      if within_inline_fragment?
+        # ap node.value
+        # if within_fragment_definition?
+          # @parent_field = nil
+        # elsif within_data_type_within_fragment_definition?
+          @parent_field = @parent_field[:parent]
+        # end
+      elsif within_fragment_definition?
         @parent_field = nil
       elsif within_data_type?
         data_type_builder_stack.pop
@@ -34,20 +41,103 @@ module RailsQL
 
     def visit_name(node)
       @current_name = node.value
+      # ap 'visit name'
+      # ap node.value
       case node_stack.last
       when :field then visit_field_name node
       when :fragment_spread then visit_fragment_spread_name node
       when :fragment_definition then visit_fragment_definition_name node
+      when :inline_fragment then visit_inline_fragment_name node
+      when :named_type then visit_named_type_name node
       end
       visit_node :name, node
     end
 
+    def visit_inline_fragment(node)
+      @inline_fragment = true
+    end
+
+    def end_visit_inline_fragment(node)
+      ap ' end visit named'
+       ap @parent_field
+       ap within_fragment_definition?
+      # if within_fragment_definition?
+        # if within_data_type_within_fragment_definition?
+        if @parent_field #&& @parent_field[:parent]
+          @parent_field = @parent_field[:parent]
+        end
+      # end
+      ap @parent_field
+      @inline_fragment = nil
+    end
+
+    def visit_named_type_name(node)
+      if within_inline_fragment?
+        if within_fragment_definition?
+          @parent_field = {
+            name: node.value,
+            fields: [],
+            fragments: [],
+            inline_fragments: [],
+            parent: nil
+          }
+          @current_fragment[:inline_fragments] << @parent_field
+        elsif within_data_type_within_fragment_definition?
+          new_parent_field = {
+            name: node.value,
+            fields: [],
+            fragments: [],
+            inline_fragments: [],
+            parent: @parent_field
+          }
+          @parent_field[:inline_fragments] << new_parent_field
+          @parent_field = new_parent_field
+        else
+          current_data_type_builder.add_union_child_builder node.value
+        end
+      end
+    end
+
+    def end_visit_named_type(node)
+
+    end
+
     def visit_field_name(node)
-      if within_fragment_definition?
+      if within_inline_fragment?
+        if within_fragment_definition?
+          inline_fragment_name = @current_fragment[:inline_fragments].keys.last
+          @parent_field = @current_fragment[:inline_fragments].last
+          @parent_field[:fields] << {
+            name: node.value,
+            fields: [],
+            fragments: [],
+            inline_fragments: [],
+            parent: @parent_field
+          }
+        elsif within_data_type_within_fragment_definition?
+          # ap @parent_field
+          # inline_fragment = @parent_field[:inline_fragments].last
+          # ap 'inline frag'
+          # ap inline_fragment
+          # @parent_field[:inline_fragments][node.value][:fields]
+          new_parent_field = {
+            name: node.value,
+            fields: [],
+            fragments: [],
+            inline_fragments: [],
+            parent: @parent_field
+          }
+          @parent_field[:fields] << new_parent_field
+          @parent_field = new_parent_field
+        else
+          current_data_type_builder.add_union_child_builder_field node.value
+        end
+      elsif within_fragment_definition?
         @parent_field = {
           name: node.value,
           fields: [],
           fragments: [],
+          inline_fragments: [],
           parent: nil
         }
         @current_fragment[:fields] << @parent_field
@@ -60,6 +150,7 @@ module RailsQL
           name: node.value,
           fields: [],
           fragments: [],
+          inline_fragments: {},
           parent: @parent_field
         }
         @parent_field[:fields] << new_parent_field
@@ -107,6 +198,7 @@ module RailsQL
     end
 
     def end_visit_document(node)
+      ap @fragments
       resolve_fragments!
     end
 
@@ -115,6 +207,7 @@ module RailsQL
       sym, node = args
       name = sym.to_s
       # puts name
+      # ap node.try :value
       if name.match /^visit_/
         visit_node name.gsub("visit_", "").to_sym, node
       elsif name.match /^end_visit_/
@@ -125,7 +218,9 @@ module RailsQL
     end
 
     def visit_node(sym, node)
+      # ap 'node'
       # puts sym
+      # puts node.try :value
       node_stack.push(sym)
       (@current_visitors||[]).each do |visitor|
         visitor.send(:"visit_#{sym}", node)
@@ -163,6 +258,24 @@ module RailsQL
         )
         apply_fragment_to_data_type_builder field, child_data_type_builder
       end if fields.any?
+
+      fragment[:inline_fragments].each do |inline_fragment|
+        child_data_type_builder = data_type_builder.add_union_child_builder(
+          inline_fragment[:name]
+        )
+        fields = inline_fragment[:fields]
+        fields += inline_fragment[:fragments].map do |fragment_name|
+          @fragments.select {|f| f[:name] == fragment_name}.first[:fields]
+        end.flatten
+
+        fields.each do |field|
+          child_data_type_builder = data_type_builder.add_union_child_builder_field(
+            field[:name]
+          )
+          apply_fragment_to_data_type_builder field, child_data_type_builder
+        end if fields.any?
+
+      end unless fragment[:inline_fragments].blank?
     end
 
     # helpers to indicate where in the tree traversal
@@ -177,6 +290,10 @@ module RailsQL
       return false unless @current_fragment.present?
 
       return !within_data_type_within_fragment_definition?
+    end
+
+    def within_inline_fragment?
+      @inline_fragment.present?
     end
 
     # eg: {

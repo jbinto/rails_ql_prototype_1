@@ -33,6 +33,52 @@ describe RailsQL::Visitor do
       visit_graphql "query { hero(id: 3) }"
     end
 
+    it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
+      hero_builder = double
+      weapon_builder = instance_double "RailsQL::DataType::Builder"
+      sheathe_builder = instance_double "RailsQL::DataType::Builder"
+      allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+      allow(hero_builder).to receive(:add_child_builder).and_return weapon_builder
+      expect(weapon_builder).to receive(:add_union_child_builder).with(
+        "sword"
+      )
+      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+        "damage"
+      )
+      expect(weapon_builder).to receive(:add_union_child_builder).with(
+        "crossbow"
+      )
+      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+        "damage"
+      )
+      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+        "sheathe"
+      ).and_return sheathe_builder
+      expect(sheathe_builder).to receive(:add_child_builder).with "length"
+      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+        "range"
+      )
+
+      visit_graphql("
+        query {
+          hero {
+            weapon {
+              ... on sword {
+                damage
+                sheathe {
+                  length
+                }
+              }
+              ... on crossbow {
+                damage
+                range
+              }
+            }
+          }
+        }
+      ")
+    end
+
     it "calls for each subscription" do
       pending
       fail
@@ -58,7 +104,76 @@ describe RailsQL::Visitor do
             query { hero { ...heroFieldsFragment } }
           "
         end
+
+        it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
+          hero_builder = double
+          weapon_builder = instance_double "RailsQL::DataType::Builder"
+          allow(root_builder).to receive(:add_child_builder).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder).and_return weapon_builder
+          expect(weapon_builder).to receive(:add_union_child_builder).with(
+            "sword"
+          )
+          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+            "damage"
+          )
+          expect(weapon_builder).to receive(:add_union_child_builder).with(
+            "crossbow"
+          )
+          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+            "damage"
+          )
+          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+            "range"
+          )
+
+          visit_graphql("
+            fragment weaponFrag on Hero {
+              weapon {
+                ... on sword {
+                  damage
+                }
+                ... on crossbow {
+                  damage
+                  range
+                }
+              }
+            }
+            query {
+              hero {
+                ...weaponFrag
+              }
+            }
+          ")
+        end
       end
+
+      # fragments = [{
+      #   name: weaponFrag,
+      #   fields: [{
+      #     name: "weapon",
+      #     fields: [],
+      #     fragments: [],
+      #     inline_fragments: [
+      #       {
+      #         name: "sword",
+      #         fields: [{
+      #           name: "damage"
+      #         }]
+      #       },
+      #       {
+      #         name: "crossbow",
+      #         fields: [
+      #           {
+      #             name: "damage"
+      #           },
+      #           {
+      #             name: "range"
+      #           }
+      #         ]
+      #       }
+      #     ]
+      #   }]
+      # }]
 
       context "when the fragment is defined after the spread" do
         it "parses queries with fragments into data types" do
@@ -133,10 +248,14 @@ describe RailsQL::Visitor do
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
           expect(hero_builder).to receive(:add_child_builder).with 'description'
+          expect(hero_builder).to receive(:add_child_builder).with 'icon'
 
           visit_graphql "
             fragment frag2 on Hero { ...frag3 }
-            fragment frag3 on Hero { description }
+            fragment frag3 on Hero {
+              description
+              icon
+            }
             fragment heroFieldsFragment on Hero {
               name
             }
