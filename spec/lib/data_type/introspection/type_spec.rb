@@ -8,16 +8,30 @@ describe RailsQL::DataType::Introspection::Type do
     )
   end
 
-  let(:data_type_klass) do
-    klass = Class.new RailsQL::DataType::Base
-    klass.class_eval do
-      def self.name
-        "Panda"
-      end
-      description "https://youtu.be/u155ncSlkCk"
-      field :pandas_are_awesome, data_type: :Boolean
-      field :because_reasons, data_type: :Boolean
+  let(:field_definitions) do
+    definitions = {
+      pandas_are_awesome: instance_double(RailsQL::DataType::FieldDefinition),
+      because_reasons: instance_double(RailsQL::DataType::FieldDefinition)
+    }
+    definitions.each do |name, definition|
+      allow(definition).to receive(:name).and_return name
+      allow(definition).to receive(:deprecated?).and_return false
     end
+    definitions
+  end
+
+  let(:data_type_klass) do
+    klass = class_double RailsQL::DataType::Base
+    allow(klass).to receive(:type_definition).and_return OpenStruct.new(
+      name: "Panda",
+      kind: :OBJECT,
+      enum_values: {
+        mega_panda: OpenStruct.new(name: "mega_panda"),
+        normal_panda: OpenStruct.new(name: "normal_panda")
+      },
+      description: "https://youtu.be/u155ncSlkCk"
+    )
+    allow(klass).to receive(:field_definitions).and_return field_definitions
     klass
   end
 
@@ -79,12 +93,14 @@ describe RailsQL::DataType::Introspection::Type do
     end
   end
 
-  # TODO: enumValues
   describe "[:enumValues]" do
-    it "resolves to an empty array" do
+    it "resolves to an array of the enum values" do
       results = runner.execute!(query: "query {enumValues {name}}").as_json
 
-      expect(results["enumValues"]).to eq []
+      expect(results["enumValues"]).to eq [
+        {"name" => "mega_panda"},
+        {"name" => "normal_panda"}
+      ]
     end
   end
 

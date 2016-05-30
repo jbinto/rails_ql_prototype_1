@@ -15,7 +15,7 @@ module RailsQL
 
         field(:name,
           data_type: :String,
-          nullable: false,
+          nullable: false
         )
 
         field(:description,

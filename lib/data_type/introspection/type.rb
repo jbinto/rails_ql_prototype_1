@@ -72,7 +72,7 @@ module RailsQL
         has_many(:enumValues,
           data_type: "RailsQL::DataType::Introspection::EnumValue",
           resolve: ->(args, child_query) {
-            []
+            model.type_definition.enum_values.values
           }
         )
 
