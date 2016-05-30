@@ -11,7 +11,12 @@ describe RailsQL::DataType::Introspection::Field do
   let(:data_type) do
     data_type = class_double RailsQL::DataType::Base
     allow(data_type).to receive(:data_type?).and_return true
-    allow(data_type).to receive(:name).and_return "MooCow"
+    allow(data_type).to(
+      receive_message_chain(:class, :type_definition, :name).and_return(
+        "MooCow"
+      )
+    )
+
     data_type
   end
 

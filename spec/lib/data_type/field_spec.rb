@@ -12,13 +12,6 @@ describe RailsQL::DataType::Field do
   let(:data_type) do
     data_type = instance_double RailsQL::DataType::Base
     allow(data_type).to receive(:args).and_return({})
-    allow(data_type).to(
-      receive_message_chain(:class, :typd_definition).and_return(
-        OpenStruct.new({
-          name: "a series of tubes"
-        })
-      )
-    )
     data_type
   end
 
