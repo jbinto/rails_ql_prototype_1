@@ -98,11 +98,13 @@ describe RailsQL::DataType::Base do
         expect(results).to eq(
           monkeys: OpenStruct.new(
             is_deprecated: false,
-            deprecation_reason: nil
+            deprecation_reason: nil,
+            name: :monkeys
           ),
           potatoes: OpenStruct.new(
             is_deprecated: false,
-            deprecation_reason: nil
+            deprecation_reason: nil,
+            name: :potatoes
           ),
         )
       end
