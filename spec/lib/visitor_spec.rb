@@ -26,7 +26,7 @@ describe RailsQL::Visitor do
     end
 
     it "calls builder#add_arg for each arg" do
-      hero_builder = double
+      hero_builder = instance_double "RailsQL::DataType::Builder"
       allow(root_builder).to receive(:add_child_builder).and_return hero_builder
       expect(hero_builder).to receive(:add_arg).with('id', 3)
 
@@ -34,7 +34,7 @@ describe RailsQL::Visitor do
     end
 
     it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
-      hero_builder = double
+      hero_builder = instance_double "RailsQL::DataType::Builder"
       weapon_builder = instance_double "RailsQL::DataType::Builder"
       sheathe_builder = instance_double "RailsQL::DataType::Builder"
       allow(root_builder).to receive(:add_child_builder).and_return hero_builder
@@ -95,7 +95,7 @@ describe RailsQL::Visitor do
 
       context "when the fragment is defined before the spread" do
         it "parses queries with fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           expect(hero_builder).to receive(:add_child_builder).with 'name'
 
@@ -106,13 +106,18 @@ describe RailsQL::Visitor do
         end
 
         it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           weapon_builder = instance_double "RailsQL::DataType::Builder"
+          sheathe_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).and_return weapon_builder
           expect(weapon_builder).to receive(:add_union_child_builder).with(
             "sword"
           )
+          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+            "sheathe"
+          ).and_return sheathe_builder
+          expect(sheathe_builder).to receive(:add_child_builder).with "length"
           expect(weapon_builder).to receive(:add_union_child_builder_field).with(
             "damage"
           )
@@ -131,6 +136,9 @@ describe RailsQL::Visitor do
               weapon {
                 ... on sword {
                   damage
+                  sheathe {
+                    length
+                  }
                 }
                 ... on crossbow {
                   damage
@@ -177,7 +185,7 @@ describe RailsQL::Visitor do
 
       context "when the fragment is defined after the spread" do
         it "parses queries with fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           expect(hero_builder).to receive(:add_child_builder).with 'name'
 
@@ -190,7 +198,7 @@ describe RailsQL::Visitor do
 
       context "when the nested fragment is defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
           expect(hero_builder).to receive(:add_child_builder).with 'description'
@@ -208,7 +216,7 @@ describe RailsQL::Visitor do
 
       context "when the nested fragment is defined after the nested spread" do
         it "parses queries with nested fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
           expect(hero_builder).to receive(:add_child_builder).with 'description'
@@ -226,7 +234,7 @@ describe RailsQL::Visitor do
 
       context "when the nested fragment is defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
           expect(hero_builder).to receive(:add_child_builder).with 'description'
@@ -244,7 +252,7 @@ describe RailsQL::Visitor do
 
       context "when two nested fragments are defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
           expect(hero_builder).to receive(:add_child_builder).with 'description'
@@ -269,10 +277,10 @@ describe RailsQL::Visitor do
 
       context "when the nested fragment is not a grandchild of the fragment" do
         it "parses queries with nested fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
-          pet_builder = double
+          pet_builder = instance_double "RailsQL::DataType::Builder"
           expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
             pet_builder
           )
@@ -295,10 +303,10 @@ describe RailsQL::Visitor do
 
       context "when the nested fragment is defined after the nested spread and is not a grandchild of the fragment" do
         it "parses queries with nested fragments into data types" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
-          pet_builder = double
+          pet_builder = instance_double "RailsQL::DataType::Builder"
           expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
             pet_builder
           )
@@ -319,7 +327,7 @@ describe RailsQL::Visitor do
 
        context "when a fragment cycle is circular" do
         it "raises InvalidFragment error" do
-          hero_builder = double
+          hero_builder = instance_double "RailsQL::DataType::Builder"
           allow(root_builder).to receive(:add_child_builder).and_return hero_builder
           allow(hero_builder).to receive(:add_child_builder).with 'name'
           allow(hero_builder).to receive(:add_child_builder).with 'friends'
