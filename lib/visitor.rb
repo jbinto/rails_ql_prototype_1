@@ -76,29 +76,7 @@ module RailsQL
 
     def visit_field_name(node)
       if within_inline_fragment?
-        if within_fragment_definition?
-          inline_fragment_name = @current_fragment[:inline_fragments].keys.last
-          @parent_field = @current_fragment[:inline_fragments].last
-          @parent_field[:fields] << new_field(node.value, @parent_field)
-        elsif within_data_type_within_fragment_definition?
-          new_parent_field = new_field node.value, @parent_field
-          @parent_field[:fields] << new_parent_field
-          @parent_field = new_parent_field
-        else
-          if @union_type_builder_stack.any?
-            @union_type_builder_stack.push(
-              @union_type_builder_stack.last.add_child_builder(
-                node.value
-              )
-            )
-          else
-            @union_type_builder_stack.push(
-              current_data_type_builder.add_union_child_builder_field(
-                node.value
-              )
-            )
-          end
-        end
+        visit_field_name_in_inline_fragment node
       elsif within_fragment_definition?
         @parent_field = new_field node.value
         @current_fragment[:fields] << @parent_field
@@ -107,9 +85,26 @@ module RailsQL
         @data_type_builder_stack.push child_data_type
         @data_type_builders << child_data_type
       elsif within_data_type_within_fragment_definition?
-        new_parent_field = new_field node.value, @parent_field
-        @parent_field[:fields] << new_parent_field
-        @parent_field = new_parent_field
+        new_parent_field node.value
+      end
+    end
+
+    def visit_field_name_in_inline_fragment(node)
+      if within_fragment_definition?
+        @parent_field = @current_fragment[:inline_fragments].last
+        @parent_field[:fields] << new_field(node.value, @parent_field)
+      elsif within_data_type_within_fragment_definition?
+        new_parent_field node.value
+      else
+        if @union_type_builder_stack.any?
+          @union_type_builder_stack.push(
+            @union_type_builder_stack.last.add_child_builder(node.value)
+          )
+        else
+          @union_type_builder_stack.push(
+            current_data_type_builder.add_union_child_builder_field(node.value)
+          )
+        end
       end
     end
 
@@ -167,19 +162,19 @@ module RailsQL
 
     def visit_node(sym, node)
       node_stack.push(sym)
-      (@current_visitors||[]).each do |visitor|
-        visitor.send(:"visit_#{sym}", node)
-      end
     end
 
     def end_visit_node(sym, node)
       node_stack.pop
-      (@current_visitors||[]).each do |visitor|
-        visitor.send(:"end_visit_#{sym}", node)
-      end
     end
 
     private
+
+    def new_parent_field(name)
+      new_parent_field = new_field name, @parent_field
+      @parent_field[:fields] << new_parent_field
+      @parent_field = new_parent_field
+    end
 
     def new_field(name, parent=nil)
       return {
