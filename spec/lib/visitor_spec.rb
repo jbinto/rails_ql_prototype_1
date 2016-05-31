@@ -157,34 +157,6 @@ describe RailsQL::Visitor do
         end
       end
 
-      # fragments = [{
-      #   name: weaponFrag,
-      #   fields: [{
-      #     name: "weapon",
-      #     fields: [],
-      #     fragments: [],
-      #     inline_fragments: [
-      #       {
-      #         name: "sword",
-      #         fields: [{
-      #           name: "damage"
-      #         }]
-      #       },
-      #       {
-      #         name: "crossbow",
-      #         fields: [
-      #           {
-      #             name: "damage"
-      #           },
-      #           {
-      #             name: "range"
-      #           }
-      #         ]
-      #       }
-      #     ]
-      #   }]
-      # }]
-
       context "when the fragment is defined after the spread" do
         it "parses queries with fragments into data types" do
           hero_builder = instance_double "RailsQL::DataType::Builder"
