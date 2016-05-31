@@ -193,7 +193,6 @@ module RailsQL
     end
 
     def end_visit_document(node)
-      ap @fragments
       resolve_fragments!
     end
 
