@@ -83,9 +83,6 @@ module RailsQL
 
       class << self
         def type_name(next_name)
-          ap 'hi'
-          ap next_name
-          ap self
           if next_name.present?
             @name = next_name.strip
           else
