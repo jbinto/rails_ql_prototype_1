@@ -196,6 +196,8 @@ describe RailsQL::DataType::Base do
   describe "#resolve_child_data_types!" do
     before :each do
       @data_type = data_type_klass.new
+      ap @data_type
+      ap '-----'
       @field = instance_double RailsQL::DataType::Field
       allow(@data_type).to receive(:fields).and_return(fake_field: @field)
       allow(@field).to receive :parent_data_type=

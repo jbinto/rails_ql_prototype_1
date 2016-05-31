@@ -5,7 +5,7 @@ module RailsQL
   module DataType
     module Introspection
       class Directive < Base
-        name "__Directive"
+        type_name "__Directive"
 
         description <<-eos
         eos

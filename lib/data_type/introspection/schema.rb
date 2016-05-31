@@ -5,7 +5,7 @@ module RailsQL
   module DataType
     module Introspection
       class Schema < Base
-        name "__Schema"
+        type_name "__Schema"
         description <<-eos
           A GraphQL Schema defines the capabilities of a GraphQL server. It
           exposes all available types and directives on the server, as well as

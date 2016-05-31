@@ -5,7 +5,7 @@ module RailsQL
   module DataType
     module Introspection
       class InputValue < Base
-        name "__InputValue"
+        type_name "__InputValue"
 
         description <<-eos
           Object and Interface types are described by a list of Fields, each of

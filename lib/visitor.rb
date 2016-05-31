@@ -59,16 +59,6 @@ module RailsQL
       @inline_fragment = nil
     end
 
-    def new_field(name, parent=nil)
-      {
-        name: name,
-        fields: [],
-        fragments: [],
-        inline_fragments: [],
-        parent: parent
-      }
-    end
-
     def visit_named_type_name(node)
       if within_inline_fragment?
         if within_fragment_definition?
@@ -82,10 +72,6 @@ module RailsQL
           current_data_type_builder.add_union_child_builder node.value
         end
       end
-    end
-
-    def end_visit_named_type(node)
-
     end
 
     def visit_field_name(node)
@@ -195,6 +181,16 @@ module RailsQL
 
     private
 
+    def new_field(name, parent=nil)
+      return {
+        name: name,
+        fields: [],
+        fragments: [],
+        inline_fragments: [],
+        parent: parent
+      }
+    end
+
     def resolve_fragments!
       @data_type_builders.each do |data_type_builder|
         @fragments.each do |fragment|
@@ -218,6 +214,12 @@ module RailsQL
         apply_fragment_to_data_type_builder field, child_data_type_builder
       end if fields.any?
 
+      apply_inline_fragments_to_data_type_builder fragment, data_type_builder
+    end
+
+    def apply_inline_fragments_to_data_type_builder(fragment, data_type_builder)
+      return if fragment[:inline_fragments].blank?
+
       fragment[:inline_fragments].each do |inline_fragment|
         child_data_type_builder = data_type_builder.add_union_child_builder(
           inline_fragment[:name]
@@ -233,8 +235,7 @@ module RailsQL
           )
           apply_fragment_to_data_type_builder field, child_data_type_builder
         end if fields.any?
-
-      end unless fragment[:inline_fragments].blank?
+      end
     end
 
     # helpers to indicate where in the tree traversal
@@ -251,6 +252,15 @@ module RailsQL
       return !within_data_type_within_fragment_definition?
     end
 
+    # eg: {
+    #   weapon {
+    #     ... on sword {
+    #       here
+    #     }
+    #     ... on crossbow {
+    #     }
+    #   }
+    # }
     def within_inline_fragment?
       @inline_fragment.present?
     end

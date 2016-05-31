@@ -5,7 +5,7 @@ module RailsQL
   module DataType
     module Introspection
       class EnumValue < Base
-        name "__EnumValue"
+        type_name "__EnumValue"
 
         description <<-eos
           One possible value for a given Enum. Enum values are unique values,

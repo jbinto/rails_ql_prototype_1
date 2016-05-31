@@ -11,7 +11,7 @@ describe RailsQL::DataType::Introspection::Schema do
   let(:user_data_type) do
     klass = Class.new RailsQL::DataType::Base
     klass.class_eval do
-      name "User"
+      type_name "User"
       field :email, data_type: :String
       # Recursive association
       field :friends, data_type: klass
@@ -23,7 +23,7 @@ describe RailsQL::DataType::Introspection::Schema do
     klass = Class.new RailsQL::DataType::Base
     klass.field :user, data_type: user_data_type
     klass.class_eval do
-      name "Root"
+      type_name "Root"
       field :user_count, data_type: :Integer
     end
     klass

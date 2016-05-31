@@ -5,7 +5,7 @@ module RailsQL
   module DataType
     module Introspection
       class Field < Base
-        name "__Field"
+        type_name "__Field"
 
         description <<-eos
           Object and Interface types are described by a list of Fields, each of
