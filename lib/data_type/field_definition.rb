@@ -14,6 +14,7 @@ module RailsQL
         :description,
         :nullable,
         :child_ctx,
+        :union,
         :name,
       )
 
@@ -50,6 +51,7 @@ module RailsQL
           nullable: true,
           deprecated: false,
           singular: true,
+          union: false,
           child_ctx: {},
           resolve: nil,
           query: nil

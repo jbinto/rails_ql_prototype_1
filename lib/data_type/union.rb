@@ -19,11 +19,31 @@ module RailsQL
         without the use of typed fragments.
       eos
 
-      #
-      def resolve_child_data_types!
-      end
+      # unions(
+      #   {name: "sword", data_type: "SwordDataType, model_klass: "Sword"},
+      #   {name: "cross_bow", data_type: "CrossBowDataType, model_klass: "CrossBow"}
+      # )
+      class << self
+        def unions(*union_definitions)
+          return nil if union_definitions.blank?
 
-      def as_json
+          union_definitions = union_definitions.map &:symbolize_keys!
+
+          union_definitions.each do |union_definition|
+            field(union_definition[:name],
+              union_definition.slice(:data_type, :model_klass).merge(
+                union: true,
+                nullable: true,
+                singular: true,
+                resolve: ->(args, child_query){
+                  if model.kind_of?(union_definition[:model_klass].constantize)
+                    model
+                  end
+                }
+              )
+            )
+          end
+        end
       end
     end
   end

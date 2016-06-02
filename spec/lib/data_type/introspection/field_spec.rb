@@ -9,15 +9,18 @@ describe RailsQL::DataType::Introspection::Field do
   end
 
   let(:data_type) do
-    data_type = class_double RailsQL::DataType::Base
-    allow(data_type).to receive(:data_type?).and_return true
-    allow(data_type).to(
-      receive_message_chain(:class, :type_definition, :name).and_return(
-        "MooCow"
+    data_type_klass = class_double RailsQL::DataType::Base
+    allow(data_type_klass).to receive(:data_type?).and_return true
+    allow(data_type_klass).to receive(:type_definition).and_return(
+      OpenStruct.new(
+        name: "MooCow",
+        kind: :OBJECT,
+        enum_values: {},
+        description: "https://youtu.be/u155ncSlkCk"
       )
     )
 
-    data_type
+    data_type_klass
   end
 
   let(:field_definition) do

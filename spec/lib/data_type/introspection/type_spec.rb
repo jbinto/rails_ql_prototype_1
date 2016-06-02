@@ -21,7 +21,7 @@ describe RailsQL::DataType::Introspection::Type do
   end
 
   let(:data_type_klass) do
-    klass = class_double RailsQL::DataType::Primative::String
+    klass = class_double RailsQL::DataType::Base
     allow(klass).to receive(:type_definition).and_return OpenStruct.new(
       name: "Panda",
       kind: :OBJECT,
