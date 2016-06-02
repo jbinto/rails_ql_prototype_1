@@ -40,6 +40,28 @@ module RailsQL
         end
       end
 
+      # weapon
+      #   unions :sword, :crossbow
+
+      #   fields: [
+      #     {
+      #       name: :sword,
+      #       field_definition: self.class.field_definitions[:sword],
+      #       parent_data_type: self,
+      #       data_type: SwordDataType
+      #     },
+      #     {
+      #       name: name,
+      #       field_definition: self.class.field_definitions[name],
+      #       parent_data_type: self,
+      #       data_type: CrossBowDataType
+      #     }
+      #   ]
+
+      # SwordFieldDefinition: {
+      #   resolve: ->{model if model.kind_of?(Sword)}
+      # }
+
       def root?
         @root
       end
