@@ -27,7 +27,7 @@ module RailsQL
           singular: true,
           query: nil,
           resolve: ->(args, child_query){
-            model.data_type_klass.class
+            model.data_type_klass
           }
         )
         field(:isDeprecated,
