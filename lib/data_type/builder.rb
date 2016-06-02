@@ -50,39 +50,39 @@ module RailsQL
 
       # try to use existing add_child_builder api for unions
       # instead of this new api
-      # but first, implement the union data type class 
+      # but first, implement the union data type class
 
       def add_union_child_builder(name)
-        # # does not return a builder
-        # if field_definitions[name] == nil
-        #   raise "Invalid field #{name} on #{@data_type_klass}"
-        # end
+      #   # # does not return a builder
+      #   # if field_definitions[name] == nil
+      #   #   raise "Invalid field #{name} on #{@data_type_klass}"
+      #   # end
 
-        # @union_child_builders[name] = {
-        #   child_builders: {}
-        # }
-        if field_definitions[name] == nil
-          raise "Invalid field #{name} on #{@data_type_klass}"
-        end
-        return @child_builders[name] if @child_builders[name].present?
+      #   # @union_child_builders[name] = {
+      #   #   child_builders: {}
+      #   # }
+      #   if field_definitions[name] == nil
+      #     raise "Invalid field #{name} on #{@data_type_klass}"
+      #   end
+      #   return @child_builders[name] if @child_builders[name].present?
 
-        field_definition = field_definitions[name]
-        data_type_klass = field_definition.data_type
+      #   field_definition = field_definitions[name]
+      #   data_type_klass = field_definition.data_type
 
-        child_builder = Builder.new(
-          data_type_klass: data_type_klass,
-          ctx: @ctx.merge(field_definition.child_ctx),
-          root: false
-        )
+      #   child_builder = Builder.new(
+      #     data_type_klass: data_type_klass,
+      #     ctx: @ctx.merge(field_definition.child_ctx),
+      #     root: false
+      #   )
 
-        @child_builders[name] = child_builder
-        return child_builder
+      #   @child_builders[name] = child_builder
+      #   return child_builder
       end
 
       def add_union_child_builder_field(name)
-        # must return a builder
-        latest_union_data_type_name = @union_child_builders.keys.last
-        @union_child_builders[latest_union_data_type_name][child_builders][name] =
+      #   # must return a builder
+      #   latest_union_data_type_name = @union_child_builders.keys.last
+      #   @union_child_builders[latest_union_data_type_name][child_builders][name] =
 
       end
 
@@ -102,9 +102,6 @@ module RailsQL
       def unresolved_fragments
         @unresolved_fragments ||= []
       end
-
-      # def add_unresolved_fragment
-      # end
 
       private
 
