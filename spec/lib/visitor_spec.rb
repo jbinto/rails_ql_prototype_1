@@ -33,31 +33,37 @@ describe RailsQL::Visitor do
       visit_graphql "query { hero(id: 3) }"
     end
 
-    it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
+    def union_setup
       hero_builder = instance_double "RailsQL::DataType::Builder"
       weapon_builder = instance_double "RailsQL::DataType::Builder"
       sheathe_builder = instance_double "RailsQL::DataType::Builder"
+      sword_builder = instance_double "RailsQL::DataType::Builder"
+      crossbow_builder = instance_double "RailsQL::DataType::Builder"
       allow(root_builder).to receive(:add_child_builder).and_return hero_builder
       allow(hero_builder).to receive(:add_child_builder).and_return weapon_builder
-      expect(weapon_builder).to receive(:add_union_child_builder).with(
+      expect(weapon_builder).to receive(:add_child_builder).with(
         "sword"
-      )
-      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+      ).and_return(sword_builder)
+      expect(sword_builder).to receive(:add_child_builder).with(
         "damage"
       )
-      expect(weapon_builder).to receive(:add_union_child_builder).with(
-        "crossbow"
-      )
-      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
-        "damage"
-      )
-      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+      expect(weapon_builder).to receive(:add_child_builder).with(
         "sheathe"
       ).and_return sheathe_builder
       expect(sheathe_builder).to receive(:add_child_builder).with "length"
-      expect(weapon_builder).to receive(:add_union_child_builder_field).with(
+      expect(weapon_builder).to receive(:add_child_builder).with(
+        "crossbow"
+      ).and_return crossbow_builder
+      expect(crossbow_builder).to receive(:add_child_builder).with(
+        "damage"
+      )
+      expect(crossbow_builder).to receive(:add_child_builder).with(
         "range"
       )
+    end
+
+    it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
+      union_setup
 
       visit_graphql("
         query {
@@ -106,32 +112,7 @@ describe RailsQL::Visitor do
         end
 
         it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
-          weapon_builder = instance_double "RailsQL::DataType::Builder"
-          sheathe_builder = instance_double "RailsQL::DataType::Builder"
-          hero_builder = double
-          allow(root_builder).to receive(:add_child_builder).with(
-            'hero'
-          ).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).and_return weapon_builder
-          expect(weapon_builder).to receive(:add_union_child_builder).with(
-            "sword"
-          )
-          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
-            "sheathe"
-          ).and_return sheathe_builder
-          expect(sheathe_builder).to receive(:add_child_builder).with "length"
-          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
-            "damage"
-          )
-          expect(weapon_builder).to receive(:add_union_child_builder).with(
-            "crossbow"
-          )
-          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
-            "damage"
-          )
-          expect(weapon_builder).to receive(:add_union_child_builder_field).with(
-            "range"
-          )
+          union_setup
 
           visit_graphql("
             fragment weaponFrag on Hero {

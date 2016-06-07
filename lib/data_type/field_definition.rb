@@ -141,8 +141,14 @@ module RailsQL
           )
         elsif parent_data_type.respond_to? @name
           parent_data_type.send @name
+        elsif parent_data_type.model.respond_to? @name
+          parent_data_type.model.send @name
         else
-          parent_data_type.model.try @name
+          raise(
+            RailsQL::NullResolve,
+            "#{parent_data_type.class}##{@name} does not have an explicit " +
+            "resolve, nor does the model respond to :#{@name}."
+          )
         end
       end
     end
