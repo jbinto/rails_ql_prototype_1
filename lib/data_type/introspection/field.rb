@@ -30,6 +30,7 @@ module RailsQL
             model.data_type_klass
           }
         )
+        field :singular, data_type: :Boolean
         field(:isDeprecated,
           data_type: :Boolean,
           resolve: ->(args, child_query) {
@@ -46,6 +47,7 @@ module RailsQL
         can :read, fields: [
           :name,
           :description,
+          :singular,
           :args,
           :type,
           :isDeprecated,

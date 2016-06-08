@@ -16,6 +16,7 @@ module RailsQL
         :child_ctx,
         :union,
         :name,
+        :singular
       )
 
       ARG_TYPE_TO_RUBY_CLASSES = {
