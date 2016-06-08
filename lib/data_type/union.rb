@@ -19,6 +19,12 @@ module RailsQL
         without the use of typed fragments.
       eos
 
+      def as_json
+        json = super
+
+        return json[@resolved_type]
+      end
+
       # unions(
       #   {name: "sword", data_type: "SwordDataType, model_klass: "Sword"},
       #   {name: "cross_bow", data_type: "CrossBowDataType, model_klass: "CrossBow"}
@@ -37,6 +43,7 @@ module RailsQL
                 singular: true,
                 resolve: ->(args, child_query){
                   if model.kind_of?(union_definition[:model_klass].constantize)
+                    @resolved_type = union_definition[:name]
                     model
                   end
                 }

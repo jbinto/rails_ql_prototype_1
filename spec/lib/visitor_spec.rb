@@ -34,20 +34,24 @@ describe RailsQL::Visitor do
     end
 
     def union_setup
-      hero_builder = instance_double "RailsQL::DataType::Builder"
+      hero_builder = double
       weapon_builder = instance_double "RailsQL::DataType::Builder"
       sheathe_builder = instance_double "RailsQL::DataType::Builder"
       sword_builder = instance_double "RailsQL::DataType::Builder"
       crossbow_builder = instance_double "RailsQL::DataType::Builder"
-      allow(root_builder).to receive(:add_child_builder).and_return hero_builder
-      allow(hero_builder).to receive(:add_child_builder).and_return weapon_builder
+      allow(root_builder).to receive(:add_child_builder).with(
+        "hero"
+      ).and_return hero_builder
+      allow(hero_builder).to receive(:add_child_builder).with(
+        "weapon"
+      ).and_return weapon_builder
       expect(weapon_builder).to receive(:add_child_builder).with(
         "sword"
       ).and_return(sword_builder)
       expect(sword_builder).to receive(:add_child_builder).with(
         "damage"
       )
-      expect(weapon_builder).to receive(:add_child_builder).with(
+      expect(sword_builder).to receive(:add_child_builder).with(
         "sheathe"
       ).and_return sheathe_builder
       expect(sheathe_builder).to receive(:add_child_builder).with "length"
@@ -62,20 +66,20 @@ describe RailsQL::Visitor do
       )
     end
 
-    it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
+    it "calls builder#add_child_builder for each union child field node when defined in fragment" do
       union_setup
 
       visit_graphql("
         query {
           hero {
             weapon {
-              ... on sword {
+              ... on Sword {
                 damage
                 sheathe {
                   length
                 }
               }
-              ... on crossbow {
+              ... on Crossbow {
                 damage
                 range
               }
@@ -111,19 +115,19 @@ describe RailsQL::Visitor do
           "
         end
 
-        it "calls builder#add_union_child_builder for each union child field node when defined in fragment" do
+        it "calls builder#add_child_builder for each union child field node when defined in fragment" do
           union_setup
 
           visit_graphql("
             fragment weaponFrag on Hero {
               weapon {
-                ... on sword {
+                ... on Sword {
                   damage
                   sheathe {
                     length
                   }
                 }
-                ... on crossbow {
+                ... on Crossbow {
                   damage
                   range
                 }

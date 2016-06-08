@@ -182,7 +182,7 @@ describe RailsQL::DataType::FieldDefinition do
             "parent_model_field"
           )
           data_type = instance_double RailsQL::DataType::Base
-          expect(data_type).to receive(:model).and_return parent_model
+          expect(data_type).to receive(:model).twice.and_return parent_model
           field_definition = described_class.new "stuff", resolve: nil
 
           expect(field_definition.resolve(
