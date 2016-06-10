@@ -44,7 +44,10 @@ module RailsQL
                 resolve: ->(args, child_query){
                   model_klass =
                     if union_definition[:model_klass].kind_of? Proc
-                      union_definition[:model_klass].call.to_s.constantize
+                      self.instance_exec(
+                        &union_definition[:model_klass]
+                      ).to_s.constantize
+                      # union_definition[:model_klass].call.to_s.constantize
                     else
                       union_definition[:model_klass].to_s.constantize
                     end
