@@ -33,7 +33,7 @@ describe RailsQL::DataType::Union do
       data_type_klass.unions(
         {name: "sword", data_type: "SwordDataType", model_klass: "Sword"},
         {name: "crossbow", data_type: "CrossbowDataType",
-          model_klass: "Crossbow"
+          model_klass: ->{"Crossbow"}
         }
       )
       data_type_klass.can :read, fields: [:sword, :crossbow]
