@@ -40,7 +40,7 @@ describe RailsQL::DataType::Builder do
         'child_data_type' => @field_definition
       )
     end
-    
+
     context "when association field exists" do
       it "intantiates the child builder and adds to builder#child_builders" do
         child_builder = @builder.add_child_builder "child_data_type"
@@ -84,34 +84,6 @@ describe RailsQL::DataType::Builder do
 
       expect(@builder.args['string_key']).to eq "string_value"
       expect(@builder.args['int_key']).to eq 3
-    end
-  end
-
-  describe "#add_union_child_builder" do
-    before :each do
-      allow(@builder).to receive(:data_type_klass).and_return @mocked_data_type
-      @field_definition = instance_double RailsQL::DataType::FieldDefinition
-      allow(@field_definition).to receive(:data_type).and_return "mocked_data_type"
-      allow(@field_definition).to receive(:child_ctx).and_return({})
-      allow(@mocked_data_type).to receive(:field_definitions).and_return(
-        'child_data_type' => @field_definition
-      )
-    end
-  
-    context "when association field exists" do
-    end
-
-    context "when association field does not exist" do
-      it "raises invalid field error" do
-        expect{@builder.add_union_child_builder 'invalid_data_type'}.to(
-          raise_error
-        )
-      end
-    end
-  end
-
-  describe "#add_union_child_builder_field" do
-    it "adds a field to the last union_child_builder" do
     end
   end
 end

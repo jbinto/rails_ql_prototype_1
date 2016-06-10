@@ -69,7 +69,9 @@ module RailsQL
           @parent_field[:inline_fragments] << new_parent_field
           @parent_field = new_parent_field
         else
-          current_data_type_builder.add_union_child_builder node.value
+          @union_type_builder_stack.push(
+            current_data_type_builder.add_child_builder node.value.downcase
+          )
         end
       end
     end
@@ -96,15 +98,10 @@ module RailsQL
       elsif within_data_type_within_fragment_definition?
         new_parent_field node.value
       else
-        if @union_type_builder_stack.any?
-          @union_type_builder_stack.push(
-            @union_type_builder_stack.last.add_child_builder(node.value)
-          )
-        else
-          @union_type_builder_stack.push(
-            current_data_type_builder.add_union_child_builder_field(node.value)
-          )
-        end
+        @union_type_builder_stack.push(
+          (@union_type_builder_stack.last || current_data_type_builder)
+            .add_child_builder(node.value.downcase)
+        )
       end
     end
 
@@ -216,20 +213,13 @@ module RailsQL
       return if fragment[:inline_fragments].blank?
 
       fragment[:inline_fragments].each do |inline_fragment|
-        child_data_type_builder = data_type_builder.add_union_child_builder(
-          inline_fragment[:name]
+        child_data_type_builder = data_type_builder.add_child_builder(
+          inline_fragment[:name].downcase
         )
-        fields = inline_fragment[:fields]
-        fields += inline_fragment[:fragments].map do |fragment_name|
-          @fragments.select {|f| f[:name] == fragment_name}.first[:fields]
-        end.flatten
-
-        fields.each do |field|
-          child_data_type_builder = data_type_builder.add_union_child_builder_field(
-            field[:name]
-          )
-          apply_fragment_to_data_type_builder field, child_data_type_builder
-        end if fields.any?
+        apply_fragment_to_data_type_builder(
+          inline_fragment,
+          child_data_type_builder
+        )
       end
     end
 
