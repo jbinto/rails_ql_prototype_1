@@ -27,8 +27,8 @@ describe RailsQL::DataType::Introspection::Field do
     RailsQL::DataType::FieldDefinition.new("mooCows",
       data_type: data_type,
       description: "cows are awesome",
-      required_args: {how_many_cows: :IntValue},
-      optional_args: {allow_future_cows: :BooleanValue},
+      required_args: {how_many_cows: {type: :Int}},
+      optional_args: {allow_future_cows: {type: :Boolean}},
       nullable: true,
       deprecated: false,
     )

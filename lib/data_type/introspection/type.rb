@@ -40,7 +40,7 @@ module RailsQL
         )
 
         has_many(:fields,
-          optional_args: {include_deprecated: "BooleanValue"},
+          optional_args: {include_deprecated: {type: "Boolean"}},
           data_type: "RailsQL::DataType::Introspection::Field",
           resolve: ->(args, child_query){
             definitions = model.field_definitions

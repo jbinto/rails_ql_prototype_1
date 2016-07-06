@@ -18,29 +18,7 @@ module RailsQL
       end
 
       def validate_args!
-        required_args = @field_definition.required_args.symbolize_keys
-        arg_whitelist = @field_definition.arg_whitelist
-        arg_keys = data_type_args.keys
-
-        unless (forbidden_args = arg_keys - arg_whitelist).empty?
-          raise ForbiddenArg, "Invalid args: #{forbidden_args} for #{@name}"
-        end
-
-        unless (missing_required_args = required_args.keys - arg_keys).empty?
-          raise(
-            ArgMissing,
-            "Missing required args: #{missing_required_args} for #{@name}"
-          )
-        end
-
-        data_type_args.each do |k, v|
-          unless @field_definition.arg_value_matches_type? k, v
-            raise(
-              ArgTypeError,
-              "#{k} => #{v} (#{v.class}) is not a valid input value for #{@name}"
-            )
-          end
-        end
+        @field_definition.args.validate_input_args! data_type_args
       end
 
       def nullable?
