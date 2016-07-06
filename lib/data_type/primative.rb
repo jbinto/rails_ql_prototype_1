@@ -62,7 +62,7 @@ module RailsQL
         )
       end
 
-      class Integer < Base
+      class Int < Base
         type_definition(
           "The `Int` scalar type represents non-fractional signed whole numeric " +
           "values. Int can represent values between -(2^53 - 1) and 2^53 - 1 " +

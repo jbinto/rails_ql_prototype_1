@@ -24,7 +24,7 @@ describe RailsQL::DataType::Introspection::Schema do
     klass.field :user, data_type: user_data_type
     klass.class_eval do
       type_name "Root"
-      field :user_count, data_type: :Integer
+      field :user_count, data_type: :Int
     end
     klass
   end
@@ -41,7 +41,7 @@ describe RailsQL::DataType::Introspection::Schema do
         "Root",
         "User",
         "String",
-        "Integer"
+        "Int"
       ].sort
     end
   end

@@ -24,11 +24,11 @@ describe RailsQL::DataType::Union do
       Sword = Class.new
       Crossbow = Class.new
       SwordDataType = Class.new RailsQL::DataType::Base
-      SwordDataType.field :damage, data_type: "Integer"
+      SwordDataType.field :damage, data_type: "Int"
       SwordDataType.can :read, fields: [:damage]
       CrossbowDataType = Class.new RailsQL::DataType::Base
-      CrossbowDataType.field :damage, data_type: "Integer"
-      CrossbowDataType.field :range, data_type: "Integer"
+      CrossbowDataType.field :damage, data_type: "Int"
+      CrossbowDataType.field :range, data_type: "Int"
       CrossbowDataType.can :read, fields: [:damage, :range]
       data_type_klass.unions(
         {name: "sword", data_type: "SwordDataType", model_klass: "Sword"},

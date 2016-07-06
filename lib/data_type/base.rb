@@ -9,7 +9,6 @@ module RailsQL
 
       include Can
 
-      PRIMITIVE_DATA_TYPES = %w(RailsQL::DataType::String)
       attr_reader :args, :ctx, :query
       attr_accessor :model, :fields
 
@@ -39,28 +38,6 @@ module RailsQL
           @query = instance_exec &self.class.get_initial_query
         end
       end
-
-      # weapon
-      #   unions :sword, :crossbow
-
-      #   fields: [
-      #     {
-      #       name: :sword,
-      #       field_definition: self.class.field_definitions[:sword],
-      #       parent_data_type: self,
-      #       data_type: SwordDataType
-      #     },
-      #     {
-      #       name: name,
-      #       field_definition: self.class.field_definitions[name],
-      #       parent_data_type: self,
-      #       data_type: CrossBowDataType
-      #     }
-      #   ]
-
-      # SwordFieldDefinition: {
-      #   resolve: ->{model if model.kind_of?(Sword)}
-      # }
 
       def root?
         @root
