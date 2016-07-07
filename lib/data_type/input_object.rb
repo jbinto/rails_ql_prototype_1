@@ -37,7 +37,8 @@ module RailsQL
             raise ForbiddenArg, "Invalid args: #{forbidden_args}"
           end
 
-          unless (missing_args = required_args.keys - input_args.keys).empty?
+          required_keys = required_args.symbolize_keys.keys
+          unless (missing_args = required_keys - input_args.keys).empty?
             raise(
               ArgMissing,
               "Missing required args: #{missing_args}"
@@ -66,12 +67,6 @@ end
 # end
 #
 #
-# # has_one(:venue, args: MyVenueFindArgType)
-# #
-# # class MyVenueFindArgType < InputObject
-# #   input_field :id, type: "Int"
-# # end
-#
 # has_one(:venue, args: -> (args) {
 #   args == class.new InputObject
 #   args.anonymous = true
@@ -79,16 +74,3 @@ end
 #   args.input_field :id, type: "Int", optional: false, description: "blah"
 #   args.input_field :address, type: "AdressType", optional: false, description: "blah"
 # })
-#
-# field_definition
-#   name :venue
-#   args InputObject
-#     .input_field_definitions [
-#       InputFieldDefinition.new(:id, type: "Int"),
-#       InputFieldDefinition.new(:address, type: AdressType)
-#         input_field_definitions [
-#           InputFieldDefinition.new(:street, type: "String")
-#           InputFieldDefinition.new(:house_number, type: "Int")
-#         ]
-#       )
-#     ]

@@ -1,62 +1,87 @@
 require "spec_helper"
 
 describe RailsQL::DataType::InputObject do
-  describe "#validate_arg_types!" do
-    context "when args have types belonging to .ARG_TYPES" do
+  let(:input_obj_klass) {Class.new described_class}
+
+  describe "#validate_input_args!" do
+    before :each do
+      input_obj_klass.input_field(:id,
+        type: "Int", description: "The identifier value"
+      )
+    end
+
+    context "when args have keys belonging to the defined args" do
       it "does not raise an error" do
-        described_class.input_field(:id,
-          type: "Int", description: "The identifier value"
-        )
-        expect{described_class.validate_arg_types!}.to_not raise_error
+        expect{input_obj_klass.validate_input_args!(id: 3)}.to_not raise_error
       end
     end
 
-    context "when optional or required args have types not belonging to .ARG_TYPES" do
-      context "when type is defined" do
-
+    context "when args have keys not belonging to the defined args" do
+      it "raises an error" do
+        expect{input_obj_klass.validate_input_args!(bogus_key: 3)}.to raise_error
       end
-      context "when type is not defined"
+    end
+
+    context "with required args" do
+      before :each do
+        input_obj_klass.input_field(:required_arg,
+          type: "String", description: "Required!!", optional: false
+        )
+      end
+
+      context "when all required args are present" do
+        it "does not raise an error" do
+          expect{input_obj_klass.validate_input_args!(
+            required_arg: "Requirement satisfied!"
+          )}.to_not raise_error
+        end
+      end
+
+      context "when all required args are not present" do
         it "raises an error" do
-          @field_definition.args[:id] = "FakeTypeValue"
-          expect{@field_definition.validate_arg_types!}.to raise_error
+          expect{input_obj_klass.validate_input_args!(id: 3)}.to raise_error
         end
       end
     end
-  end
 
-  describe "arg_value_matches_type?" do
-    it "returns whether or not the arg value class is included in the defined types" do
-      field_definition = described_class.new "stuff", optional_args: {
-        id: {type: "Int"},
-        name: {type: "String"},
-        complete: {type: "Boolean"}
-        # address: {type: "AddressType"}
-      }
+    context "with nested input_object args" do
+      before :each do
+        NestedInputObj = Class.new described_class
+        NestedInputObj.input_field :x, type: "Int", optional: true
+        NestedInputObj.input_field :y, type: "Int", optional: false
+        input_obj_klass.input_field(:nested,
+          type: "NestedInputObj", description: "Required!!", optional: true
+        )
+      end
 
-      expect(field_definition.arg_value_matches_type?(:id, 3)).to eq true
-      expect(field_definition.arg_value_matches_type?(:id, '3')).to eq false
-      expect(field_definition.arg_value_matches_type?(:id, true)).to eq false
+      context "when nested args have keys belonging to the defined nested args" do
+        it "does not raise an error" do
+          expect{input_obj_klass.validate_input_args!(
+            nested: {x: 1, y: 2}
+          )}.to_not raise_error
+        end
+      end
 
-      expect(field_definition.arg_value_matches_type?(:name, 'steve')).to eq(
-        true
-      )
-      expect(field_definition.arg_value_matches_type?(:name, 3)).to eq false
+      context "when nested args have keys not belonging to the defined nested args" do
+        it "does raises an error" do
+          expect{input_obj_klass.validate_input_args!(
+            nested: {x: 1, y: 2, z: 3}
+          )}.to raise_error
+        end
+      end
 
-      expect(field_definition.arg_value_matches_type?(:complete, true)).to eq(
-        true
-      )
-      expect(field_definition.arg_value_matches_type?(:complete, false)).to eq(
-        true
-      )
-      expect(field_definition.arg_value_matches_type?(:complete, 3)).to eq false
+      context "when nested args does not have required keys" do
+        it "does raises an error" do
+          expect{input_obj_klass.validate_input_args!(
+            nested: {x: 1}
+          )}.to raise_error
+          expect{input_obj_klass.validate_input_args!(nested: {})}.to raise_error
 
-      # expect(field_definition.arg_value_matches_type?(
-      #   :address, {street: "To"}
-      # )).to eq true
-      # expect(field_definition.arg_value_matches_type?(:address, [])).to eq false
-      # expect(field_definition.arg_value_matches_type?(:address, true)).to eq(
-      #   false
-      # )
+          # the top level object is not required
+          # only check required on nested keys if the top level object is present
+          expect{input_obj_klass.validate_input_args!(id: 3)}.to_not raise_error
+        end
+      end
     end
   end
 end
