@@ -18,6 +18,8 @@ module RailsQL
       end
 
       def validate_args!
+        return if data_type_args.empty?
+
         @field_definition.args.validate_input_args! data_type_args
       end
 

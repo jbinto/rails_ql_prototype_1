@@ -1,11 +1,20 @@
 require "spec_helper"
 
 describe RailsQL::DataType::Field do
+  let(:input_field_definition){instance_double(
+    RailsQL::DataType::InputFieldDefinition
+  )}
+
+  let(:input_obj_klass) do
+    klass = class_double RailsQL::DataType::InputObject
+    # allow(klass).to receive(input_field_definitions).and_return(
+    #   random_arg_field: input_field_definition
+    # )
+  end
+
   let(:field_definition) do
     definition = instance_double RailsQL::DataType::FieldDefinition
-    allow(definition).to receive(:arg_whitelist).and_return []
-    allow(definition).to receive(:required_args).and_return({})
-    allow(definition).to receive(:optional_args).and_return({})
+    allow(definition).to receive(:args).and_return input_obj_klass
     definition
   end
 
@@ -29,54 +38,15 @@ describe RailsQL::DataType::Field do
   end
 
   describe "#validate_args!" do
-    before :each do
-      allow(data_type).to receive(:args).and_return('id' => 3)
-      allow(field_definition).to receive(:arg_whitelist).and_return [:id, :stuff]
-      allow(field_definition).to receive(:required_args).and_return(
-        id: "IntValue"
+    it "calls field_definition#args#validate_input_args! with the data_type args" do
+      field
+      allow(field).to receive(:data_type_args).and_return(random_arg_field: 3)
+      expect(field_definition).to receive(:args).and_return input_obj_klass
+      expect(input_obj_klass).to receive(:validate_input_args!).with(
+        random_arg_field: 3
       )
-      allow(field_definition).to receive(:optional_args).and_return(
-        stuff: "StringValue"
-      )
-      allow(field_definition).to receive(:arg_value_matches_type?).and_return(
-        true
-      )
-    end
 
-    context "when the data_type#arg keys are included in the FieldDefinition#arg_whitelist" do
-      context "when the data_type#arg keys match the FieldDefinition#required_args keys" do
-        context "when the data_type#arg values match the type specified in the field_definition" do
-          it "does not raise an error" do
-            expect{field.validate_args!}.to_not raise_error
-          end
-        end
-
-        context "when the data_type#arg values do not match the type specified in the field_definition" do
-          it "raises an error" do
-            expect(data_type).to receive(:args).and_return('id' => '3')
-            expect(field_definition).to receive(:arg_value_matches_type?).with(
-              :id, '3'
-            ).and_return(
-              false
-            )
-            expect{field.validate_args!}.to raise_error
-          end
-        end
-      end
-
-      context "when the data_type#arg keys do not match the FieldDefinition#required_args keys" do
-        it "raises an error" do
-            expect(data_type).to receive(:args).and_return('stuff' => '3')
-            expect{field.validate_args!}.to raise_error
-          end
-      end
-    end
-
-    context "when the data_type#arg keys are not included in the FieldDefinition#arg_whitelist" do
-      it "raises an error" do
-        expect(data_type).to receive(:args).and_return('cow' => 3)
-        expect{field.validate_args!}.to raise_error
-      end
+      field.validate_args!
     end
   end
 

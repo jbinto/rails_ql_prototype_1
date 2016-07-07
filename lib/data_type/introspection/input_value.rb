@@ -14,16 +14,10 @@ module RailsQL
 
         field(:name,
           data_type: :String,
-          nullable: false,
-          resolve: ->(args, child_query) {
-            model[:name]
-          }
+          nullable: false
         )
         field(:description,
-          data_type: :String,
-          resolve: ->(args, child_query) {
-            nil # TODO
-          }
+          data_type: :String
         )
         field(:type,
           data_type: "RailsQL::DataType::Introspection::Type",
@@ -36,7 +30,7 @@ module RailsQL
           data_type: :String,
           nullable: true,
           resolve: ->(args, child_query) {
-            nil # TODO
+            model.default_value
           }
         )
 

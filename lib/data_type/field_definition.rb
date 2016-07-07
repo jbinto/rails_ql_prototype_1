@@ -18,18 +18,6 @@ module RailsQL
         :singular
       )
 
-      ARG_TYPE_TO_RUBY_CLASSES = {
-        Int: [Fixnum],
-        Float: [Float],
-        String: [String],
-        Boolean: [TrueClass, FalseClass],
-        EnumValue: [String, Fixnum],
-        ListValue: [Array],
-        ObjectValue: [Hash]
-      }
-
-      ARG_TYPES = ARG_TYPE_TO_RUBY_CLASSES.keys
-
       def initialize(name, opts)
         @name = name
         @read_permissions = []
@@ -72,7 +60,7 @@ module RailsQL
         @evaled_args ||=(
           anonymous_input_object = Class.new InputObject
           anonymous_input_object.anonymous = true
-          parent_data_type.instance_exec anonymous_input_object, &@args
+          data_type.instance_exec anonymous_input_object, &@args
         )
       end
 

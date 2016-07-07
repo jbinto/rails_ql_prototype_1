@@ -40,6 +40,7 @@ module RailsQL
         )
 
         has_many(:fields,
+          description: "OBJECT and INTERFACE only",
           optional_args: {include_deprecated: {type: "Boolean"}},
           data_type: "RailsQL::DataType::Introspection::Field",
           resolve: ->(args, child_query){
@@ -53,6 +54,7 @@ module RailsQL
 
         # TODO: interfaces
         has_many(:interfaces,
+          description: "OBJECT only",
           data_type: "RailsQL::DataType::Introspection::Type",
           resolve: ->(args, child_query) {
             []
@@ -62,6 +64,7 @@ module RailsQL
 
         # TODO: interfaces and unions
         has_many(:possibleTypes,
+          description: "INTERFACE and UNION only",
           data_type: "RailsQL::DataType::Introspection::Type",
           resolve: ->(args, child_query) {
             []
@@ -70,22 +73,24 @@ module RailsQL
 
         # TODO: enums
         has_many(:enumValues,
+          description: "ENUM only",
           data_type: "RailsQL::DataType::Introspection::EnumValue",
           resolve: ->(args, child_query) {
             model.type_definition.enum_values.values
           }
         )
 
-        # TODO: input objects
         has_many(:inputFields,
+          description: "INPUT_OBJECT only",
           data_type: "RailsQL::DataType::Introspection::InputValue",
           resolve: ->(args, child_query) {
-            []
+            model.try :input_field_definitions
           }
         )
 
         # TODO: non nulls and lists
         field(:ofType,
+          description: "NON_NULL and LIST only",
           data_type: "RailsQL::DataType::Introspection::Type",
           resolve: ->(args, child_query) {
             nil

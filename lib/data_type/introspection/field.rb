@@ -17,14 +17,11 @@ module RailsQL
         has_many(:args,
           data_type: "RailsQL::DataType::Introspection::InputValue",
           resolve: ->(args, child_query){
-            model.args.map{|k, v|
-              {name: k}
-            }
+            model.args.input_field_definitions
           }
         )
-        field(:type,
+        has_one(:type,
           data_type: "RailsQL::DataType::Introspection::Type",
-          singular: true,
           query: nil,
           resolve: ->(args, child_query){
             model.data_type_klass
