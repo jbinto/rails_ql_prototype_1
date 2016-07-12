@@ -76,6 +76,9 @@ module RailsQL
         end
       end
 
+      def child_field_collections
+        populated_types.map(&:field_collection)
+      end
     end
   end
 end

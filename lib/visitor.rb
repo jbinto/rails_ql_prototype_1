@@ -4,21 +4,27 @@ module RailsQL
   class Visitor < GraphQL::Parser::Visitor
 
     attr_accessor :node_stack
-    attr_reader :data_type_builder_stack, :root
+    attr_reader :data_type_builder_stack, :query_root, :mutation_root
 
-    def initialize(root_builder)
-      @root = root_builder
-      @data_type_builder_stack = [root]
+    def initialize(query_root_builder:, mutation_root_builder:)
+      @query_root = query_root_builder
+      @mutation_root = mutation_root_builder
+      @data_type_builder_stack = {
+        query: [query_root],
+        mutation: [mutation_root_builder]
+      }
       @union_type_builder_stack = []
       @fragments = []
-      @data_type_builders = [root]
+      @data_type_builders = [query_root, mutation_root]
       @node_stack = []
+      @current_operation = :query
+      @input_object_key_stack = []
     end
 
     protected
 
     def current_data_type_builder
-      data_type_builder_stack.last
+      data_type_builder_stack[@current_operation].last
     end
 
     def end_visit_field(node)
@@ -29,7 +35,7 @@ module RailsQL
       elsif within_fragment_definition?
         @parent_field = nil
       elsif within_data_type?
-        data_type_builder_stack.pop
+        data_type_builder_stack[@current_operation].pop
       elsif within_data_type_within_fragment_definition?
         @parent_field = @parent_field[:parent]
       end
@@ -84,7 +90,7 @@ module RailsQL
         @current_fragment[:fields] << @parent_field
       elsif within_data_type?
         child_data_type = current_data_type_builder.add_child_builder node.value
-        @data_type_builder_stack.push child_data_type
+        @data_type_builder_stack[@current_operation].push child_data_type
         @data_type_builders << child_data_type
       elsif within_data_type_within_fragment_definition?
         new_parent_field node.value
@@ -117,8 +123,45 @@ module RailsQL
       visit_arg_value node.value
     end
 
+    def current_input_object
+      @input_object_key_stack.inject(@input_object) do |current_input_obj, key|
+        current_input_obj[key]
+      end
+    end
+
+    def current_input_object=(value)
+      @input_object_key_stack.inject(@input_object) do |current_input_obj, key|
+        current_input_obj[key]
+      end
+    end
+
+    def visit_object_value(node)
+      if @input_object.nil?
+        @input_object ||= {@current_name.to_sym => {}}
+      else
+        current_input_object[@current_name.to_sym] = {}
+      end
+      @input_object_key_stack.push @current_name.to_sym
+    end
+
+    def end_visit_object_value(node)
+      if @input_object_key_stack.size == 1
+        # the input_object has been fully built, so add to the current builder
+        current_data_type_builder.add_arg(
+          @input_object_key_stack.first.to_sym,
+          @input_object[@input_object_key_stack.first]
+        )
+        @input_object = nil
+      end
+      @input_object_key_stack.pop
+    end
+
     def visit_arg_value(value)
-      current_data_type_builder.add_arg @current_name, value
+      if @input_object.nil?
+        current_data_type_builder.add_arg @current_name, value
+      else
+        current_input_object[@current_name.to_sym] = value
+      end
     end
 
     def visit_fragment_spread_name(node)
@@ -157,7 +200,19 @@ module RailsQL
       end
     end
 
+    def visit_operation_definition(node)
+      if node.operation == "mutation"
+        @current_operation = :mutation
+      end
+    end
+
+    def end_visit_operation_definition(node)
+      @current_operation = :query
+    end
+
     def visit_node(sym, node)
+      ap sym
+      # ap node.try(:value)
       node_stack.push(sym)
     end
 

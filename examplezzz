@@ -1,0 +1,288 @@
+class FieldDefinitionCollection
+  def initialize(field_definition_class)
+    @field_definition_class = field_definition_class
+  end
+
+  def add_permissions(operations, opts)
+    operations = [operations].flatten
+
+    opts = {
+      fields: [],
+      :when => ->{true}
+    }.merge opts
+
+    operations.each do |operation|
+      opts[:fields].each do |field|
+        if field_definitions[field]
+          field_definitions[field].send(
+            :"add_#{operation}_permission",
+            opts[:when]
+          )
+        else
+          raise FieldMissing, "The field #{field} was not defined on #{self}"
+        end
+      end
+      # if permissions.include? :write
+      #   field_definitions[field].add_write_permission permission
+      # end
+    end
+  end
+
+
+  def add_field_definition(name, opts)
+  end
+
+  def add_plural_field_definition(name, opts)
+  end
+
+end
+
+class FieldCollection
+  attr_accessor :fields
+
+  def unauthorized_fields_for(action)
+    fields.reduce(HashWithIndifferentAccess.new) do |h, (k, field)|
+      json = field.can?(action) ? nil : true
+      json ||= {}.merge(*field.child_field_collections.map{|collection|
+        collection.unauthorized_fields_for action
+      })
+      h[k] = json if json.present?
+      h
+    end
+  end
+end
+
+class TypeObject
+  after_resolve :authorize_query!, if: :root?
+
+  def authorize_query!
+    unauthorized = unauthorized_fields_for(
+      :read,
+      args
+    )
+    if unauthorized.present?
+      raise UnauthorizedQuery, "unauthorized fields: #{unauthorized.to_json}"
+    end
+  end
+
+  def unauthorized_fields_for(action)
+    field_definitions = self.class.field_definitions
+    unauthorized_fields = field_definitions.unauthorized_fields_for(
+      action,
+      self,
+    )
+  end
+
+  class << self
+    def self.field_definitions
+      @field_definitions = FieldDefinitionCollection.new FieldDefinition
+    end
+
+    def can(operations, opts)
+      @field_definitions.add_permissions(operations, opts)
+    end
+
+    def field(name, opts)
+      @field_definitions.add_field_definition(name, opts)
+    end
+
+    def has_many(name, opts)
+      @field_definitions.add_plural_field_definition(name, opts)
+    end
+  end
+end
+
+has_one(:venue,
+  args: ->(args) ->{
+    if ctx[:current_user].admin?
+      args.input_field :admin_arg, type: "Blah"
+    end
+  }
+)
+
+class InputTypeObject
+  def authorize_args!
+    unauthorized = unauthorized_fields_for(
+      :input,
+      args
+    )
+    if unauthorized.present?
+      raise UnauthorizedQuery, "unauthorized arguments: #{unauthorized.to_json}"
+    end
+  end
+
+  def unauthorized_fields_for(action)
+    field_definitions = self.class.field_definitions
+    unauthorized_fields = field_definitions.unauthorized_fields_for(
+      action,
+      self,
+    )
+  end
+
+  class << self
+    def self.field_definitions
+      @field_definitions = FieldDefinitionCollection.new InputFieldDefinition
+    end
+
+    def can(operations, opts)
+      @field_definitions.add_permissions(operations, opts)
+    end
+
+    def input_field(name, opts)
+      @field_definitions.add_field_definition(name, opts)
+    end
+  end
+end
+
+bills: [
+  {
+    id: 1,
+    order_items: [
+      {
+        id: 2,
+        cost: 4
+      }
+    ]
+  }
+]
+
+class BillObjectType < RailsQL::Type
+  kind :object
+  field :id
+
+  can :query, :id
+end
+
+class BillInputObject < RailsQL::Type
+  kind :input_object
+  field :id
+
+  can :input, :id
+end
+
+# bill.rb
+{
+  :InputObject
+  :Object
+}.each do |kind_sym|
+  Class.new(RailsQL::Types.const_get(kind_sym))
+  class kind_sym::Bill < RailsQL::Types.const_get(kind_sym)
+    field :id
+
+    action = parent.kind_sym == :input_object ? :input : :query
+    can action, :id
+  end
+end
+
+Bill::InputObjectType
+Bill::ObjectType
+
+InputObjectType::Bill
+ObjectType::Bill
+
+# -------
+Bills::InputObject
+   input_field :id, required: true
+
+class GodMutation < RailsQL::Type
+  field(:createBill,
+    type: "Bill::Object",
+    args: (args)->{
+      args.field :bill, type: "Bill::InputObject", required: true
+      args.field :bills, type: "[Bills::InputObject!]"
+      # bills: null OR [{}]
+    },
+    resolve: ->(args, child_query) {
+      bill = Bill.create(args[:bill])
+      Bill.where{id == bill.id}.merge(child_query).first
+    }
+  )
+
+  can :mutate, :createBill
+end
+
+createBill: {
+  id: 1,
+  items: [{id: 1}]
+}
+
+
+class Venue < RailsQL::Type
+  kind :object
+
+  has_many :bills, type: "BillType"
+
+  can [:query], :bills
+end
+
+# Class.new + class eval
+# Creates Bill::InputObject and Bill::Object
+::Bill = RailsQL.object_and_input do
+  name (kind == :object) ? "Bill" : "BillInputObject"
+
+  if kind == :object
+    field :id
+  end
+
+  can [:query], :id
+end
+
+class Bill < RailsQL::Type
+  kind :object
+  name (kind == :object) ? "Bill" : "BillInputObject"
+
+  if kind == :object
+    field :id
+  end
+
+  can [:query], :id
+end
+
+query {
+  venue {
+    bills {
+      id
+    }
+  }
+}
+
+Runner(query_root: Schema, mutation_root: GodMutation)
+calls Visitor
+
+GodMutation.new fields: createBill <- has args BillInputType
+  BillObjectType.model = Bill
+
+Schema
+ createBill
+
+mutation {
+  createBill(
+    bill: {id: 1}
+  ){
+    id
+    items {
+      id
+    }
+  }
+}
+
+
+mutate {
+  updateBill(
+    id: 1,
+    bill: {name: "updated bill name"}
+  ){
+    id
+    name
+  }
+}
+
+
+# --------
+1. Refactor Base and InputObject, FieldDefinition and InputFieldDefinition to combine shared-logic
+2. Implement can :mutate and can :query (aliases), can :input
+3. Add mutation support to Visitor
+4. Add mutation root option to Runner
+5. Switch to 8.0 (GodMutation for menu_item)
+---
+6. Introspection fix-up and additions
