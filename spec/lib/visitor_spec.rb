@@ -315,7 +315,7 @@ describe RailsQL::Visitor do
     end
 
     context "when mutations are present" do
-      it "follows query workflow but applies to the mutation_root_builder" do
+      it "follows query workflow but applies it to the mutation_root_builder" do
         hero_builder = instance_double "RailsQL::DataType::Builder"
         expect(query_root_builder).to_not receive(:add_child_builder).with(
           'createHero'
