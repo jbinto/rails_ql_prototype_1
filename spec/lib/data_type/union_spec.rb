@@ -37,7 +37,10 @@ describe RailsQL::DataType::Union do
         }
       )
       data_type_klass.can :read, fields: [:sword, :crossbow]
-      @runner = RailsQL::Runner.new data_type_klass
+      @runner = RailsQL::Runner.new(
+        query_root: data_type_klass,
+        mutation_root: data_type_klass
+      )
     end
 
     it "returns the appropriate fields based on the type of the resolved union model" do

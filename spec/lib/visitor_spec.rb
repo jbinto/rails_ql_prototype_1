@@ -340,5 +340,66 @@ describe RailsQL::Visitor do
         }"
       end
     end
+
+    context "multiple operations in a single query document" do
+      context "without names" do
+        it "throws an error" do
+          hero_builder = instance_double "RailsQL::DataType::Builder"
+          allow(query_root_builder).to receive(:add_child_builder).and_return(
+            hero_builder
+          )
+
+          expect{
+            visit_graphql "
+              query {
+                hero {name}
+              }
+              query {
+                hero {description}
+              }
+            "
+          }.to raise_error
+        end
+      end
+
+      context "with names" do
+        it "instantiates query + mutation roots for each operation" do
+          hero_builder = instance_double "RailsQL::DataType::Builder"
+          allow(query_root_builder).to receive(:add_child_builder).with(
+            'hero'
+          ).and_return hero_builder
+          allow(mutation_root_builder).to receive(:add_child_builder).with(
+            'createHero'
+          ).and_return hero_builder
+          expect(hero_builder).to receive(:add_arg).with(
+            :hero, {name: "Cloud", weapon: {damage: 6}}
+          )
+          allow(hero_builder).to receive(:add_child_builder).with('name')
+
+          visit_graphql "
+            fragment heroFields on Hero {
+              name
+            }
+            mutation A {
+              createHero(hero: {
+                name: \"Cloud\",
+                weapon: {
+                  damage: 6
+                }
+              }){ ...heroFields }
+            }
+            query B {
+              hero {...heroFields}
+            }
+            query C {
+              hero {...heroFields}
+            }
+          "
+
+          expect(visitor.root_builders.length).to eq 3
+          # expect(visitor.root_builders.keys).to eq ["A", "B", "C"]
+        end
+      end
+    end
   end
 end

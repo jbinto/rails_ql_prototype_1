@@ -9,6 +9,12 @@ describe RailsQL::Runner do
     allow(RailsQL::Visitor).to receive(:new).and_return @visitor
     allow(GraphQL::Parser).to receive(:parse).and_return :fake_ast
     allow(@visitor).to receive :accept
+    @schema_builder = double
+    @schema_type = double
+    allow(@schema_builder).to receive(:data_type).and_return @schema_type
+    allow(@schema_type).to receive(:build_query!)
+    allow(@schema_type).to receive(:resolve_child_data_types!)
+    allow(@visitor).to receive(:root_builders).and_return [@schema_builder]
 
     @runner = RailsQL::Runner.new query_root: @schema, mutation_root: @mutation
   end
@@ -29,10 +35,16 @@ describe RailsQL::Runner do
       @runner.execute! query: "hero {}"
     end
 
-    it "returns the query root data_type and mutation root data_type" do
-      result = @runner.execute! query: "hero {}"
-      expect(result.first.class).to eq @schema
-      expect(result.last.class).to eq @mutation
+    it "returns the appropriate root data_type" do
+      root = @runner.execute! query: "hero {}"
+      expect(root).to eq @schema_type
+    end
+
+    it "raises error with multiple operations" do
+      allow(@visitor).to receive(:root_builders).and_return [
+        @schema_builder, @schema_builder
+      ]
+      expect{@runner.execute! query: "hero {}"}.to raise_error
     end
   end
 

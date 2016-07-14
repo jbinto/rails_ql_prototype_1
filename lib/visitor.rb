@@ -3,19 +3,15 @@ require 'graphql/parser'
 module RailsQL
   class Visitor < GraphQL::Parser::Visitor
 
-    attr_accessor :node_stack
-    attr_reader :data_type_builder_stack, :query_root, :mutation_root
+    attr_reader :root_builders
 
     def initialize(query_root_builder:, mutation_root_builder:)
-      @query_root = query_root_builder
-      @mutation_root = mutation_root_builder
-      @data_type_builder_stack = {
-        query: [query_root],
-        mutation: [mutation_root_builder]
-      }
+      @query_root_prototype = query_root_builder
+      @mutation_root_prototype = mutation_root_builder
+      @root_builders = []
       @union_type_builder_stack = []
       @fragments = []
-      @data_type_builders = [query_root, mutation_root]
+      @data_type_builders = []
       @node_stack = []
       @current_operation = :query
       @input_object_key_stack = []
@@ -24,18 +20,18 @@ module RailsQL
     protected
 
     def current_data_type_builder
-      data_type_builder_stack[@current_operation].last
+      @data_type_builder_stack.last
     end
 
     def end_visit_field(node)
-      node_stack.pop
+      @node_stack.pop
       if within_inline_fragment?
         @parent_field = @parent_field[:parent] if @parent_field
         @union_type_builder_stack.pop
       elsif within_fragment_definition?
         @parent_field = nil
       elsif within_data_type?
-        data_type_builder_stack[@current_operation].pop
+        @data_type_builder_stack.pop
       elsif within_data_type_within_fragment_definition?
         @parent_field = @parent_field[:parent]
       end
@@ -44,7 +40,7 @@ module RailsQL
 
     def visit_name(node)
       @current_name = node.value
-      case node_stack.last
+      case @node_stack.last
       when :field then visit_field_name node
       when :fragment_spread then visit_fragment_spread_name node
       when :fragment_definition then visit_fragment_definition_name node
@@ -90,7 +86,7 @@ module RailsQL
         @current_fragment[:fields] << @parent_field
       elsif within_data_type?
         child_data_type = current_data_type_builder.add_child_builder node.value
-        @data_type_builder_stack[@current_operation].push child_data_type
+        @data_type_builder_stack.push child_data_type
         @data_type_builders << child_data_type
       elsif within_data_type_within_fragment_definition?
         new_parent_field node.value
@@ -201,23 +197,29 @@ module RailsQL
     end
 
     def visit_operation_definition(node)
-      if node.operation == "mutation"
-        @current_operation = :mutation
-      end
+      prototype =
+        if node.operation == "mutation"
+          @mutation_root_prototype
+        elsif node.operation == "query" || node.operation == "subscription"
+          @query_root_prototype
+        else
+          raise "Operation not supported: #{node.operation}"
+        end
+      builder = prototype.clone
+      @root_builders << builder
+      @data_type_builder_stack = [builder]
     end
 
     def end_visit_operation_definition(node)
-      @current_operation = :query
+      @data_type_builder_stack = nil
     end
 
     def visit_node(sym, node)
-      ap sym
-      # ap node.try(:value)
-      node_stack.push(sym)
+      @node_stack.push(sym)
     end
 
     def end_visit_node(sym, node)
-      node_stack.pop
+      @node_stack.pop
     end
 
     private

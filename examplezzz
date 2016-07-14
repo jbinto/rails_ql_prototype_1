@@ -281,8 +281,8 @@ mutate {
 # --------
 1. Refactor Base and InputObject, FieldDefinition and InputFieldDefinition to combine shared-logic
 2. Implement can :mutate and can :query (aliases), can :input
-3. Add mutation support to Visitor
-4. Add mutation root option to Runner
+3. Add mutation support to Visitor [done]
+4. Add mutation root option to Runner [done]
 5. Switch to 8.0 (GodMutation for menu_item)
 ---
 6. Introspection fix-up and additions

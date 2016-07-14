@@ -32,15 +32,15 @@ module RailsQL
       ast = GraphQL::Parser.parse opts[:query]
       visitor.accept ast
 
-      query_root = query_root_builder.data_type
-      query_root.build_query!
-      query_root.resolve_child_data_types!
+      # the visitor returns one root builder per operation in the query document
+      if visitor.root_builders.length > 1
+        raise "Can not execute multiple operations in one query document"
+      end
+      root = visitor.root_builders.first.data_type
+      root.build_query!
+      root.resolve_child_data_types!
 
-      mutation_root = mutation_root_builder.data_type
-      mutation_root.build_query!
-      mutation_root.resolve_child_data_types!
-
-      return query_root, mutation_root
+      return root
     end
 
   end
