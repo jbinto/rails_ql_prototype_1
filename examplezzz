@@ -1,44 +1,4 @@
 
-class TypeObject
-  after_resolve :authorize_query!, if: :root?
-
-  def authorize_query!
-    unauthorized = unauthorized_fields_for(
-      :read,
-      args
-    )
-    if unauthorized.present?
-      raise UnauthorizedQuery, "unauthorized fields: #{unauthorized.to_json}"
-    end
-  end
-
-  def unauthorized_fields_for(action)
-    field_definitions = self.class.field_definitions
-    unauthorized_fields = field_definitions.unauthorized_fields_for(
-      action,
-      self,
-    )
-  end
-
-  class << self
-    def self.field_definitions
-      @field_definitions = FieldDefinitionCollection.new FieldDefinition
-    end
-
-    def can(operations, opts)
-      @field_definitions.add_permissions(operations, opts)
-    end
-
-    def field(name, opts)
-      @field_definitions.add_field_definition(name, opts)
-    end
-
-    def has_many(name, opts)
-      @field_definitions.add_plural_field_definition(name, opts)
-    end
-  end
-end
-
 has_one(:venue,
   args: ->(args) ->{
     if ctx[:current_user].admin?
@@ -46,40 +6,6 @@ has_one(:venue,
     end
   }
 )
-
-class InputTypeObject
-  def authorize_args!
-    unauthorized = unauthorized_fields_for(
-      :input,
-      args
-    )
-    if unauthorized.present?
-      raise UnauthorizedQuery, "unauthorized arguments: #{unauthorized.to_json}"
-    end
-  end
-
-  def unauthorized_fields_for(action)
-    field_definitions = self.class.field_definitions
-    unauthorized_fields = field_definitions.unauthorized_fields_for(
-      action,
-      self,
-    )
-  end
-
-  class << self
-    def self.field_definitions
-      @field_definitions = FieldDefinitionCollection.new InputFieldDefinition
-    end
-
-    def can(operations, opts)
-      @field_definitions.add_permissions(operations, opts)
-    end
-
-    def input_field(name, opts)
-      @field_definitions.add_field_definition(name, opts)
-    end
-  end
-end
 
 bills: [
   {

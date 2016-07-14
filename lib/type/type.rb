@@ -5,8 +5,7 @@ module RailsQL
   class Type
     extend ActiveModel::Callbacks
     define_model_callbacks :resolve
-
-    include Can
+    after_resolve :authorize_query!, if: :root?
 
     attr_reader :args, :ctx, :query
     attr_accessor :model, :fields
@@ -36,6 +35,17 @@ module RailsQL
       if self.class.get_initial_query.present?
         @query = instance_exec &self.class.get_initial_query
       end
+    end
+
+    def authorize_for!(action)
+      unauthorized = unauthorized_fields_for action
+      if unauthorized.present?
+        raise UnauthorizedQuery, "unauthorized fields: #{unauthorized.to_json}"
+      end
+    end
+
+    def unauthorized_fields_for(action)
+      self.class.field_definitions.unauthorized_fields_for action, self
     end
 
     def root?
@@ -80,128 +90,7 @@ module RailsQL
     end
 
     class << self
-      def type_name(next_name)
-        if next_name.present?
-          @name = next_name.strip
-        else
-          @name = nil
-        end
-      end
-
-      def description(description=nil)
-        if description.present?
-          @description = description.gsub(/\n\s+/, "\n").strip
-        else
-          @description = nil
-        end
-      end
-
-      def kind(kind)
-        kind_values = Kind.enum_values
-        if kind_values.include? kind
-          @kind = kind
-        else
-          raise <<-eos.gsub(/[\s\n]+/, " ")
-            #{kind} is not a valid kind. Must be one of
-            #{kind_values.join ", "}
-          eos
-        end
-      end
-
-      def enum_values(*enum_values, opts)
-        if opts.is_a? Symbol
-          enum_values << opts
-          opts = {}
-        end
-        opts = {
-          is_deprecated: false,
-          deprecation_reason: nil
-        }.merge opts
-        @enum_values = (@enum_values || {}).merge(
-          Hash[enum_values.map{|value|
-            [value, OpenStruct.new(opts.merge(name: value))]
-          }]
-        )
-      end
-
-      def type_definition
-        return OpenStruct.new(
-          name: @name || to_s,
-          kind: @kind || :OBJECT,
-          enum_values: @enum_values || {},
-          description: @description,
-        )
-      end
-
-      # enum_values :a, :b
-      # enum_values []
-      #
-      # Class.enum_values
-      # => []
-
-      def field_definitions
-        @field_definitions ||= HashWithIndifferentAccess.new
-      end
-
-      def data_type?
-        true
-      end
-
-      def initial_query(initial_query)
-        @initial_query = initial_query
-      end
-
-      def get_initial_query
-        @initial_query
-      end
-
-      # Adds a FieldDefinition to the data type
-      #
-      #   class UserType < RailsQL::Type::Type
-      #
-      #     field(:email,
-      #       data_type: RailsQL::Type::String
-      #     )
-      #   end
-      #
-      # Options:
-      # * <tt>:data_type</tt> - Specifies the data_type
-      # * <tt>:description</tt> - A description of the field
-      # * <tt>:accessible_args</tt> - Arguments that can be passed to the resolve method
-      # * <tt>:nullable</tt> -
-      def field(name, opts={})
-        instance_methods = (
-          RailsQL::Type::Type.instance_methods - Object.instance_methods
-        )
-
-        name = name.to_s
-        if name.include?("__") && name != "__type" && name != "__schema"
-          raise(
-            RailsQL::InvalidField,
-            "#{name} is an invalid field; names must not be " +
-            "prefixed with double underscores"
-          )
-        end
-
-        if (instance_methods).include?(name.to_sym) && opts[:resolve].nil?
-          raise(
-            RailsQL::InvalidField,
-            "Reserved word: Can not use #{name} as a field name without a " +
-            ":resolve option"
-          )
-        end
-
-        field_definitions[name] = FieldDefinition.new name.to_sym, opts
-      end
-
-      def has_one(name, opts={})
-        field name, opts.merge(singular: true)
-      end
-
-      def has_many(name, opts={})
-        field name, opts.merge(singular: false)
-      end
-
+      include RailsQL::Type::ClassMethods
     end
   end
 end
