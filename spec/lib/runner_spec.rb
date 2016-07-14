@@ -2,8 +2,8 @@ require "spec_helper"
 
 describe RailsQL::Runner do
   before :each do
-    @schema = Class.new RailsQL::DataType::Base
-    @mutation = Class.new RailsQL::DataType::Base
+    @schema = Class.new RailsQL::Type::Type
+    @mutation = Class.new RailsQL::Type::Type
 
     @visitor = instance_double RailsQL::Visitor
     allow(RailsQL::Visitor).to receive(:new).and_return @visitor
@@ -21,7 +21,7 @@ describe RailsQL::Runner do
 
   context "when query option is not nil" do
     it "instantiates a query root builder and a mutation root builder" do
-      expect(RailsQL::DataType::Builder).to receive(:new).twice.and_call_original
+      expect(RailsQL::Type::Builder).to receive(:new).twice.and_call_original
       @runner.execute! query: "hero {}"
     end
 

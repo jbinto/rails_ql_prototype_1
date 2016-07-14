@@ -1,4 +1,4 @@
-class MyNamespace < RailsQL::DataType::Base
+class MyNamespace < RailsQL::Type::Type
 
   has_one(:user,
     resolve: ->(args, child_query) {

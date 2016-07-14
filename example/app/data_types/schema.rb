@@ -1,5 +1,5 @@
-class Schema < RailsQL::DataType::Base
-  include RailsQL::DataType::Introspection
+class Schema < RailsQL::Type::Type
+  include RailsQL::Introspection
 
   has_one(:my,
     data_type: "MyNamespace",
