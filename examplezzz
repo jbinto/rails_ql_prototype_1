@@ -152,10 +152,17 @@ mutate {
 
 
 # --------
-1. Refactor Base and InputObject, FieldDefinition and InputFieldDefinition to combine shared-logic
-2. Implement can :mutate and can :query (aliases), can :input
+1. Refactor Base and InputObject, FieldDefinition and InputFieldDefinition to combine shared-logic [in progress]
+2. Implement can :mutate and can :query (aliases), can :input [in progress]
 3. Add mutation support to Visitor [done]
 4. Add mutation root option to Runner [done]
 5. Switch to 8.0 (GodMutation for menu_item)
 ---
 6. Introspection fix-up and additions
+
+More Features
+* Type Name Introspection (__typename field on all types)
+* Variables
+* List and Non-Null as standalone anonomous types + syntax for fields
+* Directives
+* Field Aliases

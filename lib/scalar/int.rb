@@ -2,7 +2,8 @@ module RailsQL
   module Scalar
     class Int  < RailsQL::Type
       kind :scalar
-      type_definition <<-DESC.strip_heredoc
+      name "Int"
+      description <<-DESC.strip_heredoc
         The `Int` scalar type represents non-fractional signed whole numeric
         values. Int can represent values between -(2^53 - 1) and 2^53 - 1
         since represented in JSON as double-precision floating point numbers

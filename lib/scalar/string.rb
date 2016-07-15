@@ -2,7 +2,8 @@ module RailsQL
   module Scalar
     class String  < RailsQL::Type
       kind :scalar
-      type_definition <<-DESC.strip_heredoc
+      name "String"
+      description <<-DESC.strip_heredoc
         The `String` scalar type represents textual data, represented as
         UTF-8 character sequences. The String type is most often used by
         GraphQL to represent free-form human-readable text.
@@ -10,7 +11,7 @@ module RailsQL
     end
 
     def parse_value!(value)
-      if value.nil? value.is_a?(String)
+      if value.nil? value.is_a?(::String)
         return value
       else
         raise ArgTypeError.new, "#{value} is not a string"

@@ -12,7 +12,7 @@ module RailsQL
         @union_child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]
-        @is_input = opts[:is_input]
+        @is_arg_value = opts[:is_arg_value]
         @args = {}
       end
 
