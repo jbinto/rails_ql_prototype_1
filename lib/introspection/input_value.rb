@@ -12,21 +12,21 @@ module RailsQL
       eos
 
       field(:name,
-        data_type: :String,
+        type: :String,
         nullable: false
       )
       field(:description,
-        data_type: :String
+        type: :String
       )
       field(:type,
-        data_type: "RailsQL::Introspection::Type",
+        type: "RailsQL::Introspection::Type",
         nullable: true, # For now. Should be false.
         resolve: ->(args, child_query) {
           nil # TODO
         }
       )
       field(:defaultValue,
-        data_type: :String,
+        type: :String,
         nullable: true,
         resolve: ->(args, child_query) {
           model.default_value

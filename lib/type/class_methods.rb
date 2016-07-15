@@ -46,7 +46,7 @@ module RailsQL
         )
       end
 
-      def data_type?
+      def type?
         true
       end
 
@@ -64,6 +64,8 @@ module RailsQL
 
       def can(operations, opts)
         @field_definitions.add_permissions(operations, opts)
+      rescue Exception => e
+        raise e, "#{e.message} on #{self}", e.backtrace
       end
 
       # Adds a FieldDefinition to the data type
@@ -71,12 +73,12 @@ module RailsQL
       #   class UserType < RailsQL::Type::Type
       #
       #     field(:email,
-      #       data_type: RailsQL::Type::String
+      #       type: RailsQL::Type::String
       #     )
       #   end
       #
       # Options:
-      # * <tt>:data_type</tt> - Specifies the data_type
+      # * <tt>:type</tt> - Specifies the type
       # * <tt>:description</tt> - A description of the field
       # * <tt>:accessible_args</tt> - Arguments that can be passed to the resolve method
       # * <tt>:nullable</tt> -

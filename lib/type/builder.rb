@@ -1,28 +1,29 @@
 module RailsQL
   class Type
     class Builder
-      attr_reader :data_type_klass
+      attr_reader :type_klass
 
       def initialize(opts)
-        if opts[:data_type_klass].blank?
-          raise "requires a :data_type_klass option"
+        if opts[:type_klass].blank?
+          raise "requires a :type_klass option"
         end
-        @data_type_klass = KlassFactory.find opts[:data_type_klass]
+        @type_klass = KlassFactory.find opts[:type_klass]
         @child_builders = {}
         @union_child_builders = {}
         @ctx = opts[:ctx]
         @root = opts[:root]
+        @is_input = opts[:is_input]
         @args = {}
       end
 
-      def data_type
+      def type
         children = @child_builders.reduce({}) do |types, (type, builder)|
-          types[type] = builder.data_type
+          types[type] = builder.type
           types
         end
-        @data_type ||= data_type_klass.new(
+        @type ||= type_klass.new(
           args: @args,
-          child_data_types: children,
+          child_types: children,
           ctx: @ctx,
           root: @root
         )
@@ -31,15 +32,15 @@ module RailsQL
       # idempotent
       def add_child_builder(name)
         if field_definitions[name] == nil
-          raise "Invalid field #{name} on #{@data_type_klass}"
+          raise "Invalid field #{name} on #{@type_klass}"
         end
         return @child_builders[name] if @child_builders[name].present?
 
         field_definition = field_definitions[name]
-        data_type_klass = field_definition.data_type
+        type_klass = field_definition.type
 
         child_builder = Builder.new(
-          data_type_klass: data_type_klass,
+          type_klass: type_klass,
           ctx: @ctx.merge(field_definition.child_ctx),
           root: false
         )
@@ -68,7 +69,7 @@ module RailsQL
       private
 
       def field_definitions
-        data_type_klass.field_definitions
+        type_klass.field_definitions
       end
 
     end

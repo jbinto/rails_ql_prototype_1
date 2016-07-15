@@ -7,24 +7,25 @@ module RailsQL
     define_model_callbacks :resolve
     after_resolve :authorize_query!, if: :root?
 
-    attr_reader :args, :ctx, :query
-    attr_accessor :model, :fields
+    attr_reader :args, :ctx, :query, :anonymous, :model
+    attr_accessor :fields
 
     def initialize(opts={})
       opts = {
-        child_data_types: {},
+        child_types: {},
         args: {},
         ctx: {},
         root: false
+        anonymous: false
       }.merge opts
 
       @fields = HashWithIndifferentAccess.new
-      opts[:child_data_types].each do |name, data_type|
-        @fields[name] = Field.new(
+      opts[:child_types].each do |name, type|
+        @fields[name] = RailsQL::Field::Field.new(
           name: name,
           field_definition: self.class.field_definitions[name],
-          parent_data_type: self,
-          data_type: data_type
+          parent_type: self,
+          type: type
         )
       end
 
@@ -32,6 +33,7 @@ module RailsQL
       @args = HashWithIndifferentAccess.new(opts[:args]).freeze
       @ctx = HashWithIndifferentAccess.new opts[:ctx]
       @root = opts[:root]
+      @anonymous = opts[:anonymous]
       if self.class.get_initial_query.present?
         @query = instance_exec &self.class.get_initial_query
       end
@@ -55,19 +57,19 @@ module RailsQL
     def build_query!
       # Bottom to top recursion
       fields.each do |k, field|
-        field.prototype_data_type.build_query!
+        field.prototype_type.build_query!
         @query = field.appended_parent_query
       end
       return query
     end
 
-    def resolve_child_data_types!
+    def resolve_child_types!
       run_callbacks :resolve do
         # Top to bottom recursion
         fields.each do |k, field|
-          field.parent_data_type = self
-          field.resolve_models_and_dup_data_type!
-          field.data_types.each &:resolve_child_data_types!
+          field.parent_type = self
+          field.resolve_models_and_dup_type!
+          field.types.each &:resolve_child_types!
         end
       end
     end
@@ -76,17 +78,25 @@ module RailsQL
       kind = self.class.type_definition.kind
       if kind == :OBJECT
         json = fields.reduce({}) do |json, (k, field)|
-          child_json = field.data_types.as_json
+          child_json = field.types.as_json
           json.merge(
             k.to_s => field.singular? ? child_json.first : child_json
           )
         end
-      elsif kind == :ENUM
+      elsif kind == :ENUM || kind == :SCALAR
         json = model.as_json
       else
         raise "Kind #{kind} is not yet supported :("
       end
       return json
+    end
+
+    def model=(value)
+      @model = parse_value! value
+    end
+
+    def parse_value!(value)
+      value
     end
 
     class << self

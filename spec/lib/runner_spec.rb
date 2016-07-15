@@ -11,9 +11,9 @@ describe RailsQL::Runner do
     allow(@visitor).to receive :accept
     @schema_builder = double
     @schema_type = double
-    allow(@schema_builder).to receive(:data_type).and_return @schema_type
+    allow(@schema_builder).to receive(:type).and_return @schema_type
     allow(@schema_type).to receive(:build_query!)
-    allow(@schema_type).to receive(:resolve_child_data_types!)
+    allow(@schema_type).to receive(:resolve_child_types!)
     allow(@visitor).to receive(:root_builders).and_return [@schema_builder]
 
     @runner = RailsQL::Runner.new query_root: @schema, mutation_root: @mutation
@@ -35,7 +35,7 @@ describe RailsQL::Runner do
       @runner.execute! query: "hero {}"
     end
 
-    it "returns the appropriate root data_type" do
+    it "returns the appropriate root type" do
       root = @runner.execute! query: "hero {}"
       expect(root).to eq @schema_type
     end

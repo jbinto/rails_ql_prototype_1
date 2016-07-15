@@ -4,27 +4,27 @@ describe RailsQL::Introspection::Schema do
 
   before(:each) do
     allow_any_instance_of(described_class).to(
-      receive(:model).and_return root_data_type
+      receive(:model).and_return root_type
     )
   end
 
-  let(:user_data_type) do
+  let(:user_type) do
     klass = Class.new RailsQL::Type::Type
     klass.class_eval do
       type_name "User"
-      field :email, data_type: :String
+      field :email, type: :String
       # Recursive association
-      field :friends, data_type: klass
+      field :friends, type: klass
     end
     klass
   end
 
-  let(:root_data_type) do
+  let(:root_type) do
     klass = Class.new RailsQL::Type::Type
-    klass.field :user, data_type: user_data_type
+    klass.field :user, type: user_type
     klass.class_eval do
       type_name "Root"
-      field :user_count, data_type: :Int
+      field :user_count, type: :Int
     end
     klass
   end

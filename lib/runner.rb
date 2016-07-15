@@ -14,13 +14,13 @@ module RailsQL
         raise "RailsQL::Runner.execute! requires a :query option"
       end
 
-      query_root_builder = DataType::Builder.new(
-        data_type_klass: @query_root,
+      query_root_builder = Type::Builder.new(
+        type_klass: @query_root,
         ctx: opts[:ctx],
         root: true
       )
-      mutation_root_builder = DataType::Builder.new(
-        data_type_klass: @mutation_root,
+      mutation_root_builder = Type::Builder.new(
+        type_klass: @mutation_root,
         ctx: opts[:ctx],
         root: true
       )
@@ -36,9 +36,9 @@ module RailsQL
       if visitor.root_builders.length > 1
         raise "Can not execute multiple operations in one query document"
       end
-      root = visitor.root_builders.first.data_type
+      root = visitor.root_builders.first.type
       root.build_query!
-      root.resolve_child_data_types!
+      root.resolve_child_types!
 
       return root
     end

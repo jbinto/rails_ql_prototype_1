@@ -1,4 +1,4 @@
-class UserDataType < RailsQL::Type::Type
+class UserType < RailsQL::Type::Type
   initial_query ->{User.all}
 
   has_many(:to_dos,
@@ -23,9 +23,9 @@ class UserDataType < RailsQL::Type::Type
     end
   end
 
-  field :id, data_type: :Integer
-  field :email, data_type: :String
-  field :admin, data_type: :Boolean
+  field :id, type: :Integer
+  field :email, type: :String
+  field :admin, type: :Boolean
 
   can :read, fields: [:id, :to_dos, :email, :admin]
 

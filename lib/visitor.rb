@@ -11,7 +11,7 @@ module RailsQL
       @root_builders = []
       @union_type_builder_stack = []
       @fragments = []
-      @data_type_builders = []
+      @type_builders = []
       @node_stack = []
       @current_operation = :query
       @input_object_key_stack = []
@@ -19,8 +19,8 @@ module RailsQL
 
     protected
 
-    def current_data_type_builder
-      @data_type_builder_stack.last
+    def current_type_builder
+      @type_builder_stack.last
     end
 
     def end_visit_field(node)
@@ -30,9 +30,9 @@ module RailsQL
         @union_type_builder_stack.pop
       elsif within_fragment_definition?
         @parent_field = nil
-      elsif within_data_type?
-        @data_type_builder_stack.pop
-      elsif within_data_type_within_fragment_definition?
+      elsif within_type?
+        @type_builder_stack.pop
+      elsif within_type_within_fragment_definition?
         @parent_field = @parent_field[:parent]
       end
       end_visit_node :field, node
@@ -66,13 +66,13 @@ module RailsQL
         if within_fragment_definition?
           @parent_field = new_field node.value
           @current_fragment[:inline_fragments] << @parent_field
-        elsif within_data_type_within_fragment_definition?
+        elsif within_type_within_fragment_definition?
           new_parent_field = new_field node.value, @parent_field
           @parent_field[:inline_fragments] << new_parent_field
           @parent_field = new_parent_field
         else
           @union_type_builder_stack.push(
-            current_data_type_builder.add_child_builder node.value.downcase
+            current_type_builder.add_child_builder node.value.downcase
           )
         end
       end
@@ -84,11 +84,11 @@ module RailsQL
       elsif within_fragment_definition?
         @parent_field = new_field node.value
         @current_fragment[:fields] << @parent_field
-      elsif within_data_type?
-        child_data_type = current_data_type_builder.add_child_builder node.value
-        @data_type_builder_stack.push child_data_type
-        @data_type_builders << child_data_type
-      elsif within_data_type_within_fragment_definition?
+      elsif within_type?
+        child_type = current_type_builder.add_child_builder node.value
+        @type_builder_stack.push child_type
+        @type_builders << child_type
+      elsif within_type_within_fragment_definition?
         new_parent_field node.value
       end
     end
@@ -97,11 +97,11 @@ module RailsQL
       if within_fragment_definition?
         @parent_field = @current_fragment[:inline_fragments].last
         @parent_field[:fields] << new_field(node.value, @parent_field)
-      elsif within_data_type_within_fragment_definition?
+      elsif within_type_within_fragment_definition?
         new_parent_field node.value
       else
         @union_type_builder_stack.push(
-          (@union_type_builder_stack.last || current_data_type_builder)
+          (@union_type_builder_stack.last || current_type_builder)
             .add_child_builder(node.value.downcase)
         )
       end
@@ -143,7 +143,7 @@ module RailsQL
     def end_visit_object_value(node)
       if @input_object_key_stack.size == 1
         # the input_object has been fully built, so add to the current builder
-        current_data_type_builder.add_arg(
+        current_type_builder.add_arg(
           @input_object_key_stack.first.to_sym,
           @input_object[@input_object_key_stack.first]
         )
@@ -154,7 +154,7 @@ module RailsQL
 
     def visit_arg_value(value)
       if @input_object.nil?
-        current_data_type_builder.add_arg @current_name, value
+        current_type_builder.add_arg @current_name, value
       else
         current_input_object[@current_name.to_sym] = value
       end
@@ -163,9 +163,9 @@ module RailsQL
     def visit_fragment_spread_name(node)
       if within_fragment_definition?
         @current_fragment[:fragments] << node.value
-      elsif within_data_type?
-        current_data_type_builder.unresolved_fragments << node.value
-      elsif within_data_type_within_fragment_definition?
+      elsif within_type?
+        current_type_builder.unresolved_fragments << node.value
+      elsif within_type_within_fragment_definition?
         @parent_field[:fragments] << node.value
       end
     end
@@ -207,11 +207,11 @@ module RailsQL
         end
       builder = prototype.clone
       @root_builders << builder
-      @data_type_builder_stack = [builder]
+      @type_builder_stack = [builder]
     end
 
     def end_visit_operation_definition(node)
-      @data_type_builder_stack = nil
+      @type_builder_stack = nil
     end
 
     def visit_node(sym, node)
@@ -241,41 +241,41 @@ module RailsQL
     end
 
     def resolve_fragments!
-      @data_type_builders.each do |data_type_builder|
+      @type_builders.each do |type_builder|
         @fragments.each do |fragment|
-          if data_type_builder.unresolved_fragments.include?(fragment[:name])
-            apply_fragment_to_data_type_builder fragment, data_type_builder
+          if type_builder.unresolved_fragments.include?(fragment[:name])
+            apply_fragment_to_type_builder fragment, type_builder
           end
         end
       end
     end
 
-    def apply_fragment_to_data_type_builder(fragment, data_type_builder)
+    def apply_fragment_to_type_builder(fragment, type_builder)
       fields = fragment[:fields]
       fields += fragment[:fragments].map do |fragment_name|
         @fragments.select {|f| f[:name] == fragment_name}.first[:fields]
       end.flatten
 
       fields.each do |field|
-        child_data_type_builder = data_type_builder.add_child_builder(
+        child_type_builder = type_builder.add_child_builder(
           field[:name]
         )
-        apply_fragment_to_data_type_builder field, child_data_type_builder
+        apply_fragment_to_type_builder field, child_type_builder
       end if fields.any?
 
-      apply_inline_fragments_to_data_type_builder fragment, data_type_builder
+      apply_inline_fragments_to_type_builder fragment, type_builder
     end
 
-    def apply_inline_fragments_to_data_type_builder(fragment, data_type_builder)
+    def apply_inline_fragments_to_type_builder(fragment, type_builder)
       return if fragment[:inline_fragments].blank?
 
       fragment[:inline_fragments].each do |inline_fragment|
-        child_data_type_builder = data_type_builder.add_child_builder(
+        child_type_builder = type_builder.add_child_builder(
           inline_fragment[:name].downcase
         )
-        apply_fragment_to_data_type_builder(
+        apply_fragment_to_type_builder(
           inline_fragment,
-          child_data_type_builder
+          child_type_builder
         )
       end
     end
@@ -291,7 +291,7 @@ module RailsQL
     def within_fragment_definition?
       return false unless @current_fragment.present?
 
-      return !within_data_type_within_fragment_definition?
+      return !within_type_within_fragment_definition?
     end
 
     # eg: {
@@ -312,7 +312,7 @@ module RailsQL
     #     here
     #   }
     # }
-    def within_data_type?
+    def within_type?
       !@current_fragment.present?
     end
 
@@ -323,7 +323,7 @@ module RailsQL
     #     }
     #   }
     # }
-    def within_data_type_within_fragment_definition?
+    def within_type_within_fragment_definition?
       return false unless @current_fragment.present?
 
       @parent_field.present?

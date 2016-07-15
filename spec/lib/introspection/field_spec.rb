@@ -8,10 +8,10 @@ describe RailsQL::Introspection::Field do
     )
   end
 
-  let(:data_type) do
-    data_type_klass = class_double RailsQL::Type::Type
-    allow(data_type_klass).to receive(:data_type?).and_return true
-    allow(data_type_klass).to receive(:type_definition).and_return(
+  let(:type) do
+    type_klass = class_double RailsQL::Type::Type
+    allow(type_klass).to receive(:type?).and_return true
+    allow(type_klass).to receive(:type_definition).and_return(
       OpenStruct.new(
         name: "MooCow",
         kind: :OBJECT,
@@ -20,12 +20,12 @@ describe RailsQL::Introspection::Field do
       )
     )
 
-    data_type_klass
+    type_klass
   end
 
   let(:field_definition) do
     RailsQL::Field::FieldDefinition.new("mooCows",
-      data_type: data_type,
+      type: type,
       description: "cows are awesome",
       required_args: {how_many_cows: {type: :Int}},
       optional_args: {allow_future_cows: {type: :Boolean}},

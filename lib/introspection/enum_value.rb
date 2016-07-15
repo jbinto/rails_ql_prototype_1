@@ -13,16 +13,16 @@ module RailsQL
       eos
 
       field(:name,
-        data_type: :String,
+        type: :String,
         nullable: false
       )
 
       field(:description,
-        data_type: :String,
+        type: :String,
       )
 
       field(:isDeprecated,
-        data_type: :Boolean,
+        type: :Boolean,
         nullable: false,
         resolve: ->(args, child_query){
           model.is_deprecated
@@ -30,7 +30,7 @@ module RailsQL
       )
 
       field(:deprecationReason,
-        data_type: :String,
+        type: :String,
         resolve: ->(args, child_query){
           model.deprecation_reason
         }

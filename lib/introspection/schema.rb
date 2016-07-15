@@ -1,5 +1,5 @@
 # used for introspection
-# the model resolves to the schema data_type class
+# the model resolves to the schema type class
 
 module RailsQL
   module Introspection
@@ -15,7 +15,7 @@ module RailsQL
         description: <<-eos,
           A list of all types supported by this server.
         eos
-        data_type: "RailsQL::Introspection::Type",
+        type: "RailsQL::Introspection::Type",
         resolve: ->(args, child_query){
           self.class.all_type_klasses_in(model)
         }
@@ -25,7 +25,7 @@ module RailsQL
         description: <<-eos,
           The type that query operations will be rooted at.
         eos
-        data_type: "RailsQL::Introspection::Type",
+        type: "RailsQL::Introspection::Type",
         resolve: ->(args, child_query){
           model
         }
@@ -37,7 +37,7 @@ module RailsQL
           If this server supports mutation, the type that mutation operations
           will be rooted at.
         eos
-        data_type: "RailsQL::Introspection::Type",
+        type: "RailsQL::Introspection::Type",
         resolve: ->(args, child_query){
           nil
         }
@@ -48,7 +48,7 @@ module RailsQL
         description: <<-eos,
           A list of all directives supported by this server.
         eos
-        data_type: "RailsQL::Introspection::Directive",
+        type: "RailsQL::Introspection::Directive",
         singular: false,
         resolve: ->(args, child_query){
           []
@@ -58,7 +58,7 @@ module RailsQL
       def self.all_type_klasses_in(klass, exclude = [])
         child_klasses = klass.field_definitions
           .values
-          .map(&:data_type_klass)
+          .map(&:type_klass)
           .uniq
           .reject{|child_klass| exclude.include? child_klass}
         all_known_klasses = child_klasses + exclude

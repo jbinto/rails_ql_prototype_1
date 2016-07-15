@@ -8,7 +8,7 @@ module RailsQL
         :deprecation_reason
       )
       attr_reader(
-        :data_type,
+        :type,
         :args,
         :description,
         :nullable,
@@ -32,7 +32,7 @@ module RailsQL
         end
 
         defaults = {
-          data_type: "#{name.to_s.singularize.classify}DataType",
+          type: "#{name.to_s.singularize.classify}Type",
           description: nil,
           args: ->(args){},
           nullable: true,
@@ -41,7 +41,8 @@ module RailsQL
           union: false,
           child_ctx: {},
           resolve: nil,
-          query: nil
+          query: nil,
+          default_value: nil # InputObject field definitions only
         }
         opts = defaults.merge(opts.slice *defaults.keys)
         if opts[:description]
@@ -52,15 +53,17 @@ module RailsQL
         end
       end
 
-      def data_type_klass
-        KlassFactory.find @data_type
+      def type_klass
+        KlassFactory.find @type
       end
 
       def args
         @evaled_args ||=(
-          anonymous_input_object = Class.new InputObject
-          anonymous_input_object.anonymous = true
-          data_type.instance_exec anonymous_input_object, &@args
+          anonymous_input_object = Class.new(RailsQL::Type) do
+            kind :input_object
+            anonymous true
+          end
+          type.instance_exec anonymous_input_object, &@args
         )
       end
 
@@ -88,33 +91,33 @@ module RailsQL
         end
       end
 
-      def append_to_query(parent_data_type:, args: {}, child_query: nil)
+      def append_to_query(parent_type:, args: {}, child_query: nil)
         if @query.present?
-          parent_data_type.instance_exec(
+          parent_type.instance_exec(
             args,
             child_query,
             &@query
           )
         else
-          parent_data_type.query
+          parent_type.query
         end
       end
 
-      def resolve(parent_data_type:, args: {}, child_query: nil)
+      def resolve(parent_type:, args: {}, child_query: nil)
         if @resolve.present?
-          parent_data_type.instance_exec(
+          parent_type.instance_exec(
             args,
             child_query,
             &@resolve
           )
-        elsif parent_data_type.respond_to? @name
-          parent_data_type.send @name
-        elsif parent_data_type.model.respond_to? @name
-          parent_data_type.model.send @name
+        elsif parent_type.respond_to? @name
+          parent_type.send @name
+        elsif parent_type.model.respond_to? @name
+          parent_type.model.send @name
         else
           raise(
             RailsQL::NullResolve,
-            "#{parent_data_type.class}##{@name} does not have an explicit " +
+            "#{parent_type.class}##{@name} does not have an explicit " +
             "resolve, nor does the model respond to :#{@name}."
           )
         end

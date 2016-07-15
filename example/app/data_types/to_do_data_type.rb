@@ -1,4 +1,4 @@
-class ToDoDataType < RailsQL::Type::Type
+class ToDoType < RailsQL::Type::Type
   initial_query ->{ToDo.all}
 
   has_one(:user,
@@ -8,9 +8,9 @@ class ToDoDataType < RailsQL::Type::Type
     resolve: ->(args, child_query) {model.user}
   )
 
-  field :id, data_type: :Integer
-  field :status, data_type: :String
-  field :content, data_type: :String
+  field :id, type: :Integer
+  field :status, type: :String
+  field :content, type: :String
 
   can :read, fields: [:id, :user, :status, :content]
 

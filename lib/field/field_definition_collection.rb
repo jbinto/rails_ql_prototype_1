@@ -1,8 +1,8 @@
 module RailsQL
   module Field
     class FieldDefinitionCollection
-      def initialize(field_definition_class)
-        @field_definition_class = field_definition_class
+      def initialize
+        @field_definitions = []
       end
 
       def add_permissions(operations, opts)
@@ -21,7 +21,8 @@ module RailsQL
                 opts[:when]
               )
             else
-              raise FieldMissing, "The field #{field} was not defined on #{self}"
+              msg = "The field #{field} was not defined"
+              raise FieldMissing, msg
             end
           end
           # if permissions.include? :write
@@ -32,9 +33,30 @@ module RailsQL
 
 
       def add_field_definition(name, opts)
+        instance_methods = RailsQL::Type::Type.instance_methods
+
+        name = name.to_s
+        if name.include?("__") && name != "__type" && name != "__schema"
+          raise(
+            RailsQL::InvalidField,
+            "#{name} is an invalid field; names must not be " +
+            "prefixed with double underscores"
+          )
+        end
+
+        if (instance_methods).include?(name.to_sym) && opts[:resolve].nil?
+          raise(
+            RailsQL::InvalidField,
+            "Reserved word: Can not use #{name} as a field name without a " +
+            ":resolve option"
+          )
+        end
+
+        @field_definitions[name] = FieldDefinition.new name.to_sym, opts
       end
 
       def add_plural_field_definition(name, opts)
+        add_field_definition name, opts.merge singular: false
       end
 
     end

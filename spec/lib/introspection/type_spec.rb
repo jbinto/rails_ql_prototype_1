@@ -4,7 +4,7 @@ describe RailsQL::Introspection::Type do
 
   before(:each) do
     allow_any_instance_of(described_class).to(
-      receive(:model).and_return data_type_klass
+      receive(:model).and_return type_klass
     )
   end
 
@@ -20,7 +20,7 @@ describe RailsQL::Introspection::Type do
     definitions
   end
 
-  let(:data_type_klass) do
+  let(:type_klass) do
     klass = class_double RailsQL::Type::Type
     allow(klass).to receive(:type_definition).and_return OpenStruct.new(
       name: "Panda",

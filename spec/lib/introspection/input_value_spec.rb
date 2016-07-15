@@ -8,18 +8,18 @@ describe RailsQL::Introspection::InputValue do
         name: "howGreatAreUnicorns",
         # TODO: These aren't implemented yet:
         # description: "I <3 Unicorns",
-        # type: data_type
+        # type: type
         # defaultValue: "__SO__FREAKING__AWESOME__"
       )
     )
   end
 
   # TODO: not implemented yet:
-  # let(:data_type) do
-  #   data_type = class_double RailsQL::Type::Type
-  #   allow(data_type).to receive(:data_type?).and_return true
-  #   allow(data_type).to receive(:name).and_return "UnicornAwesomeness"
-  #   data_type
+  # let(:type) do
+  #   type = class_double RailsQL::Type::Type
+  #   allow(type).to receive(:type?).and_return true
+  #   allow(type).to receive(:name).and_return "UnicornAwesomeness"
+  #   type
   # end
 
   let(:runner) {

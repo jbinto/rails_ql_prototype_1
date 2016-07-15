@@ -2,7 +2,7 @@ require "active_model/callbacks"
 require_relative "./field_definition"
 
 module RailsQL
-  class Union < Type
+  class Union < RailsQL::Type
     type_name "Union"
     description <<-eos
       GraphQL Unions represent an object that could be one of a list of
@@ -25,8 +25,8 @@ module RailsQL
     end
 
     # unions(
-    #   {name: "sword", data_type: "SwordDataType, model_klass: "Sword"},
-    #   {name: "cross_bow", data_type: "CrossBowDataType, model_klass: "CrossBow"}
+    #   {name: "sword", type: "SwordType, model_klass: "Sword"},
+    #   {name: "cross_bow", type: "CrossBowType, model_klass: "CrossBow"}
     # )
     class << self
       def unions(*union_definitions)
@@ -36,7 +36,7 @@ module RailsQL
 
         union_definitions.each do |union_definition|
           field(union_definition[:name],
-            union_definition.slice(:data_type, :model_klass).merge(
+            union_definition.slice(:type, :model_klass).merge(
               union: true,
               nullable: true,
               singular: true,

@@ -11,30 +11,30 @@ module RailsQL
         which has a name, potentially a list of arguments, and a return type.
       eos
 
-      field :name, data_type: :String
-      field :description, data_type: :String
+      field :name, type: :String
+      field :description, type: :String
       has_many(:args,
-        data_type: "RailsQL::Introspection::InputValue",
+        type: "RailsQL::Introspection::InputValue",
         resolve: ->(args, child_query){
           model.args.input_field_definitions
         }
       )
       has_one(:type,
-        data_type: "RailsQL::Introspection::Type",
+        type: "RailsQL::Introspection::Type",
         query: nil,
         resolve: ->(args, child_query){
-          model.data_type_klass
+          model.type_klass
         }
       )
-      field :singular, data_type: :Boolean
+      field :singular, type: :Boolean
       field(:isDeprecated,
-        data_type: :Boolean,
+        type: :Boolean,
         resolve: ->(args, child_query) {
           model.deprecated?
         }
       )
       field(:deprecationReason,
-        data_type: :String,
+        type: :String,
         resolve: ->(args, child_query) {
           model.deprecation_reason
         }

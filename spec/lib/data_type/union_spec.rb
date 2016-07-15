@@ -1,21 +1,21 @@
 require "spec_helper"
 
 describe RailsQL::Type::Union do
-  let(:data_type_klass) {Class.new described_class}
+  let(:type_klass) {Class.new described_class}
 
 
   describe ".unions" do
     it "creates field definitions" do
-      data_type_klass.unions(
-        {name: "sword", data_type: "SwordDataType", model_klass: "Sword"},
-        {name: "crossbow", data_type: "CrossbowDataType",
+      type_klass.unions(
+        {name: "sword", type: "SwordType", model_klass: "Sword"},
+        {name: "crossbow", type: "CrossbowType",
           model_klass: "Crossbow"
         }
       )
 
-      expect(data_type_klass.field_definitions.count).to eq 2
-      expect(data_type_klass.field_definitions["sword"].union).to eq true
-      expect(data_type_klass.field_definitions["crossbow"].union).to eq true
+      expect(type_klass.field_definitions.count).to eq 2
+      expect(type_klass.field_definitions["sword"].union).to eq true
+      expect(type_klass.field_definitions["crossbow"].union).to eq true
     end
   end
 
@@ -23,23 +23,23 @@ describe RailsQL::Type::Union do
     before :each do
       Sword = Class.new
       Crossbow = Class.new
-      SwordDataType = Class.new RailsQL::Type::Type
-      SwordDataType.field :damage, data_type: "Int"
-      SwordDataType.can :read, fields: [:damage]
-      CrossbowDataType = Class.new RailsQL::Type::Type
-      CrossbowDataType.field :damage, data_type: "Int"
-      CrossbowDataType.field :range, data_type: "Int"
-      CrossbowDataType.can :read, fields: [:damage, :range]
-      data_type_klass.unions(
-        {name: "sword", data_type: "SwordDataType", model_klass: "Sword"},
-        {name: "crossbow", data_type: "CrossbowDataType",
+      SwordType = Class.new RailsQL::Type::Type
+      SwordType.field :damage, type: "Int"
+      SwordType.can :read, fields: [:damage]
+      CrossbowType = Class.new RailsQL::Type::Type
+      CrossbowType.field :damage, type: "Int"
+      CrossbowType.field :range, type: "Int"
+      CrossbowType.can :read, fields: [:damage, :range]
+      type_klass.unions(
+        {name: "sword", type: "SwordType", model_klass: "Sword"},
+        {name: "crossbow", type: "CrossbowType",
           model_klass: ->{"Crossbow"}
         }
       )
-      data_type_klass.can :read, fields: [:sword, :crossbow]
+      type_klass.can :read, fields: [:sword, :crossbow]
       @runner = RailsQL::Runner.new(
-        query_root: data_type_klass,
-        mutation_root: data_type_klass
+        query_root: type_klass,
+        mutation_root: type_klass
       )
     end
 
@@ -61,14 +61,14 @@ describe RailsQL::Type::Union do
         }
       }"
 
-      allow_any_instance_of(data_type_klass).to receive(:model).and_return sword
+      allow_any_instance_of(type_klass).to receive(:model).and_return sword
       allow(sword).to receive(:kind_of?).with(Sword).and_return true
       allow(sword).to receive(:kind_of?).with(Crossbow).and_return false
       results = @runner.execute!(query: query).as_json
       expect(results.keys).to eq ["damage"]
       expect(results["damage"]).to eq 5
 
-      allow_any_instance_of(data_type_klass).to receive(:model).and_return(
+      allow_any_instance_of(type_klass).to receive(:model).and_return(
         crossbow
       )
       allow(crossbow).to receive(:kind_of?).with(Sword).and_return false

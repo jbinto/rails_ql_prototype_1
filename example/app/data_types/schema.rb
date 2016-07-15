@@ -2,12 +2,12 @@ class Schema < RailsQL::Type::Type
   include RailsQL::Introspection
 
   has_one(:my,
-    data_type: "MyNamespace",
+    type: "MyNamespace",
     resolve: ->(args, child_query) {:my}
   )
 
   has_one(:all,
-    data_type: "AllNamespace",
+    type: "AllNamespace",
     resolve: ->(args, child_query) {:all}
   )
 
