@@ -15,6 +15,7 @@ module RailsQL
       @node_stack = []
       @current_operation = :query
       @input_object_key_stack = []
+      @defined_variables = {}
     end
 
     protected
@@ -39,24 +40,57 @@ module RailsQL
     end
 
     def visit_name(node)
-      ap 'name'
-      ap node.value
-      ap @node_stack.last
+      # ap 'name'
+      # ap node.value
+      # ap @node_stack.last
       @current_name = node.value
-      case @node_stack.last
-      when :field then visit_field_name node
-      when :fragment_spread then visit_fragment_spread_name node
-      when :fragment_definition then visit_fragment_definition_name node
-      when :inline_fragment then visit_inline_fragment_name node
-      when :named_type then visit_named_type_name node
-      when :argument then visit_argument_name node
+      if @node_stack.last(2) == [:variable_definition, :variable]
+        visit_variable_definition_name node
+      elsif @node_stack.last(2) == [:variable_definition, :named_type]
+        visit_variable_definition_named_type node
+      else
+        case @node_stack.last
+        when :field then visit_field_name node
+        when :fragment_spread then visit_fragment_spread_name node
+        when :fragment_definition then visit_fragment_definition_name node
+        when :inline_fragment then visit_inline_fragment_name node
+        when :named_type then visit_named_type_name node
+        when :argument then visit_argument_name node
+        when :variable then visit_variable_name node
+        end
       end
       visit_node :name, node
     end
 
-    def visit_argument_name(node)
-      ap 'arg name'
+    def visit_variable_name(node)
+      ap 'var'
       ap node.value
+      ap @defined_variables
+      if @defined_variables.keys.include? node.value
+        current_type_builder.add_variable(
+          argument_name: @last_argument_name,
+          variable_name: node.value,
+          variable_type_name: @defined_variables[node.value]
+        )
+      else
+        raise(
+          UndefinedVariable,
+          "#{node.value} was not defined as a variable in the operation"
+        )
+      end
+    end
+
+    def visit_variable_definition_name(node)
+      @last_defined_variable_name = node.value
+    end
+
+    def visit_variable_definition_named_type(node)
+      ap "var type"
+      ap node.value
+      @defined_variables[@last_defined_variable_name] = node.value
+    end
+
+    def visit_argument_name(node)
       @last_argument_name = node.value
     end
 
@@ -191,18 +225,6 @@ module RailsQL
 
     def end_visit_document(node)
       resolve_fragments!
-    end
-
-    def visit_variable_definition(node)
-      ap "Variable!"
-      # ap node.methods - Object.methods
-      ap node.default_value
-      # ap node.type.to_s
-      ap node.variable.methods - Object.methods
-    end
-
-    def visit_variable(node)
-      ap node.methods - Object.methods
     end
 
     def method_missing(*args)

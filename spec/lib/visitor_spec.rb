@@ -121,6 +121,17 @@ describe RailsQL::Visitor do
           "
         end
 
+        it "calls builder#add_arg for each arg in a fragment" do
+          hero_builder = instance_double "RailsQL::Type::Builder"
+          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
+          expect(hero_builder).to receive(:add_arg).with('id', 3)
+
+          visit_graphql "
+            fragment heroFieldsFragment on Stuff { hero(id: 3) }
+            query { ...heroFieldsFragment }
+          "
+        end
+
         it "calls builder#add_child_builder for each union child field node when defined in fragment" do
           union_setup
 
@@ -355,7 +366,9 @@ describe RailsQL::Visitor do
       context "when the operation defines the variable" do
         it "adds the variables in the operation to the builder" do
           expect(@hero_builder).to receive(:add_variable).with(
-            :hero, "cow"
+            argument_name: "hero",
+            variable_name: "cow",
+            variable_type_name: "CowType"
           )
           visit_graphql <<-GraphQL
             mutation Thing($cow: CowType) {
@@ -366,7 +379,9 @@ describe RailsQL::Visitor do
 
         it "adds the variables in a fragment to the builder" do
           expect(@hero_builder).to receive(:add_variable).with(
-            :hero, "cow"
+            argument_name: "hero",
+            variable_name: "cow",
+            variable_type_name: "CowType"
           )
           visit_graphql <<-GraphQL
             mutation Thing($cow: CowType) {

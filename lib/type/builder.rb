@@ -49,7 +49,7 @@ module RailsQL
         return child_builder
       end
 
-      def add_variable(field_name, variable_name)
+      def add_variable(argument_name:, variable_name:, variable_type_name:)
       end
 
       # idempotent

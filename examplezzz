@@ -159,6 +159,8 @@ mutate {
 5. Switch to 8.0 (GodMutation for menu_item)
 ---
 6. Introspection fix-up and additions
+7. Update visitor to not convert any user inputted values to symbols
+8. Fragment on <type> does not currently validate <type>. Validate it.
 
 More Features
 * Type Name Introspection (__typename field on all types)
