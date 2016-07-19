@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe RailsQL::Type::Builder do
   before :each do
-    stub_const "MockedType", Class.new(RailsQL::Type::Type)
+    stub_const "MockedType", Class.new(RailsQL::Type)
     @mocked_type = class_double("MockedType")
     @builder = RailsQL::Type::Builder.new(
       type_klass: "mocked_type",
@@ -85,5 +85,31 @@ describe RailsQL::Type::Builder do
       expect(@builder.args['string_key']).to eq "string_value"
       expect(@builder.args['int_key']).to eq 3
     end
+  end
+
+  describe "#add_variable" do
+    context "when variable_type_name exists as a type" do
+      it "adds argument name, variable_name, and variable_type to vars" do
+        CowType = Class.new RailsQL::Type
+        @builder.add_variable(
+          argument_name: "hero",
+          variable_name: "cow",
+          variable_type_name: "CowType"
+        )
+
+        expect(@builder.unresolved_variables['hero']).to eq "cow"
+      end
+    end
+
+    context "when variable_type_name does not exist as a type" do
+      it "raises an error" do
+        expect{@builder.add_variable(
+          argument_name: "hero",
+          variable_name: "cow",
+          variable_type_name: "BogusType"
+        )}.to raise_error
+      end
+    end
+
   end
 end

@@ -14,6 +14,7 @@ module RailsQL
         @root = opts[:root]
         @is_arg_value = opts[:is_arg_value]
         @args = {}
+        @unresolved_variables = {}
       end
 
       def type
@@ -50,6 +51,8 @@ module RailsQL
       end
 
       def add_variable(argument_name:, variable_name:, variable_type_name:)
+        KlassFactory.find variable_type_name
+        @unresolved_variables[argument_name] = variable_name
       end
 
       # idempotent
@@ -63,6 +66,10 @@ module RailsQL
 
       def args
         @args.clone
+      end
+
+      def unresolved_variables
+        @unresolved_variables.clone
       end
 
       def unresolved_fragments
