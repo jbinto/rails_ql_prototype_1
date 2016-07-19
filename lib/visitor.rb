@@ -11,7 +11,8 @@ module RailsQL
       @root_builders = []
       @union_type_builder_stack = []
       @fragments = []
-      @type_builders = []
+      @type_builders = [query_root_builder, mutation_root_builder]
+      # @type_builders = []
       @node_stack = []
       @current_operation = :query
       @input_object_key_stack = []
@@ -40,9 +41,6 @@ module RailsQL
     end
 
     def visit_name(node)
-      # ap 'name'
-      # ap node.value
-      # ap @node_stack.last
       @current_name = node.value
       if @node_stack.last(2) == [:variable_definition, :variable]
         visit_variable_definition_name node
@@ -63,15 +61,20 @@ module RailsQL
     end
 
     def visit_variable_name(node)
-      ap 'var'
-      ap node.value
-      ap @defined_variables
       if @defined_variables.keys.include? node.value
-        current_type_builder.add_variable(
+        var_attrs = {
           argument_name: @last_argument_name,
           variable_name: node.value,
           variable_type_name: @defined_variables[node.value]
-        )
+        }
+        if within_type?
+          current_type_builder.add_variable var_attrs
+        elsif within_type_within_fragment_definition?
+          @parent_field[:variables] << var_attrs
+        else
+          @current_fragment[:variables] << var_attrs
+        end
+
       else
         raise(
           UndefinedVariable,
@@ -85,8 +88,6 @@ module RailsQL
     end
 
     def visit_variable_definition_named_type(node)
-      ap "var type"
-      ap node.value
       @defined_variables[@last_defined_variable_name] = node.value
     end
 
@@ -198,7 +199,13 @@ module RailsQL
 
     def visit_arg_value(value)
       if @input_object.nil?
-        current_type_builder.add_arg @current_name, value
+        if within_type?
+          current_type_builder.add_arg @current_name, value
+        elsif within_type_within_fragment_definition?
+          @parent_field[:args][@current_name] = value
+        else
+          @current_fragment[:args][@current_name] = value
+        end
       else
         current_input_object[@current_name.to_sym] = value
       end
@@ -280,6 +287,8 @@ module RailsQL
         fields: [],
         fragments: [],
         inline_fragments: [],
+        args: {},
+        variables: [],
         parent: parent
       }
     end
@@ -306,6 +315,14 @@ module RailsQL
         )
         apply_fragment_to_type_builder field, child_type_builder
       end if fields.any?
+
+      fragment[:args].each do |name, value|
+        type_builder.add_arg name, value
+      end
+
+      fragment[:variables].each do |var_attrs|
+        type_builder.add_variable var_attrs
+      end
 
       apply_inline_fragments_to_type_builder fragment, type_builder
     end

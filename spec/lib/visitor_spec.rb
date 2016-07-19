@@ -443,7 +443,7 @@ describe RailsQL::Visitor do
 
       context "with names" do
         it "instantiates query + mutation roots for each operation" do
-          hero_builder = instance_double "RailsQL::Type::Builder"
+          hero_builder = double
           allow(query_root_builder).to receive(:add_child_builder).with(
             'hero'
           ).and_return hero_builder
