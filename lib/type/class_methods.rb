@@ -2,19 +2,19 @@ module RailsQL
   class Type
     module ClassMethods
       def type_name(next_name)
-        @name = next_name.try :strip
+        @type_name = next_name.try :strip
       end
 
       def description(description=nil)
-        @description = description.try(:gsub, /\n\s+/, "\n").try :strip
+        @description = description.strip_heredoc
       end
 
       def kind(kind)
-        kind_values = Kind.enum_values
+        kind_values = Kind.enum_values.map{|v| v.to_s.downcase.to_sym}
         if kind_values.include? kind
           @kind = kind
         else
-          raise <<-eos.gsub(/[\s\n]+/, " ")
+          raise <<-eos.strip_heredoc
             #{kind} is not a valid kind. Must be one of
             #{kind_values.join ", "}
           eos
@@ -39,7 +39,7 @@ module RailsQL
 
       def type_definition
         return OpenStruct.new(
-          name: @name || to_s,
+          name: @type_name || to_s,
           kind: @kind || :OBJECT,
           enum_values: @enum_values || {},
           description: @description,
@@ -59,11 +59,11 @@ module RailsQL
       end
 
       def field_definitions
-        @field_definitions = FieldDefinitionCollection.new FieldDefinition
+        @field_definitions ||= Field::FieldDefinitionCollection.new
       end
 
       def can(operations, opts)
-        @field_definitions.add_permissions(operations, opts)
+        field_definitions.add_permissions(operations, opts)
       rescue Exception => e
         raise e, "#{e.message} on #{self}", e.backtrace
       end
@@ -83,13 +83,13 @@ module RailsQL
       # * <tt>:accessible_args</tt> - Arguments that can be passed to the resolve method
       # * <tt>:nullable</tt> -
       def field(name, opts)
-        @field_definitions.add_field_definition(name, opts)
+        field_definitions.add_field_definition(name, opts)
       end
 
       alias_method :has_one, :field
 
       def has_many(name, opts)
-        @field_definitions.add_plural_field_definition(name, opts)
+        field_definitions.add_plural_field_definition(name, opts)
       end
 
     end

@@ -20,7 +20,7 @@ module RailsQL
         type: "RailsQL::Introspection::TypeKind",
         nullable: false,
         resolve: ->(args, child_query) {
-          model.type_definition.kind
+          model.type_definition.kind.to_s.upcase.to_sym
         }
       )
 

@@ -163,6 +163,49 @@ mutate {
 More Features
 * Type Name Introspection (__typename field on all types)
 * Variables
+  - order of variable definitions, how does visitor handle it?
+    - must be defined at the top of an operation
+    - actually, runner needs to handle resolving variables
+      (in case the value of a var is based on a previous operation in the document)
+      - visitor generates builders (one tree per operation)
+      - for each operation/builder tree:
+        - resolve builder vars (see below)
+        - resolve builders to data types
+        - run query and resolve models
+        - update vars
+  - variables in fragments?
+    - yes, but var must be defined at the top of any operation which references that fragment
+  - can you share vars across multiple operations?
+    - no
+  - are vars always scalars or can they be objects?
+    - can be any type of input
+  - how would you handle resolving variables with recursive input object values?
+    - add arg to everywhere the variable is referenced
+  - can you reference a variable within a variable's input object value?
+    - no. Because variable values come through a side channel and are not GraphQL
 * List and Non-Null as standalone anonomous types + syntax for fields
 * Directives
 * Field Aliases
+  - breaks sequel gem model querying
+  - in railsQL, just use the alias name as the field key in type
+    - eg: RootType has fields user_1: Field(name: "user"), user_2: Field(name: "user")
+
+Potential Resolve Builder Var solution :
+class Builder
+  def resolve_variables!(variable_values)
+    @unresolved_variables.each do |k|
+      add_arg k, variable_values[k]
+    end
+    child_builders.each{|b| b.resolve_variables! variables_values}
+  end
+end
+
+(in runner, run after each operation [if we allow more than one operation]):
+roots = visitor.root_builders.map do |root_builder|
+  root_builder.resolve_variables! variables
+  root = root_builder.type
+  root.build_query!
+  root.resolve_child_types!
+  update_variables!
+  root
+end

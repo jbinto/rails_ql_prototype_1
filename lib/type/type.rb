@@ -1,11 +1,14 @@
 require "active_model/callbacks"
-require_relative "./field_definition"
+require_relative "./class_methods.rb"
+require_relative "../field/field_collection.rb"
 
 module RailsQL
   class Type
     extend ActiveModel::Callbacks
+    extend RailsQL::Type::ClassMethods
+
     define_model_callbacks :resolve
-    after_resolve :authorize_query!, if: :root?
+    before_resolve :authorize_query!, if: :root?
 
     attr_reader :args, :ctx, :query, :anonymous, :model
     attr_accessor :fields
@@ -15,7 +18,7 @@ module RailsQL
         child_types: {},
         args: {},
         ctx: {},
-        root: false
+        root: false,
         anonymous: false
       }.merge opts
 
@@ -99,8 +102,5 @@ module RailsQL
       value
     end
 
-    class << self
-      include RailsQL::Type::ClassMethods
-    end
   end
 end

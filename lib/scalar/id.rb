@@ -2,7 +2,7 @@ module RailsQL
   module Scalar
     class ID  < RailsQL::Type
       kind :scalar
-      name "ID"
+      type_name "ID"
       description <<-DESC.strip_heredoc
         The `ID` scalar type represents a unique identifier, often used to
         refetch an object or as key for a cache. The ID type appears in a JSON

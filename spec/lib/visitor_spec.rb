@@ -341,6 +341,70 @@ describe RailsQL::Visitor do
       end
     end
 
+    context "with variables" do
+      before :each do
+        @hero_builder = instance_double "RailsQL::Type::Builder"
+        allow(mutation_root_builder).to receive(:add_child_builder).with(
+          'createHero'
+        ).and_return @hero_builder
+        allow(@hero_builder).to receive(:add_child_builder).with(
+          'name'
+        )
+      end
+
+      context "when the operation defines the variable" do
+        it "adds the variables in the operation to the builder" do
+          expect(@hero_builder).to receive(:add_variable).with(
+            :hero, "cow"
+          )
+          visit_graphql <<-GraphQL
+            mutation Thing($cow: CowType) {
+              createHero(hero: $cow){ name }
+            }
+          GraphQL
+        end
+
+        it "adds the variables in a fragment to the builder" do
+          expect(@hero_builder).to receive(:add_variable).with(
+            :hero, "cow"
+          )
+          visit_graphql <<-GraphQL
+            mutation Thing($cow: CowType) {
+              ...cowFragment
+            }
+            fragment cowFragment on Stuff {
+              createHero(hero: $cow){ name }
+            }
+          GraphQL
+        end
+      end
+
+      context "when the operation does not define the variable" do
+        it "errors on variables in the operation" do
+          expect{
+            visit_graphql <<-GraphQL
+              mutation() {
+                createHero(hero: $cow){ name }
+              }
+            GraphQL
+          }.to raise_error
+        end
+
+        it "errors on variables in a fragment" do
+          expect{
+            visit_graphql <<-GraphQL
+              mutation() {
+                ...cowFragment
+              }
+              cowFragment on Stuff {
+                createHero(hero: $cow){ name }
+              }
+            GraphQL
+          }.to raise_error
+        end
+      end
+    end
+
     context "multiple operations in a single query document" do
       context "without names" do
         it "throws an error" do

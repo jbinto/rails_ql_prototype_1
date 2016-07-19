@@ -39,6 +39,9 @@ module RailsQL
     end
 
     def visit_name(node)
+      ap 'name'
+      ap node.value
+      ap @node_stack.last
       @current_name = node.value
       case @node_stack.last
       when :field then visit_field_name node
@@ -46,8 +49,15 @@ module RailsQL
       when :fragment_definition then visit_fragment_definition_name node
       when :inline_fragment then visit_inline_fragment_name node
       when :named_type then visit_named_type_name node
+      when :argument then visit_argument_name node
       end
       visit_node :name, node
+    end
+
+    def visit_argument_name(node)
+      ap 'arg name'
+      ap node.value
+      @last_argument_name = node.value
     end
 
     def visit_inline_fragment(node)
@@ -181,6 +191,18 @@ module RailsQL
 
     def end_visit_document(node)
       resolve_fragments!
+    end
+
+    def visit_variable_definition(node)
+      ap "Variable!"
+      # ap node.methods - Object.methods
+      ap node.default_value
+      # ap node.type.to_s
+      ap node.variable.methods - Object.methods
+    end
+
+    def visit_variable(node)
+      ap node.methods - Object.methods
     end
 
     def method_missing(*args)

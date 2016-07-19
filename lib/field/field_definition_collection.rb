@@ -1,8 +1,10 @@
 module RailsQL
   module Field
     class FieldDefinitionCollection
+      attr_reader :field_definitions
+
       def initialize
-        @field_definitions = []
+        @field_definitions = HashWithIndifferentAccess.new
       end
 
       def add_permissions(operations, opts)
@@ -33,7 +35,7 @@ module RailsQL
 
 
       def add_field_definition(name, opts)
-        instance_methods = RailsQL::Type::Type.instance_methods
+        instance_methods = Type.instance_methods
 
         name = name.to_s
         if name.include?("__") && name != "__type" && name != "__schema"
@@ -56,7 +58,7 @@ module RailsQL
       end
 
       def add_plural_field_definition(name, opts)
-        add_field_definition name, opts.merge singular: false
+        add_field_definition name, opts.merge(singular: false)
       end
 
     end

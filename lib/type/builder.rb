@@ -49,6 +49,9 @@ module RailsQL
         return child_builder
       end
 
+      def add_variable(field_name, variable_name)
+      end
+
       # idempotent
       def add_arg(name, value)
         @args[name.to_s] = value

@@ -2,7 +2,7 @@ module RailsQL
   module Scalar
     class Float  < RailsQL::Type
       kind :scalar
-      name "Float"
+      type_name "Float"
       description <<-DESC.strip_heredoc
         The `Float` scalar type represents signed double-precision
         fractional values as specified by
