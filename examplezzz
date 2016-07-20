@@ -161,6 +161,7 @@ mutate {
 6. Introspection fix-up and additions
 7. Update visitor to not convert any user inputted values to symbols
 8. Fragment on <type> does not currently validate <type>. Validate it.
+9. Move Visitor#resolve_fragments to Builder#resolve_fragments
 
 More Features
 * Type Name Introspection (__typename field on all types)

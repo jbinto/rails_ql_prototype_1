@@ -50,6 +50,13 @@ module RailsQL
         true
       end
 
+      # TODO add specs
+      def valid_child_type?(name:, type_name:)
+        child_klass = field_definitions[name].try(:type_klass)
+        return false if child_klass.nil?
+        return child_klass.type_definition.name.to_s == type_name
+      end
+
       def initial_query(initial_query)
         @initial_query = initial_query
       end

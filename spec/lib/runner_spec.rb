@@ -2,8 +2,8 @@ require "spec_helper"
 
 describe RailsQL::Runner do
   before :each do
-    @schema = Class.new RailsQL::Type::Type
-    @mutation = Class.new RailsQL::Type::Type
+    @schema = Class.new RailsQL::Type
+    @mutation = Class.new RailsQL::Type
 
     @visitor = instance_double RailsQL::Visitor
     allow(RailsQL::Visitor).to receive(:new).and_return @visitor
@@ -52,5 +52,9 @@ describe RailsQL::Runner do
     it "raises error" do
       expect{@runner.execute!(query: nil)}.to raise_error
     end
+  end
+
+  context "when variables are included in the query" do
+    
   end
 end

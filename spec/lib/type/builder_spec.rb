@@ -79,11 +79,9 @@ describe RailsQL::Type::Builder do
 
   describe "#add_arg" do
     it "adds key, value pair to args" do
-      @builder.add_arg "string_key", "string_value"
-      @builder.add_arg "int_key", 3
+      arg_builder = @builder.add_arg_builder "legoTM",
 
-      expect(@builder.args['string_key']).to eq "string_value"
-      expect(@builder.args['int_key']).to eq 3
+      expect(@builder.args['legoTM']).to eq arg_builder
     end
   end
 

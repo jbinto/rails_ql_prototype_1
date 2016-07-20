@@ -1,11 +1,12 @@
 module RailsQL
   module Field
-    class FieldDefinitionCollection
-      attr_reader :field_definitions
+    class FieldDefinitionCollection < HashWithIndifferentAccess
+      # TODO: switch to hash inheritance
+      # attr_reader :field_definitions
 
-      def initialize
-        @field_definitions = HashWithIndifferentAccess.new
-      end
+      # def initialize
+      #   @field_definitions = HashWithIndifferentAccess.new
+      # end
 
       def add_permissions(operations, opts)
         operations = [operations].flatten
@@ -17,8 +18,8 @@ module RailsQL
 
         operations.each do |operation|
           opts[:fields].each do |field|
-            if field_definitions[field]
-              field_definitions[field].send(
+            if self[field]
+              self[field].send(
                 :"add_#{operation}_permission",
                 opts[:when]
               )
@@ -54,7 +55,7 @@ module RailsQL
           )
         end
 
-        @field_definitions[name] = FieldDefinition.new name.to_sym, opts
+        self[name] = FieldDefinition.new name.to_sym, opts
       end
 
       def add_plural_field_definition(name, opts)

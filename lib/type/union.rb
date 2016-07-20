@@ -52,6 +52,8 @@ module RailsQL
                 if model.kind_of? model_klass
                   @resolved_type = union_definition[:name]
                   model
+                else
+                  nil
                 end
               }
             )

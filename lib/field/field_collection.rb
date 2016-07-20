@@ -1,7 +1,8 @@
 module RailsQL
   module Field
-    class FieldCollection
-      attr_accessor :fields
+    class FieldCollection < HashWithIndifferentAccess
+      # TODO: switch to hash inheritance
+      # attr_accessor :fields
 
       def unauthorized_fields_for(action)
         fields.reduce(HashWithIndifferentAccess.new) do |h, (k, field)|

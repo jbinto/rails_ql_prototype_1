@@ -22,17 +22,6 @@ module RailsQL
         anonymous: false
       }.merge opts
 
-      @fields = HashWithIndifferentAccess.new
-      opts[:child_types].each do |name, type|
-        @fields[name] = RailsQL::Field::Field.new(
-          name: name,
-          field_definition: self.class.field_definitions[name],
-          parent_type: self,
-          type: type
-        )
-      end
-
-      @fields.freeze
       @args = HashWithIndifferentAccess.new(opts[:args]).freeze
       @ctx = HashWithIndifferentAccess.new opts[:ctx]
       @root = opts[:root]
@@ -50,7 +39,7 @@ module RailsQL
     end
 
     def unauthorized_fields_for(action)
-      self.class.field_definitions.unauthorized_fields_for action, self
+      self.fields.unauthorized_fields_for action, self
     end
 
     def root?
@@ -101,6 +90,5 @@ module RailsQL
     def parse_value!(value)
       value
     end
-
   end
 end

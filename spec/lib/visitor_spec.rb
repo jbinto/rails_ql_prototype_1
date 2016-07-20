@@ -1,9 +1,9 @@
 require "spec_helper"
 
-describe RailsQL::Visitor do
-  let(:query_root_builder) { instance_double "RailsQL::Type::Builder" }
-  let(:mutation_root_builder) { instance_double "RailsQL::Type::Builder" }
-  let(:visitor) {RailsQL::Visitor.new(
+describe RailsQL::Builder::Visitor do
+  let(:query_root_builder) { instance_double "RailsQL::Builder::TypeBuilder" }
+  let(:mutation_root_builder) { instance_double "RailsQL::Builder::TypeBuilder" }
+  let(:visitor) {RailsQL::Builder::Visitor.new(
     query_root_builder: query_root_builder,
     mutation_root_builder: mutation_root_builder
   )}
@@ -15,27 +15,27 @@ describe RailsQL::Visitor do
 
   before :each do
     allow_any_instance_of(double.class).to receive(
-      :unresolved_fragments
+      :fragments
     ).and_return []
     allow_any_instance_of(query_root_builder.class).to receive(
-      :unresolved_fragments
+      :fragments
     ).and_return []
     allow(mutation_root_builder).to receive(
-      :unresolved_fragments
+      :fragments
     ).and_return []
   end
 
   describe "#accept" do
-    it "calls builder#add_child_builder for each child field node" do
-      expect(query_root_builder).to receive(:add_child_builder).with 'hero'
+    it "calls builder#add_child_builder! for each child field node" do
+      expect(query_root_builder).to receive(:add_child_builder!).with name: 'hero'
 
       visit_graphql "query { hero }"
     end
 
-    it "calls builder#add_arg for each arg" do
+    it "calls builder#add_arg_builder! for each arg" do
       hero_builder = instance_double "RailsQL::Type::Builder"
-      allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-      expect(hero_builder).to receive(:add_arg).with('id', 3)
+      allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+      expect(hero_builder).to receive(:add_arg_builder!).with(name: 'id', model: 3)
 
       visit_graphql "query { hero(id: 3) }"
     end
@@ -46,34 +46,34 @@ describe RailsQL::Visitor do
       sheathe_builder = instance_double "RailsQL::Type::Builder"
       sword_builder = instance_double "RailsQL::Type::Builder"
       crossbow_builder = instance_double "RailsQL::Type::Builder"
-      allow(query_root_builder).to receive(:add_child_builder).with(
-        "hero"
+      allow(query_root_builder).to receive(:add_child_builder!).with(
+        name: "hero"
       ).and_return hero_builder
-      allow(hero_builder).to receive(:add_child_builder).with(
-        "weapon"
+      allow(hero_builder).to receive(:add_child_builder!).with(
+        name: "weapon"
       ).and_return weapon_builder
-      expect(weapon_builder).to receive(:add_child_builder).with(
-        "sword"
+      expect(weapon_builder).to receive(:add_child_builder!).with(
+        name: "Sword"
       ).and_return(sword_builder)
-      expect(sword_builder).to receive(:add_child_builder).with(
-        "damage"
+      expect(sword_builder).to receive(:add_child_builder!).with(
+        name: "damage"
       )
-      expect(sword_builder).to receive(:add_child_builder).with(
-        "sheathe"
+      expect(sword_builder).to receive(:add_child_builder!).with(
+        name: "sheathe"
       ).and_return sheathe_builder
-      expect(sheathe_builder).to receive(:add_child_builder).with "length"
-      expect(weapon_builder).to receive(:add_child_builder).with(
-        "crossbow"
+      expect(sheathe_builder).to receive(:add_child_builder!).with name: "length"
+      expect(weapon_builder).to receive(:add_child_builder!).with(
+        name: "Crossbow"
       ).and_return crossbow_builder
-      expect(crossbow_builder).to receive(:add_child_builder).with(
-        "damage"
+      expect(crossbow_builder).to receive(:add_child_builder!).with(
+        name: "damage"
       )
-      expect(crossbow_builder).to receive(:add_child_builder).with(
-        "range"
+      expect(crossbow_builder).to receive(:add_child_builder!).with(
+        name: "range"
       )
     end
 
-    it "calls builder#add_child_builder for each union child field node when defined in fragment" do
+    it "calls builder#add_child_builder! for each union child field node when defined in fragment" do
       union_setup
 
       visit_graphql("
@@ -112,8 +112,9 @@ describe RailsQL::Visitor do
       context "when the fragment is defined before the spread" do
         it "parses queries with fragments into data types" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          expect(hero_builder).to receive(:add_child_builder).with 'name'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          expect(hero_builder).to receive(:add_fragment!).with name: "heroFieldsFragment"
+          expect(hero_builder).to receive(:add_child_builder!).with name: 'name'
 
           visit_graphql "
             fragment heroFieldsFragment on Hero { name }
@@ -121,10 +122,12 @@ describe RailsQL::Visitor do
           "
         end
 
-        it "calls builder#add_arg for each arg in a fragment" do
+        it "calls builder#add_arg_builder! for each arg in a fragment" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          expect(hero_builder).to receive(:add_arg).with('id', 3)
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          expect(hero_builder).to receive(:add_arg_builder!).with(
+            name: 'id', model: 3
+          )
 
           visit_graphql "
             fragment heroFieldsFragment on Stuff { hero(id: 3) }
@@ -132,7 +135,7 @@ describe RailsQL::Visitor do
           "
         end
 
-        it "calls builder#add_child_builder for each union child field node when defined in fragment" do
+        it "calls builder#add_child_builder! for each union child field node when defined in fragment" do
           union_setup
 
           visit_graphql("
@@ -162,8 +165,8 @@ describe RailsQL::Visitor do
       context "when the fragment is defined after the spread" do
         it "parses queries with fragments into data types" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          expect(hero_builder).to receive(:add_child_builder).with 'name'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          expect(hero_builder).to receive(:add_child_builder!).with name: 'name'
 
           visit_graphql "
             query { hero { ...heroFieldsFragment } }
@@ -175,9 +178,9 @@ describe RailsQL::Visitor do
       context "when the nested fragment is defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
-          expect(hero_builder).to receive(:add_child_builder).with 'description'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder!).with name: 'name'
+          expect(hero_builder).to receive(:add_child_builder!).with name: 'description'
 
           visit_graphql "
             fragment extraFieldFragment on Hero { description }
@@ -193,9 +196,9 @@ describe RailsQL::Visitor do
       context "when the nested fragment is defined after the nested spread" do
         it "parses queries with nested fragments into data types" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
-          expect(hero_builder).to receive(:add_child_builder).with 'description'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder!).with 'name'
+          expect(hero_builder).to receive(:add_child_builder!).with 'description'
 
           visit_graphql "
             query { hero { ...heroFieldsFragment } }
@@ -211,9 +214,9 @@ describe RailsQL::Visitor do
       context "when the nested fragment is defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
-          expect(hero_builder).to receive(:add_child_builder).with 'description'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder!).with 'name'
+          expect(hero_builder).to receive(:add_child_builder!).with 'description'
 
           visit_graphql "
             fragment extraFieldFragment on Hero { description }
@@ -229,10 +232,10 @@ describe RailsQL::Visitor do
       context "when two nested fragments are defined before the nested spread" do
         it "parses queries with nested fragments into data types" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
-          expect(hero_builder).to receive(:add_child_builder).with 'description'
-          expect(hero_builder).to receive(:add_child_builder).with 'icon'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder!).with 'name'
+          expect(hero_builder).to receive(:add_child_builder!).with 'description'
+          expect(hero_builder).to receive(:add_child_builder!).with 'icon'
 
           visit_graphql "
             fragment frag2 on Hero { ...frag3 }
@@ -254,16 +257,16 @@ describe RailsQL::Visitor do
       context "when the nested fragment is not a grandchild of the fragment" do
         it "parses queries with nested fragments into data types" do
           hero_builder = double
-          allow(query_root_builder).to receive(:add_child_builder).with(
-            'hero'
+          allow(query_root_builder).to receive(:add_child_builder!).with(
+            name: 'hero'
           ).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          allow(hero_builder).to receive(:add_child_builder!).with name: 'name'
           pet_builder = instance_double "RailsQL::Type::Builder"
-          expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
-            pet_builder
-          )
-          expect(pet_builder).to receive(:add_child_builder).with 'description'
-          expect(pet_builder).to receive(:add_child_builder).with 'other_field'
+          expect(hero_builder).to receive(:add_child_builder!).with(
+            name: 'pets'
+          ).and_return pet_builder
+          expect(pet_builder).to receive(:add_child_builder!).with name: 'description'
+          expect(pet_builder).to receive(:add_child_builder!).with name: 'other_field'
 
           visit_graphql "
             query { hero { ...heroFieldsFragment } }
@@ -282,15 +285,15 @@ describe RailsQL::Visitor do
       context "when the nested fragment is defined after the nested spread and is not a grandchild of the fragment" do
         it "parses queries with nested fragments into data types" do
           hero_builder = double
-          allow(query_root_builder).to receive(:add_child_builder).with(
-            'hero'
+          allow(query_root_builder).to receive(:add_child_builder!).with(
+            name: 'hero'
           ).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
+          allow(hero_builder).to receive(:add_child_builder!).with name: 'name'
           pet_builder = instance_double "RailsQL::Type::Builder"
-          expect(hero_builder).to receive(:add_child_builder).with('pets').and_return(
+          expect(hero_builder).to receive(:add_child_builder!).with(name: 'pets').and_return(
             pet_builder
           )
-          expect(pet_builder).to receive(:add_child_builder).with 'description'
+          expect(pet_builder).to receive(:add_child_builder!).with name: 'description'
 
           visit_graphql "
             fragment extraFieldFragment on Hero { description }
@@ -308,9 +311,9 @@ describe RailsQL::Visitor do
       context "when a fragment cycle is circular" do
         it "raises InvalidFragment error" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return hero_builder
-          allow(hero_builder).to receive(:add_child_builder).with 'name'
-          allow(hero_builder).to receive(:add_child_builder).with 'friends'
+          allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
+          allow(hero_builder).to receive(:add_child_builder!).with name: 'name'
+          allow(hero_builder).to receive(:add_child_builder!).with name: 'friends'
 
           expect{visit_graphql("
             query { hero { ...heroFieldsFragment } }
@@ -328,17 +331,17 @@ describe RailsQL::Visitor do
     context "when mutations are present" do
       it "follows query workflow but applies it to the mutation_root_builder" do
         hero_builder = instance_double "RailsQL::Type::Builder"
-        expect(query_root_builder).to_not receive(:add_child_builder).with(
-          'createHero'
+        expect(query_root_builder).to_not receive(:add_child_builder!).with(
+          name: 'createHero'
         )
-        expect(mutation_root_builder).to receive(:add_child_builder).with(
-          'createHero'
+        expect(mutation_root_builder).to receive(:add_child_builder!).with(
+          name: 'createHero'
         ).and_return hero_builder
-        expect(hero_builder).to receive(:add_arg).with(
-          :hero, {name: "Cloud", weapon: {damage: 6}}
+        expect(hero_builder).to receive(:add_arg_builder!).with(
+          name: "hero", model: {name: "Cloud", weapon: {damage: 6}}
         )
-        expect(hero_builder).to receive(:add_child_builder).with(
-          'name'
+        expect(hero_builder).to receive(:add_child_builder!).with(
+          name: 'name'
         )
 
         visit_graphql "mutation {
@@ -355,11 +358,11 @@ describe RailsQL::Visitor do
     context "with variables" do
       before :each do
         @hero_builder = instance_double "RailsQL::Type::Builder"
-        allow(mutation_root_builder).to receive(:add_child_builder).with(
-          'createHero'
+        allow(mutation_root_builder).to receive(:add_child_builder!).with(
+          name: 'createHero'
         ).and_return @hero_builder
-        allow(@hero_builder).to receive(:add_child_builder).with(
-          'name'
+        allow(@hero_builder).to receive(:add_child_builder!).with(
+          name: 'name'
         )
       end
 
@@ -424,7 +427,7 @@ describe RailsQL::Visitor do
       context "without names" do
         it "throws an error" do
           hero_builder = instance_double "RailsQL::Type::Builder"
-          allow(query_root_builder).to receive(:add_child_builder).and_return(
+          allow(query_root_builder).to receive(:add_child_builder!).and_return(
             hero_builder
           )
 
@@ -444,16 +447,16 @@ describe RailsQL::Visitor do
       context "with names" do
         it "instantiates query + mutation roots for each operation" do
           hero_builder = double
-          allow(query_root_builder).to receive(:add_child_builder).with(
-            'hero'
+          allow(query_root_builder).to receive(:add_child_builder!).with(
+            name: 'hero'
           ).and_return hero_builder
-          allow(mutation_root_builder).to receive(:add_child_builder).with(
-            'createHero'
+          allow(mutation_root_builder).to receive(:add_child_builder!).with(
+            name: 'createHero'
           ).and_return hero_builder
-          expect(hero_builder).to receive(:add_arg).with(
-            :hero, {name: "Cloud", weapon: {damage: 6}}
+          expect(hero_builder).to receive(:add_arg_builder!).with(
+            name: "hero", model: {name: "Cloud", weapon: {damage: 6}}
           )
-          allow(hero_builder).to receive(:add_child_builder).with('name')
+          allow(hero_builder).to receive(:add_child_builder!).with('name')
 
           visit_graphql "
             fragment heroFields on Hero {
