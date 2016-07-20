@@ -8,7 +8,8 @@ module RailsQL
         :type_klass,
         :child_type_builders,
         :variables,
-        :fragments
+        :fragments,
+        :is_input,
       )
 
       def initialize(opts)
@@ -25,7 +26,7 @@ module RailsQL
           # (input).
           # is_input is false if this type is used as a field (output).
           is_input: false,
-          model: nil
+          model: nil,
         }.merge opts
         if opts[:type_klass].blank?
           raise "requires a :type_klass option"
@@ -36,6 +37,7 @@ module RailsQL
         @root = opts[:root]
         @is_input = opts[:is_input]
         @model = opts[:model]
+        @fragment_name = opts[:fragment_name]
         @unresolved_variables = {}
         @unresolved_fragments = []
 
@@ -47,31 +49,32 @@ module RailsQL
         )
       end
 
-      def type
-        return @type if @type.present?
-        @type = type_klass.new(
+      # Builds and returns an instance of type_klass. Can be called multiple
+      # times to build multiple instances of the Type.
+      def build_type!
+        type = type_klass.new(
           args: @arg_type_builders.types,
           ctx: @ctx,
           root: @root
         )
-        @type.model = @model if @is_input
+        type.model = @model if @is_input
         # add child fields
         field_collection_builder = FieldCollectionBuilder.new(
-          parent_type: @type,
+          parent_type: type,
           child_type_builders: @child_type_builders
         )
-        @type.fields = field_collection_builder.fields
-        return @type
+        type.fields = field_collection_builder.fields
+        return type
       end
 
       def add_child_builder!(name:)
-        @child_type_builders.add_builder! name: name
+        @child_type_builders.create_and_add_builder! name: name
       rescue Exception => e
         raise e, "#{e.message} on #{@type_klass} fields", e.backtrace
       end
 
       def add_arg_builder!(name:, model:)
-        @arg_type_builders.add_builder! name: name, model: model
+        @arg_type_builders.create_and_add_builder! name: name, model: model
       rescue Exception => e
         raise e, "#{e.message} on #{@type_klass} args", e.backtrace
       end
@@ -91,15 +94,64 @@ module RailsQL
         @variables[argument_name] = variable_name
       end
 
-      def add_fragment!(name:)
-        @fragments << name
+      def add_fragment_builder!(fragment_builder)
+        @fragment_builders << builder
       end
 
       def resolve_variables!
+        # TODO!
+        return self
       end
 
       def resolve_fragments!
-        # TODO: error out if the type of the fragment does not match the type of this type_klass
+        @fragment_builders.each do |name, fragment_builder|
+          if fragment_builder.type_builder.blank?
+            raise(InvalidFragment,
+              "Fragment #{fragment_builder.fragment_name} is not defined"
+            )
+          end
+          fragment_klass = fragment_builder.type_klass
+          # Union fragments get applied to the child builders for the applicable
+          # type inside the Union unless they are requesting the __typename meta
+          # field
+          if type_klass.is_a?(RailsQL::Union) && fragment_klass != type_klass
+            fragment_type_name = fragment_klass.type_definition.type_name
+            child_builder = add_child_builder! fragment_type_name
+            child_builder.add_fragment_builder! builder
+          # Non-union types simply add the fragment to the builder for later
+          # resolution (see TypeBuilder#resolve_fragments!)
+          elsif fragment_klass == type_klass
+            resolve_fragment! fragment_builder
+          # error out if the type of the fragment is incompatible with the type of
+          # this builder
+          else
+            msg = <<-ERROR.strip_heredoc
+              Fragment is defined on #{fragment_type_name}
+              but fragment spread is on an incompatible type
+              (#{type_klass.type_definition.type_name})
+            ERROR
+            raise InvalidFragment, msg
+          end
+        end
+        return self
+      end
+
+      def resolve_fragment!(fragment_builder)
+        # TODO: fragments on interface types
+        begin
+          fragment_builder.child_type_builders do |name, child_builder|
+            @child_type_builders.add_existing_builder!(
+              name: name,
+              type_builder: child_builder
+            )
+          end
+        rescue Exception => e
+          msg = <<-ERROR.strip_heredoc
+            #{e.message} on #{@type_klass} in fragment
+            #{fragment_builder.fragment_name}
+          ERROR
+          raise e, msg, e.backtrace
+        end
       end
 
     end

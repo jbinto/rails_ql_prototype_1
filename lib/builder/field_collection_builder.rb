@@ -14,7 +14,7 @@ module RailsQL
       def child_types
         builders = @child_type_builders
         @child_types ||= builders.transform_values do |name, builder|
-          builder.type
+          builder.build_type
         end
       end
 

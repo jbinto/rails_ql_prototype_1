@@ -5,20 +5,20 @@ module RailsQL
 
       def initialize(field_definitions:)
         @field_definitions = field_definitions
-        @builders = {}
+        @type_builders = {}
       end
 
       # idempotent
-      def add_builder!(name:, model: nil)
+      def create_and_add_builder!(name:, model: nil)
         field_definition = field_definitions[name]
         if field_definition.blank?
           raise "Invalid key #{name}"
         end
-        return @builders[name] if @builders[name].present?
+        return @type_builders[name] if @type_builders[name].present?
 
         type_klass = field_definition.type
 
-        builder = Builder.new(
+        type_builder = TypeBuilder.new(
           type_klass: type_klass,
           args_definition: field_definition.args,
           ctx: @ctx.merge(field_definition.child_ctx),
@@ -26,9 +26,15 @@ module RailsQL
           model: model
         )
 
-        @builders[name] = builder
-        return builder
+        @type_builders[name] = type_builder
+        return type_builder
       end
+    end
+
+    # idempotent
+    def add_existing_builder!(name:, type_builder:)
+      @type_builders[name] = type_builder
+      return type_builder
     end
   end
 end

@@ -36,7 +36,11 @@ module RailsQL
       if visitor.root_builders.length > 1
         raise "Can not execute multiple operations in one query document"
       end
-      root = visitor.root_builders.first.type
+      root_builder = visitor.root_builders.first
+      root = root_builder
+        .resolve_fragments!
+        .resolve_variables!
+        .build_type!
       root.build_query!
       root.resolve_child_types!
 

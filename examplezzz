@@ -162,6 +162,10 @@ mutate {
 7. Update visitor to not convert any user inputted values to symbols
 8. Fragment on <type> does not currently validate <type>. Validate it.
 9. Move Visitor#resolve_fragments to Builder#resolve_fragments
+10. Finish interfaces implementation (grep for TODO:)
+11. Fragments on arbitrary constant names should not cause Rails to try and load that constant.
+In other words fragment type lookups in the visitor should be based on a whitelist of all the types nested in the Root Prototypes
+instead of using RailsQL::Type::KlassFactory.
 
 More Features
 * Type Name Introspection (__typename field on all types)
