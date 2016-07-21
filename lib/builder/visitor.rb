@@ -45,18 +45,6 @@ module RailsQL
         @builder_stack.last
       end
 
-      def find_or_create_fragment!(name:)
-        @fragment_builders[name] ||= FragmentBuilder.new(
-          fragment_name: name
-        )
-      end
-
-      def begin_fragment_definition(name:)
-        fragment_builder = find_or_create_fragment! name: node.value
-        fragment_builder.define_fragment_once!
-        @builder_stack.push fragment_builder
-      end
-
       def method_missing(*args)
         super *args if args.length != 2
         sym, node = args
@@ -102,6 +90,9 @@ module RailsQL
         visit_node! :name, node
       end
 
+      # Variables
+      # ========================================================================
+
       def visit_variable_name(node)
         if @defined_variables.keys.include? node.value
           current_type_builder.add_variable(
@@ -124,27 +115,11 @@ module RailsQL
         @defined_variables[@last_defined_variable_name] = node.value
       end
 
+      # Args
+      # ========================================================================
+
       def visit_argument_name(node)
         @last_argument_name = node.value
-      end
-
-      def visit_field_name(node)
-        child_builder = current_type_builder.add_child_builder! name: node.value
-        @builder_stack.push child_builder
-      end
-
-      def visit_inline_fragment_name(node)
-        fragment_builder = begin_fragment_definition name: node.value
-        current_type_builder.add_fragment_builder! fragment_builder
-      end
-
-      def visit_fragment_spread_name(node)
-        fragment_builder = find_or_create_fragment! name: node.value
-        current_type_builder.add_fragment_builder! fragment_builder
-      end
-
-      def visit_fragment_definition_name(node)
-        begin_fragment_definition name: node.value
       end
 
       def visit_arg_value(node)
@@ -161,6 +136,46 @@ module RailsQL
         @builder_stack.push input_builder
         visit_node! :arg_value, node
       end
+
+      # Fields
+      # ========================================================================
+
+      def visit_field_name(node)
+        child_builder = current_type_builder.add_child_builder! name: node.value
+        @builder_stack.push child_builder
+      end
+
+      # Fragments
+      # ========================================================================
+
+      def find_or_create_fragment!(name:)
+        @fragment_builders[name] ||= FragmentBuilder.new(
+          fragment_name: name
+        )
+      end
+
+      def begin_fragment_definition(name:)
+        fragment_builder = find_or_create_fragment! name: node.value
+        fragment_builder.define_fragment_once!
+        @builder_stack.push fragment_builder
+      end
+
+      def visit_inline_fragment_name(node)
+        fragment_builder = begin_fragment_definition name: node.value
+        current_type_builder.add_fragment_builder! fragment_builder
+      end
+
+      def visit_fragment_spread_name(node)
+        fragment_builder = find_or_create_fragment! name: node.value
+        current_type_builder.add_fragment_builder! fragment_builder
+      end
+
+      def visit_fragment_definition_name(node)
+        begin_fragment_definition name: node.value
+      end
+
+      # Operations
+      # ========================================================================
 
       def visit_operation_definition(node)
         prototype =

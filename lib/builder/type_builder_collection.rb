@@ -36,5 +36,9 @@ module RailsQL
       @type_builders[name] = type_builder
       return type_builder
     end
+
+    def build_types!
+      
+    end
   end
 end

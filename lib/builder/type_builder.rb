@@ -41,8 +41,8 @@ module RailsQL
         @unresolved_variables = {}
         @unresolved_fragments = []
 
-        @arg_type_builders = TypeBuilderCollection.new(
-          field_definitions: @args_definition.field_definitions
+        @arg_type_builder = TypeBuilder.new(
+          type_klass: @args_definition
         )
         @child_type_builders = TypeBuilderCollection.new(
           field_definitions: type_klass.field_definitions
@@ -53,7 +53,7 @@ module RailsQL
       # times to build multiple instances of the Type.
       def build_type!
         type = type_klass.new(
-          args: @arg_type_builders.types,
+          args: @arg_type_builder.build_type!,
           ctx: @ctx,
           root: @root
         )
@@ -63,20 +63,30 @@ module RailsQL
           parent_type: type,
           child_type_builders: @child_type_builders
         )
-        type.fields = field_collection_builder.fields
+        type.fields = field_collection_builder.build_fields!
         return type
       end
 
-      def add_child_builder!(name:)
-        @child_type_builders.create_and_add_builder! name: name
-      rescue Exception => e
-        raise e, "#{e.message} on #{@type_klass} fields", e.backtrace
+      def add_child_builder!(name:, model: nil)
+        annotate_exceptions do
+          @child_type_builders.create_and_add_builder! name: name, model: model
+        end
       end
 
       def add_arg_builder!(name:, model:)
-        @arg_type_builders.create_and_add_builder! name: name, model: model
+        annotate_exceptions do
+          @arg_type_builder.add_child_builder! name: name, model: model
+        end
+      end
+
+      def annotate_exceptions
+        yield
       rescue Exception => e
-        raise e, "#{e.message} on #{@type_klass} args", e.backtrace
+        if @type_klass.anonomous
+          raise e
+        else
+          raise e, "#{e.message} on #{@type_klass}", e.backtrace
+        end
       end
 
       def add_variable!(argument_name:, variable_name:, variable_type_name:)

@@ -11,14 +11,14 @@ module RailsQL
         @child_type_builders = child_type_builders
       end
 
-      def child_types
+      def build_child_types!
         builders = @child_type_builders
-        @child_types ||= builders.transform_values do |name, builder|
-          builder.build_type
+        builders.transform_values do |name, builder|
+          builder.build_type!
         end
       end
 
-      def fields
+      def build_fields!
         fields = Field::FieldCollection.new
         child_types.each do |name, type|
           fields[name] = Field::Field.new(
