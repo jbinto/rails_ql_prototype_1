@@ -229,13 +229,12 @@ describe RailsQL::Builder::Visitor do
         )
       end
 
-
       context "multiple operations in a single query document" do
         context "without names" do
           it "throws an error" do
             hero_builder = instance_double "RailsQL::Type::Builder"
-            allow(query_root_builder).to receive(:add_child_builder!).and_return(
-              hero_builder
+            allow(query_root_builder).to(
+              receive(:add_child_builder!).and_return hero_builder
             )
 
             expect{ visit_graphql <<-GraphQL }.to raise_error
