@@ -90,6 +90,53 @@ module RailsQL
         visit_node! :name, node
       end
 
+      # Fragments
+      # ========================================================================
+
+      def find_or_create_fragment!(name:)
+        @fragment_builders[name] ||= FragmentBuilder.new(
+          fragment_name: name
+        )
+      end
+
+      def begin_fragment_definition(name:)
+        fragment_builder = find_or_create_fragment! name: node.value
+        fragment_builder.define_fragment_once!
+        @builder_stack.push fragment_builder
+      end
+
+      def visit_inline_fragment_name(node)
+        fragment_builder = begin_fragment_definition name: node.value
+        current_type_builder.add_fragment_builder! fragment_builder
+      end
+
+      def visit_fragment_spread_name(node)
+        fragment_builder = find_or_create_fragment! name: node.value
+        current_type_builder.add_fragment_builder! fragment_builder
+      end
+
+      def visit_fragment_definition_name(node)
+        begin_fragment_definition name: node.value
+      end
+
+      # Operations
+      # ========================================================================
+
+      def visit_operation_definition(node)
+        prototype =
+          if node.operation == "mutation"
+            @mutation_root_prototype
+          elsif node.operation == "query" || node.operation == "subscription"
+            @query_root_prototype
+          else
+            raise "Operation not supported: #{node.operation}"
+          end
+        builder = prototype.clone
+        @root_builders << builder
+        @builder_stack = [builder]
+        visit_node! :operation_definition, node
+      end
+
       # Variables
       # ========================================================================
 
@@ -143,53 +190,6 @@ module RailsQL
       def visit_field_name(node)
         child_builder = current_type_builder.add_child_builder! name: node.value
         @builder_stack.push child_builder
-      end
-
-      # Fragments
-      # ========================================================================
-
-      def find_or_create_fragment!(name:)
-        @fragment_builders[name] ||= FragmentBuilder.new(
-          fragment_name: name
-        )
-      end
-
-      def begin_fragment_definition(name:)
-        fragment_builder = find_or_create_fragment! name: node.value
-        fragment_builder.define_fragment_once!
-        @builder_stack.push fragment_builder
-      end
-
-      def visit_inline_fragment_name(node)
-        fragment_builder = begin_fragment_definition name: node.value
-        current_type_builder.add_fragment_builder! fragment_builder
-      end
-
-      def visit_fragment_spread_name(node)
-        fragment_builder = find_or_create_fragment! name: node.value
-        current_type_builder.add_fragment_builder! fragment_builder
-      end
-
-      def visit_fragment_definition_name(node)
-        begin_fragment_definition name: node.value
-      end
-
-      # Operations
-      # ========================================================================
-
-      def visit_operation_definition(node)
-        prototype =
-          if node.operation == "mutation"
-            @mutation_root_prototype
-          elsif node.operation == "query" || node.operation == "subscription"
-            @query_root_prototype
-          else
-            raise "Operation not supported: #{node.operation}"
-          end
-        builder = prototype.clone
-        @root_builders << builder
-        @builder_stack = [builder]
-        visit_node! :operation_definition, node
       end
 
     end
