@@ -4,25 +4,21 @@ module RailsQL
   module Builder
     class Visitor < GraphQL::Parser::Visitor
 
-      attr_reader :root_builders, :variable_definitions
+      attr_reader :operations
 
       def initialize(query_root_builder:, mutation_root_builder: nil)
         @query_root_prototype = query_root_builder
         @mutation_root_prototype = mutation_root_builder
-        @root_builders = []
+        @operations = []
         @fragment_builders = {}
         @builder_stack = []
         @node_stack = []
-        @current_operation = :query
-        @variable_definitions = {}
       end
-
 
       # Name
       # ========================================================================
 
       def visit_name(node)
-        ap @node_stack
         @current_name = node.value
         if @node_stack.last(2) == [:variable_definition, :variable]
           visit_variable_definition_name node
@@ -32,6 +28,7 @@ module RailsQL
           visit_inline_fragment_type_name node
         else
           case @node_stack.last
+          when :operation_definition then visit_operation_definition_name node
           when :field then visit_field_name node
           when :fragment_spread then visit_fragment_spread_name node
           when :fragment_definition then visit_fragment_definition_name node
@@ -111,6 +108,9 @@ module RailsQL
 
       def visit_fragment_spread_name(node)
         fragment_builder = find_or_create_fragment! name: node.value
+        if @builder_stack.include? fragment_builder
+          raise InvalidFragment, "circular fragment reference in #{node.value}"
+        end
         current_type_builder.add_fragment_builder! fragment_builder
       end
 
@@ -130,27 +130,26 @@ module RailsQL
           else
             raise "Operation not supported: #{node.operation}"
           end
-        builder = prototype.clone
-        @root_builders << builder
-        @builder_stack = [builder]
+        operation = Operation.new
+        operation.root_builder = prototype.clone
+        operation.operation_type = node.operation.to_sym
+        @operations << operation
+        @builder_stack = [operation.root_builder]
         visit_node! :operation_definition, node
+      end
+
+      def visit_operation_definition_name(node)
+        current_operation.name = node.value
       end
 
       # Variables
       # ========================================================================
 
       def visit_variable_name(node)
-        if @variable_definitions.keys.include? node.value
-          current_type_builder.add_variable(
-            argument_name: @last_argument_name,
-            variable_name: node.value,
-            variable_type_name: @variable_definitions[node.value]
-          )
-        else
-          raise(UndefinedVariable,
-            "#{node.value} was not defined as a variable in the operation"
-          )
-        end
+        current_type_builder.add_variable(
+          argument_name: @last_argument_name,
+          variable_name: node.value,
+        )
       end
 
       def visit_variable_definition_name(node)
@@ -158,7 +157,8 @@ module RailsQL
       end
 
       def visit_variable_definition_named_type(node)
-        @variable_definitions[@last_defined_variable_name] = node.value
+        name = @last_defined_variable_name
+        current_operation.variable_definitions[name] = node.value
       end
 
       # Fields
@@ -176,13 +176,13 @@ module RailsQL
       private
 
       def visit_node!(sym, node)
-        ap "VISIT #{sym}"
-        ap node
+        # ap "VISIT #{sym}"
+        # ap node
         @node_stack.push(sym)
       end
 
       def end_visit_node!
-        ap "END VISIT #{@node_stack.last}"
+        # ap "END VISIT #{@node_stack.last}"
         @node_stack.pop
       end
 
@@ -203,6 +203,10 @@ module RailsQL
 
       def current_type_builder
         @builder_stack.last
+      end
+
+      def current_operation
+        @operations.last
       end
 
       def method_missing(*args)

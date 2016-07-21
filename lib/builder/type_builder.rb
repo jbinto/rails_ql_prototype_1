@@ -90,26 +90,32 @@ module RailsQL
         end
       end
 
-      def add_variable!(argument_name:, variable_name:, variable_type_name:)
-        valid = @args_definition.valid_child_type?(
-          name: argument_name,
-          type_name: variable_type_name
-        )
-        unless valid
-          msg = <<-ERROR.strip_heredoc
-            #{variable_name} is of the wrong type #{variable_type_name} for
-            #{argument_name} on #{type_klass.type_definition.type_name}"
-          ERROR
-          raise ArgTypeError, msg
-        end
+      def add_variable!(argument_name:, variable_name:)
         @variables[argument_name] = variable_name
       end
 
       def add_fragment_builder!(fragment_builder)
         @fragment_builders << builder
       end
-      #
+
       # def resolve_variables!(variable_values)
+      # if !operation.variable_definitions.keys.include? node.value
+      #   raise(UndefinedVariable,
+      #     "#{node.value} was not defined as a variable in the operation"
+      #   )
+      # end
+      # valid = @args_definition.valid_child_type?(
+      #   name: argument_name,
+      #   type_name: variable_type_name
+      # )
+      # unless valid
+      #   msg = <<-ERROR.strip_heredoc
+      #     #{variable_name} is of the wrong type #{variable_type_name} for
+      #     #{argument_name} on #{type_klass.type_definition.type_name}"
+      #   ERROR
+      #   raise ArgTypeError, msg
+      # end
+
       #   # IDEA: write a variable parser that goes through a hash and calls
       #   # the visitor at each step
       #   @variables.each do |argument_name, variable_name|

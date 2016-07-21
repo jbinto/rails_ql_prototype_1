@@ -167,6 +167,7 @@ mutate {
 In other words fragment type lookups in the visitor should be based on a whitelist of all the types nested in the Root Prototypes
 instead of using RailsQL::Type::KlassFactory.
 12. plural args
+13. Variable definition default values
 
 More Features
 * Type Name Introspection (__typename field on all types)
