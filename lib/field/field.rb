@@ -62,7 +62,11 @@ module RailsQL
 
         end
 
-        @types = models.map do |model|
+        @types = dup_type! models
+      end
+
+      def dup_type!(models)
+        models.map do |model|
           type = prototype_type.deep_dup
           type.fields = prototype_type.fields.deep_dup
           type.model = model

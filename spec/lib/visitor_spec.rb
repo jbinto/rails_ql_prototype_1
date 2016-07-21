@@ -34,66 +34,72 @@ describe RailsQL::Builder::Visitor do
 
     it "calls builder#add_arg_builder! for each arg" do
       hero_builder = instance_double "RailsQL::Type::Builder"
+      allow(hero_builder).to receive(:is_input?).and_return false
       allow(query_root_builder).to receive(:add_child_builder!).and_return hero_builder
-      expect(hero_builder).to receive(:add_arg_builder!).with(name: 'id', model: 3)
+      expect(hero_builder).to receive(:add_arg_builder!).with(
+        name: 'id', model: "3"
+      )
 
       visit_graphql "query { hero(id: 3) }"
     end
 
-    def union_setup
-      hero_builder = double
-      weapon_builder = instance_double "RailsQL::Type::Builder"
-      sheathe_builder = instance_double "RailsQL::Type::Builder"
-      sword_builder = instance_double "RailsQL::Type::Builder"
-      crossbow_builder = instance_double "RailsQL::Type::Builder"
-      allow(query_root_builder).to receive(:add_child_builder!).with(
-        name: "hero"
-      ).and_return hero_builder
-      allow(hero_builder).to receive(:add_child_builder!).with(
-        name: "weapon"
-      ).and_return weapon_builder
-      expect(weapon_builder).to receive(:add_child_builder!).with(
-        name: "Sword"
-      ).and_return(sword_builder)
-      expect(sword_builder).to receive(:add_child_builder!).with(
-        name: "damage"
-      )
-      expect(sword_builder).to receive(:add_child_builder!).with(
-        name: "sheathe"
-      ).and_return sheathe_builder
-      expect(sheathe_builder).to receive(:add_child_builder!).with name: "length"
-      expect(weapon_builder).to receive(:add_child_builder!).with(
-        name: "Crossbow"
-      ).and_return crossbow_builder
-      expect(crossbow_builder).to receive(:add_child_builder!).with(
-        name: "damage"
-      )
-      expect(crossbow_builder).to receive(:add_child_builder!).with(
-        name: "range"
-      )
-    end
+    context "inline fragments" do
+      before :each do
+        @fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"
+        type_builder = instance_double "RailsQL::Builder::FragmentBuilder"
 
-    it "calls builder#add_child_builder! for each union child field node when defined in fragment" do
-      union_setup
+        expect(RailsQL::Builder::FragmentBuilder).to receive(:new).with(
+          fragment_name: nil
+        ).and_return @fragment_builder
+        expect(query_root_builder).to receive(:add_fragment_builder!).with(
+          @fragment_builder
+        ).and_return @fragment_builder
+        expect(@fragment_builder).to receive(:add_child_builder!).with(
+          name: "moo"
+        )
+        expect(@fragment_builder).to receive(:define_fragment_once!)
+        allow(query_root_builder).to receive(:type_klass).and_return(
+          :query_root_and_stuff
+        )
+        expect(RailsQL::Builder::TypeBuilder).to receive(:new).with(
+          type_klass: :query_root_and_stuff
+        ).and_return type_builder
+        expect(@fragment_builder).to receive(:type_builder=).with(
+          type_builder
+        )
+      end
 
-      visit_graphql("
-        query {
-          hero {
-            weapon {
-              ... on Sword {
-                damage
-                sheathe {
-                  length
-                }
-              }
-              ... on Crossbow {
-                damage
-                range
+      context "without a TypeCondition" do
+        it "builds an inline fragment" do
+          visit_graphql("
+            query {
+              ... {
+                moo
               }
             }
-          }
-        }
-      ")
+          ")
+        end
+      end
+
+      context "with a TypeCondition" do
+        it "builds an inline fragment" do
+          type_builder = instance_double "RailsQL::Builder::TypeBuilder"
+          expect(RailsQL::Builder::TypeBuilder).to receive(:new).with(
+            type_klass: "CowRoot"
+          ).and_return type_builder
+          expect(@fragment_builder).to receive(:type_builder=).with(
+            type_builder
+          )
+
+          visit_graphql("
+            query {
+              ... on CowRoot {
+                moo
+              }
+            }
+          ")
+        end
+      end
     end
 
     it "calls for each subscription" do

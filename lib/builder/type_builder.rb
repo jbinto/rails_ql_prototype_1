@@ -135,6 +135,9 @@ module RailsQL
           # type inside the Union unless they are requesting the __typename meta
           # field
           if type_klass.is_a?(RailsQL::Union) && fragment_klass != type_klass
+            # ap "UNION"
+            # ap fragment_klass
+            # ap type_klass
             fragment_type_name = fragment_klass.type_definition.type_name
             child_builder = add_child_builder! fragment_type_name
             child_builder.add_fragment_builder! builder

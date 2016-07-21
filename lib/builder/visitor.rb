@@ -22,17 +22,19 @@ module RailsQL
       # ========================================================================
 
       def visit_name(node)
+        ap @node_stack
         @current_name = node.value
         if @node_stack.last(2) == [:variable_definition, :variable]
           visit_variable_definition_name node
         elsif @node_stack.last(2) == [:variable_definition, :named_type]
           visit_variable_definition_named_type node
+        elsif @node_stack.last(2) == [:inline_fragment, :named_type]
+          visit_inline_fragment_type_name node
         else
           case @node_stack.last
           when :field then visit_field_name node
           when :fragment_spread then visit_fragment_spread_name node
           when :fragment_definition then visit_fragment_definition_name node
-          when :inline_fragment then visit_inline_fragment_name node
           when :argument then visit_argument_name node
           when :variable then visit_variable_name node
           end
@@ -85,14 +87,26 @@ module RailsQL
       end
 
       def begin_fragment_definition(name:)
-        fragment_builder = find_or_create_fragment! name: node.value
+        fragment_builder = find_or_create_fragment! name: name
         fragment_builder.define_fragment_once!
         @builder_stack.push fragment_builder
+        return fragment_builder
       end
 
-      def visit_inline_fragment_name(node)
-        fragment_builder = begin_fragment_definition name: node.value
-        current_type_builder.add_fragment_builder! fragment_builder
+      def visit_inline_fragment(node)
+        parent_builder = current_type_builder
+        fragment_builder = begin_fragment_definition name: nil
+        fragment_builder.type_builder = TypeBuilder.new(
+          type_klass: parent_builder.type_klass
+        )
+        parent_builder.add_fragment_builder! fragment_builder
+        visit_node! :inline_fragment, node
+      end
+
+      def visit_inline_fragment_type_name(node)
+        current_type_builder.type_builder = TypeBuilder.new(
+          type_klass: node.value
+        )
       end
 
       def visit_fragment_spread_name(node)
@@ -161,6 +175,22 @@ module RailsQL
 
       private
 
+      def visit_node!(sym, node)
+        ap "VISIT #{sym}"
+        ap node
+        @node_stack.push(sym)
+      end
+
+      def end_visit_node!
+        ap "END VISIT #{@node_stack.last}"
+        @node_stack.pop
+      end
+
+      def end_visit_builder_node(node)
+        @builder_stack.pop
+        end_visit_node!
+      end
+
       # Type builder pop aliases
       INPUT_VALUE_SYMS + [
         :field,
@@ -186,19 +216,6 @@ module RailsQL
         else
           super *args
         end
-      end
-
-      def visit_node!(sym, node)
-        @node_stack.push(sym)
-      end
-
-      def end_visit_node!
-        @node_stack.pop
-      end
-
-      def end_visit_builder_node(node)
-        @builder_stack.pop
-        end_visit_node!
       end
 
     end

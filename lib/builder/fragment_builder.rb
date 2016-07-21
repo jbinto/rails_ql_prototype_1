@@ -3,7 +3,10 @@ require_relative "./type_builder.rb"
 module RailsQL
   module Builder
     class FragmentBuilder
-      delegate TypeBuilder.instance_methods - Object.methods, to: :type_builder
+      delegate(
+        *(TypeBuilder.instance_methods - Object.methods),
+        to: :type_builder
+      )
 
       attr_reader :fragment_name
       attr_accessor :type_builder
