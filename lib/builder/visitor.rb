@@ -4,9 +4,9 @@ module RailsQL
   module Builder
     class Visitor < GraphQL::Parser::Visitor
 
-      attr_reader :root_builders
+      attr_reader :root_builders, :variable_definitions
 
-      def initialize(query_root_builder:, mutation_root_builder:)
+      def initialize(query_root_builder:, mutation_root_builder: nil)
         @query_root_prototype = query_root_builder
         @mutation_root_prototype = mutation_root_builder
         @root_builders = []
@@ -14,62 +14,12 @@ module RailsQL
         @builder_stack = []
         @node_stack = []
         @current_operation = :query
-        @defined_variables = {}
+        @variable_definitions = {}
       end
 
-      protected
 
-      INPUT_VALUE_SYMS = [
-        :int_value,
-        :boolean_value,
-        :string_value,
-        :object_value
-      ]
-
-      # input arg visit aliases
-      INPUT_VALUE_SYMS.each do |k|
-        alias_method :"visit_#{k}", :visit_arg_value
-      end
-
-      # Type builder pop aliases
-      INPUT_VALUE_SYMS + [
-        :field,
-        :inline_fragment,
-        :fragment_definition,
-        :operation_definition,
-      ].each do |k|
-        alias_method :"end_visit_#{k}", :end_visit_builder_node
-      end
-
-      def current_type_builder
-        @builder_stack.last
-      end
-
-      def method_missing(*args)
-        super *args if args.length != 2
-        sym, node = args
-        name = sym.to_s
-        if name.match /^visit_/
-          visit_node! name.gsub("visit_", "").to_sym, node
-        elsif name.match /^end_visit_/
-          end_visit_node!
-        else
-          super *args
-        end
-      end
-
-      def visit_node!(sym, node)
-        @node_stack.push(sym)
-      end
-
-      def end_visit_node!
-        @node_stack.pop
-      end
-
-      def end_visit_builder_node(node)
-        @builder_stack.pop
-        end_visit_node!
-      end
+      # Name
+      # ========================================================================
 
       def visit_name(node)
         @current_name = node.value
@@ -88,6 +38,41 @@ module RailsQL
           end
         end
         visit_node! :name, node
+      end
+
+      # Args
+      # ========================================================================
+
+      # This is used directly by the variables_parser
+      def visit_arg_value(node)
+        method =
+          if current_type_builder.is_input?
+            :add_child_builder!
+          else
+            :add_arg_builder!
+          end
+        input_builder = current_type_builder.send(method,
+          name: @current_name,
+          model: node.value
+        )
+        @builder_stack.push input_builder
+        visit_node! :arg_value, node
+      end
+
+      def visit_argument_name(node)
+        @last_argument_name = node.value
+      end
+
+      INPUT_VALUE_SYMS = [
+        :int_value,
+        :boolean_value,
+        :string_value,
+        :object_value
+      ]
+
+      # input arg visit aliases
+      INPUT_VALUE_SYMS.each do |k|
+        alias_method :"visit_#{k}", :visit_arg_value
       end
 
       # Fragments
@@ -141,11 +126,11 @@ module RailsQL
       # ========================================================================
 
       def visit_variable_name(node)
-        if @defined_variables.keys.include? node.value
+        if @variable_definitions.keys.include? node.value
           current_type_builder.add_variable(
             argument_name: @last_argument_name,
             variable_name: node.value,
-            variable_type_name: @defined_variables[node.value]
+            variable_type_name: @variable_definitions[node.value]
           )
         else
           raise(UndefinedVariable,
@@ -159,29 +144,7 @@ module RailsQL
       end
 
       def visit_variable_definition_named_type(node)
-        @defined_variables[@last_defined_variable_name] = node.value
-      end
-
-      # Args
-      # ========================================================================
-
-      def visit_argument_name(node)
-        @last_argument_name = node.value
-      end
-
-      def visit_arg_value(node)
-        method =
-          if current_type_builder.is_input?
-            :add_child_builder!
-          else
-            :add_arg_builder!
-          end
-        input_builder = current_type_builder.send(method,
-          name: @current_name,
-          model: node.value
-        )
-        @builder_stack.push input_builder
-        visit_node! :arg_value, node
+        @variable_definitions[@last_defined_variable_name] = node.value
       end
 
       # Fields
@@ -190,6 +153,52 @@ module RailsQL
       def visit_field_name(node)
         child_builder = current_type_builder.add_child_builder! name: node.value
         @builder_stack.push child_builder
+      end
+
+
+      # Util
+      # ========================================================================
+
+      private
+
+      # Type builder pop aliases
+      INPUT_VALUE_SYMS + [
+        :field,
+        :inline_fragment,
+        :fragment_definition,
+        :operation_definition,
+      ].each do |k|
+        alias_method :"end_visit_#{k}", :end_visit_builder_node
+      end
+
+      def current_type_builder
+        @builder_stack.last
+      end
+
+      def method_missing(*args)
+        super *args if args.length != 2
+        sym, node = args
+        name = sym.to_s
+        if name.match /^visit_/
+          visit_node! name.gsub("visit_", "").to_sym, node
+        elsif name.match /^end_visit_/
+          end_visit_node!
+        else
+          super *args
+        end
+      end
+
+      def visit_node!(sym, node)
+        @node_stack.push(sym)
+      end
+
+      def end_visit_node!
+        @node_stack.pop
+      end
+
+      def end_visit_builder_node(node)
+        @builder_stack.pop
+        end_visit_node!
       end
 
     end

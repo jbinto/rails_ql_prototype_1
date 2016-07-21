@@ -166,6 +166,7 @@ mutate {
 11. Fragments on arbitrary constant names should not cause Rails to try and load that constant.
 In other words fragment type lookups in the visitor should be based on a whitelist of all the types nested in the Root Prototypes
 instead of using RailsQL::Type::KlassFactory.
+12. plural args
 
 More Features
 * Type Name Introspection (__typename field on all types)

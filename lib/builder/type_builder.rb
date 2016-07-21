@@ -14,6 +14,7 @@ module RailsQL
 
       def initialize(opts)
         opts = {
+          # TODO: move ctx out of the type builder (type builders are re-usable)
           ctx: nil,
           root: nil,
           # The type the builder will instantiate in Builder#type
@@ -107,11 +108,20 @@ module RailsQL
       def add_fragment_builder!(fragment_builder)
         @fragment_builders << builder
       end
-
-      def resolve_variables!
-        # TODO!
-        return self
-      end
+      #
+      # def resolve_variables!(variable_values)
+      #   # IDEA: write a variable parser that goes through a hash and calls
+      #   # the visitor at each step
+      #   @variables.each do |argument_name, variable_name|
+      #     value = variable_values[variable_name]
+      #     if value.is_a? Hash
+      #       value.each do |k, v|
+      #       end
+      #     end
+      #     add_arg_builder! name: argument_name, model: value
+      #   end
+      #   return self
+      # end
 
       def resolve_fragments!
         @fragment_builders.each do |name, fragment_builder|

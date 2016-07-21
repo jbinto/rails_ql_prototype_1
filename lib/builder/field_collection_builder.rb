@@ -6,7 +6,7 @@ module RailsQL
     class FieldCollectionBuilder
       attr_reader :parent_type
 
-      def constructor(parent_type:, child_type_builders:)
+      def initialize(parent_type:, child_type_builders:)
         @parent_type = parent_type
         @child_type_builders = child_type_builders
       end
