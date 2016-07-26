@@ -19,6 +19,7 @@ module RailsQL
       # ========================================================================
 
       def visit_name(node)
+        # ap @node_stack
         @current_name = node.value
         if @node_stack.last(2) == [:variable_definition, :variable]
           visit_variable_definition_name node
@@ -26,6 +27,8 @@ module RailsQL
           visit_variable_definition_named_type node
         elsif @node_stack.last(2) == [:inline_fragment, :named_type]
           visit_inline_fragment_type_name node
+        elsif @node_stack.last(2) == [:fragment_definition, :named_type]
+          visit_fragment_definition_type_name node
         else
           case @node_stack.last
           when :operation_definition then visit_operation_definition_name node
@@ -45,12 +48,12 @@ module RailsQL
       # This is used directly by the variables_parser
       def visit_arg_value(node)
         method =
-          if current_type_builder.is_input?
+          if current_builder.is_input?
             :add_child_builder!
           else
             :add_arg_builder!
           end
-        input_builder = current_type_builder.send(method,
+        input_builder = current_builder.send(method,
           name: @current_name,
           model: node.value
         )
@@ -83,40 +86,40 @@ module RailsQL
         )
       end
 
-      def begin_fragment_definition(name:)
-        fragment_builder = find_or_create_fragment name: name
+      def visit_fragment_definition_name(node)
+        fragment_builder = find_or_create_fragment! name: node.value
         @builder_stack.push fragment_builder
-        return fragment_builder
       end
 
-      def visit_inline_fragment(node)
-        fragment_builder = FragmentBuilder.new
+      def visit_fragment_definition_type_name(node)
+        # TODO: whitelist the fragment type klass
+        fragment_builder = current_builder
         fragment_builder.type_builder = TypeBuilder.new(
-          type_klass: current_type_builder.type_klass
-        )
-        current_type_builder.add_fragment_builder! fragment_builder
-        @builder_stack.push fragment_builder
-        visit_node! :inline_fragment, node
-      end
-
-      def visit_inline_fragment_type_name(node)
-        current_type_builder.type_builder = TypeBuilder.new(
           type_klass: node.value
         )
       end
+
+      alias_method(
+        :visit_inline_fragment_type_name,
+        :visit_fragment_definition_type_name
+      )
 
       def visit_fragment_spread_name(node)
         fragment_builder = find_or_create_fragment! name: node.value
         if @builder_stack.include? fragment_builder
           raise InvalidFragment, "circular fragment reference in #{node.value}"
         end
-        current_type_builder.add_fragment_builder! fragment_builder
+        current_builder.add_fragment_builder! fragment_builder
       end
 
-      def visit_fragment_definition_name(node)
-        fragment_builder = find_or_create_fragment! name: node.value
+      def visit_inline_fragment(node)
+        fragment_builder = FragmentBuilder.new
+        fragment_builder.type_builder = TypeBuilder.new(
+          type_klass: current_builder.type_klass
+        )
+        current_builder.add_fragment_builder! fragment_builder
         @builder_stack.push fragment_builder
-        return fragment_builder
+        visit_node! :inline_fragment, node
       end
 
       # Operations
@@ -147,7 +150,7 @@ module RailsQL
       # ========================================================================
 
       def visit_variable_name(node)
-        current_type_builder.add_variable(
+        current_builder.add_variable(
           argument_name: @last_argument_name,
           variable_name: node.value,
         )
@@ -166,7 +169,7 @@ module RailsQL
       # ========================================================================
 
       def visit_field_name(node)
-        child_builder = current_type_builder.add_child_builder! name: node.value
+        child_builder = current_builder.add_child_builder! name: node.value
         @builder_stack.push child_builder
       end
 
@@ -202,7 +205,7 @@ module RailsQL
         alias_method :"end_visit_#{k}", :end_visit_builder_node
       end
 
-      def current_type_builder
+      def current_builder
         @builder_stack.last
       end
 

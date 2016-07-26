@@ -117,10 +117,17 @@ describe RailsQL::Builder::Visitor do
     describe "fragments" do
       before :each do
         @fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"
+        type_builder = instance_double "RailsQL::Builder::TypeBuilder"
 
         expect(RailsQL::Builder::FragmentBuilder).to receive(:new).with(
           fragment_name: "heroFieldsFragment"
         ).and_return @fragment_builder
+        expect(RailsQL::Builder::TypeBuilder).to receive(:new).and_return(
+          type_builder
+        )
+        expect(@fragment_builder).to receive(:type_builder=).with(
+          type_builder
+        )
         expect(query_root_builder).to receive(:add_fragment_builder!).with(
           @fragment_builder
         ).and_return @fragment_builder
