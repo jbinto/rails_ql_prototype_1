@@ -33,10 +33,10 @@ module RailsQL
       visitor.accept ast
 
       # the visitor returns one root builder per operation in the query document
-      if visitor.root_builders.length > 1
+      if visitor.operations.length > 1
         raise "Can not execute multiple operations in one query document"
       end
-      root_builder = visitor.root_builders.first
+      root_builder = visitor.operations.first.root_builder
       root = root_builder
         .resolve_fragments!
         .resolve_variables!

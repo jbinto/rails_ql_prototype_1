@@ -33,18 +33,17 @@ describe RailsQL::Builder::Visitor do
     end
 
     context "inline fragments" do
-      before :each do
+      def expect_inline_fragment(name: "moo")
         @fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"
         type_builder = instance_double "RailsQL::Builder::FragmentBuilder"
 
-        expect(RailsQL::Builder::FragmentBuilder).to receive(:new).with(
-          fragment_name: nil
-        ).and_return @fragment_builder
+        expect(RailsQL::Builder::FragmentBuilder).to receive(:new)
+          .and_return @fragment_builder
         expect(query_root_builder).to receive(:add_fragment_builder!).with(
           @fragment_builder
         ).and_return @fragment_builder
         expect(@fragment_builder).to receive(:add_child_builder!).with(
-          name: "moo"
+          name: name
         )
         expect(@fragment_builder).to receive(:define_fragment_once!)
         allow(query_root_builder).to receive(:type_klass).and_return(
@@ -60,6 +59,7 @@ describe RailsQL::Builder::Visitor do
 
       context "without a TypeCondition" do
         it "builds an inline fragment" do
+          expect_inline_fragment
           visit_graphql <<-GraphQL
             query {
               ... {
@@ -68,10 +68,28 @@ describe RailsQL::Builder::Visitor do
             }
           GraphQL
         end
+        it "builds multiple inline fragments" do
+          pending "figuring out how to write this"
+          fail
+          expect_inline_fragment
+          expect_inline_fragment name: "moo2"
+          visit_graphql <<-GraphQL
+            query {
+              ... {
+                moo
+              }
+              ... {
+                moo2
+              }
+            }
+          GraphQL
+        end
+
       end
 
       context "with a TypeCondition" do
         it "builds an inline fragment" do
+          expect_inline_fragment
           type_builder = instance_double "RailsQL::Builder::TypeBuilder"
           expect(RailsQL::Builder::TypeBuilder).to receive(:new).with(
             type_klass: "CowRoot"
