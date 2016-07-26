@@ -26,10 +26,16 @@ GEM
       tzinfo (~> 1.1)
     awesome_print (1.6.1)
     builder (3.2.2)
+    coderay (1.1.1)
     diff-lcs (1.2.5)
     i18n (0.7.0)
     json (1.8.3)
+    method_source (0.8.2)
     minitest (5.8.4)
+    pry (0.10.4)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
     rspec (3.4.0)
       rspec-core (~> 3.4.0)
       rspec-expectations (~> 3.4.0)
@@ -43,6 +49,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
+    slop (3.6.0)
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -53,8 +60,9 @@ PLATFORMS
 DEPENDENCIES
   awesome_print (>= 1.6.1)
   graphql-parser!
+  pry (>= 0.10.4)
   rails_ql!
   rspec (>= 3.4.0)
 
 BUNDLED WITH
-   1.11.2
+   1.12.5

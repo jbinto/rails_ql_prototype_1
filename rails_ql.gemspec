@@ -14,4 +14,8 @@ Gem::Specification.new do |s|
     [">= 3.4.0"]
   s.add_development_dependency "awesome_print",
     [">= 1.6.1"]
+
+  s.add_development_dependency "pry",
+    [">= 0.10.4"]
+
 end

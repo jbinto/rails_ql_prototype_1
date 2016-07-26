@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'awesome_print'
 require "./lib/rails_ql"
+require 'pry'
 
 RSpec.configure do |config|
 
