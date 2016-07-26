@@ -1,5 +1,6 @@
 require_relative "./type_builder_collection.rb"
 require_relative "./field_collection_builder.rb"
+require_relative "../type/klass_factory.rb"
 
 module RailsQL
   module Builder
@@ -9,7 +10,6 @@ module RailsQL
         :child_type_builders,
         :variables,
         :fragments,
-        :is_input,
       )
 
       def initialize(opts)
@@ -27,12 +27,12 @@ module RailsQL
           # (input).
           # is_input is false if this type is used as a field (output).
           is_input: false,
-          model: nil,
+          model: nil
         }.merge opts
         if opts[:type_klass].blank?
           raise "requires a :type_klass option"
         end
-        @type_klass = KlassFactory.find opts[:type_klass]
+        @type_klass = ::RailsQL::Type::KlassFactory.find opts[:type_klass]
         @args_definition = opts[:args_definition]
         @ctx = opts[:ctx]
         @root = opts[:root]
@@ -48,6 +48,10 @@ module RailsQL
         @child_type_builders = TypeBuilderCollection.new(
           field_definitions: type_klass.field_definitions
         )
+      end
+
+      def is_input?
+        return @is_input
       end
 
       # Builds and returns an instance of type_klass. Can be called multiple

@@ -1,12 +1,26 @@
-require_relative "../field/field_collection.rb"
-require_relative "../field/field.rb"
+require_relative "./type_builder.rb"
 
 module RailsQL
   module Builder
-    class VariablesParser
-      def initialize
+    class VariableBuilder
+      delegate(
+        *(TypeBuilder.instance_methods - Object.methods),
+        to: :type_builder
+      )
+
+      attr_accessor(
+        :variable_name,
+        :default_value,
+        :type_klass,
+        :default_value_builder
+      )
+      attr_reader :type_builder
+
+      def is_input?
+        true
       end
 
+      # TODO: migrate to operate on a single variable builder
       def parse!(variable_definitions:, variable_values:, type_names_whitelist:)
         variable_builders = {}
         variable_definitions.each do |variable_name, type_name|

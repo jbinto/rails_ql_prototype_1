@@ -191,9 +191,24 @@ describe RailsQL::Builder::Visitor do
     end
 
     context "with args" do
-      it "input objects" do
-        pending "input object args and list args tests"
-        fail
+      it "adds input objects" do
+        hero_builder = instance_double "RailsQL::Type::Builder"
+        stuff_builder = instance_double "RailsQL::Type::Builder"
+        allow(query_root_builder).to receive(:add_child_builder!).and_return(
+          hero_builder
+        )
+        allow(hero_builder).to receive(:is_input?).and_return false
+        expect(hero_builder).to receive(:add_arg_builder!).with(
+          name: "stuff",
+          model: nil
+        ).and_return stuff_builder
+        expect(stuff_builder).to receive(:add_child_builder!).with(
+          name: "reasons",
+          model: "5"
+        )
+        allow(stuff_builder).to receive(:is_input?).and_return true
+
+        visit_graphql "query { hero(stuff: {reasons: 5}) }"
       end
 
       it "calls builder#add_arg_builder! for each arg" do
@@ -241,15 +256,67 @@ describe RailsQL::Builder::Visitor do
         expect(visitor.operations.first.operation_type).to eq :mutation
       end
 
-      it "adds variables definitions to the operation" do
-        visit_graphql <<-GraphQL
-          query($cow: CowType95, $pig: WatType) {name}
-        GraphQL
+      context "variables" do
 
-        expect(visitor.operations.first.variable_definitions).to eq(
-          "cow" => "CowType95",
-          "pig" => "WatType"
-        )
+        # before :each do
+        #   expect(query_builder)
+        # end
+
+        def expect_default_value_builder(type_klass:, model:)
+          default_val_builder = instance_double "RailsQL::Builder::TypeBuilder"
+          expect(RailsQL::Builder::TypeBuilder).to receive(:new).with(
+            type_klass: type_klass,
+            model: model,
+            is_input: true
+          ).and_return default_val_builder
+          allow(default_val_builder).to receive(:is_input?).and_return true
+          return default_val_builder
+        end
+
+        it "adds variable builders to the operation" do
+          default_val_builder = expect_default_value_builder(
+            type_klass: "CowType95",
+            model: "1337"
+          )
+
+          visit_graphql <<-GraphQL
+            query($cow: CowType95 = 1337, $pig: WatType) {lol}
+          GraphQL
+
+          var_builders = visitor.operations.first.variable_builders
+          expect(var_builders.length).to eq 2
+          expect(var_builders["cow"].variable_name).to eq "cow"
+          expect(var_builders["cow"].type_klass).to eq "CowType95"
+          expect(var_builders["cow"].default_value_builder).to eq(
+            default_val_builder
+          )
+          expect(var_builders["pig"].variable_name).to eq "pig"
+          expect(var_builders["pig"].type_klass).to eq "WatType"
+          expect(var_builders["pig"].default_value).to eq nil
+        end
+
+        it "adds object-valued variable builders to the operation" do
+          default_val_builder = expect_default_value_builder(
+            type_klass: "CowType95",
+            model: nil
+          )
+          expect(default_val_builder).to(receive :add_child_builder!).with(
+            name: "test",
+            model: "wat"
+          )
+
+          visit_graphql <<-GraphQL
+            query($cow: CowType95 = {test: "wat"}) {lol}
+          GraphQL
+
+          var_builders = visitor.operations.first.variable_builders
+          expect(var_builders.length).to eq 1
+          expect(var_builders["cow"].variable_name).to eq "cow"
+          expect(var_builders["cow"].type_klass).to eq "CowType95"
+          expect(var_builders["cow"].default_value_builder).to eq(
+            default_val_builder
+          )
+        end
       end
 
       context "multiple operations in a single query document" do

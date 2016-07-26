@@ -47,23 +47,28 @@ module RailsQL
 
       # This is used directly by the variables_parser
       def visit_arg_value(node)
-        method =
-          if current_builder.is_input?
-            :add_child_builder!
-          else
-            :add_arg_builder!
-          end
-        input_builder = current_builder.send(method,
-          name: @current_name,
-          model: node.value
-        )
-        @builder_stack.push input_builder
+        if current_builder.is_a? VariableBuilder
+          visit_variable_definition_default_value node
+        else
+          method =
+            if current_builder.is_input?
+              :add_child_builder!
+            else
+              :add_arg_builder!
+            end
+          input_builder = current_builder.send(method,
+            name: @current_name,
+            model: node.try(:value)
+          )
+          @builder_stack.push input_builder
+        end
         visit_node! :arg_value, node
       end
 
       def visit_argument_name(node)
         @last_argument_name = node.value
       end
+
 
       INPUT_VALUE_SYMS = [
         :int_value,
@@ -156,13 +161,36 @@ module RailsQL
         )
       end
 
+      def variable_builder
+        ap current_builder
+        unless current_builder.is_a? VariableBuilder
+          raise "not a variable definition builder"
+        end
+        return current_builder
+      end
+
+      def visit_variable_definition(node)
+        @builder_stack.push VariableBuilder.new
+        visit_node! :variable_definition, node
+      end
+
       def visit_variable_definition_name(node)
-        @last_defined_variable_name = node.value
+        variable_builder.variable_name = node.value
+        current_operation.variable_builders[node.value] = variable_builder
       end
 
       def visit_variable_definition_named_type(node)
-        name = @last_defined_variable_name
-        current_operation.variable_definitions[name] = node.value
+        variable_builder.type_klass = node.value
+      end
+
+      def visit_variable_definition_default_value(node)
+        builder = TypeBuilder.new(
+          type_klass: variable_builder.type_klass,
+          model: node.try(:value),
+          is_input: true
+        )
+        variable_builder.default_value_builder = builder
+        @builder_stack.push builder
       end
 
       # Fields
@@ -179,14 +207,20 @@ module RailsQL
 
       private
 
+      def tabbing
+        "  "*@node_stack.length
+      end
+
       def visit_node!(sym, node)
-        # ap "VISIT #{sym}"
-        # ap node
         @node_stack.push(sym)
+        puts "#{tabbing}<#{sym}>"
+        if [:name, :arg_value].include?(sym) && node.try(:value).present?
+          puts "#{tabbing}  #{node.value}"
+        end
       end
 
       def end_visit_node!
-        # ap "END VISIT #{@node_stack.last}"
+        puts tabbing + "</#{@node_stack.last}>"
         @node_stack.pop
       end
 
@@ -196,12 +230,13 @@ module RailsQL
       end
 
       # Type builder pop aliases
-      INPUT_VALUE_SYMS + [
+      (INPUT_VALUE_SYMS + [
         :field,
         :inline_fragment,
         :fragment_definition,
         :operation_definition,
-      ].each do |k|
+        :variable_definition
+      ]).each do |k|
         alias_method :"end_visit_#{k}", :end_visit_builder_node
       end
 
@@ -214,6 +249,8 @@ module RailsQL
       end
 
       def method_missing(*args)
+        # For visit_foo's and end_visit_foo's not explicitly handled by this Visitor,
+        # make sure to still push it on to the stack.
         super *args if args.length != 2
         sym, node = args
         name = sym.to_s
