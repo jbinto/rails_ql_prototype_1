@@ -45,7 +45,6 @@ describe RailsQL::Builder::Visitor do
         expect(@fragment_builder).to receive(:add_child_builder!).with(
           name: name
         )
-        expect(@fragment_builder).to receive(:define_fragment_once!)
         allow(query_root_builder).to receive(:type_klass).and_return(
           :query_root_and_stuff
         )
@@ -122,7 +121,6 @@ describe RailsQL::Builder::Visitor do
         expect(RailsQL::Builder::FragmentBuilder).to receive(:new).with(
           fragment_name: "heroFieldsFragment"
         ).and_return @fragment_builder
-        expect(@fragment_builder).to receive(:define_fragment_once!)
         expect(query_root_builder).to receive(:add_fragment_builder!).with(
           @fragment_builder
         ).and_return @fragment_builder

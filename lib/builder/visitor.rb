@@ -84,18 +84,13 @@ module RailsQL
       end
 
       def begin_fragment_definition(name:)
-        fragment_builder = @fragment_builders[name] || FragmentBuilder.new(
-          fragment_name: name
-        )
-        @fragment_builders[name] = fragment_builder
-        fragment_builder.define_fragment_once!
+        fragment_builder = find_or_create_fragment name: name
         @builder_stack.push fragment_builder
         return fragment_builder
       end
 
       def visit_inline_fragment(node)
         fragment_builder = FragmentBuilder.new
-        fragment_builder.define_fragment_once!
         fragment_builder.type_builder = TypeBuilder.new(
           type_klass: current_type_builder.type_klass
         )
@@ -120,7 +115,6 @@ module RailsQL
 
       def visit_fragment_definition_name(node)
         fragment_builder = find_or_create_fragment! name: node.value
-        fragment_builder.define_fragment_once!
         @builder_stack.push fragment_builder
         return fragment_builder
       end
