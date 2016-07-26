@@ -113,7 +113,7 @@ module RailsQL
       end
 
       def visit_inline_fragment(node)
-        fragment_builder = FragmentBuilder.new
+        fragment_builder = FragmentBuilder.new inline: true
         fragment_builder.type_builder = TypeBuilder.new(
           type_klass: current_builder.type_klass
         )
