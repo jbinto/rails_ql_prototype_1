@@ -37,6 +37,7 @@ module RailsQL
           when :fragment_definition then visit_fragment_definition_name node
           when :argument then visit_argument_name node
           when :variable then visit_variable_name node
+          when :directive then visit_directive_name node
           end
         end
         visit_node! :name, node
@@ -210,7 +211,7 @@ module RailsQL
         @alias_and_name.name = node.value
       end
 
-      def create_builder_if_within_field!
+      def create_type_builder_if_within_field!
         if @node_stack.last == :field && @alias_and_name.present?
           child_builder = current_builder.add_child_builder!(
             name: @alias_and_name.name,
@@ -222,18 +223,34 @@ module RailsQL
       end
 
       def visit_selection_set(node)
-        create_builder_if_within_field!
+        create_type_builder_if_within_field!
         visit_node! :selection_set, node
       end
 
       def visit_argument(node)
-        create_builder_if_within_field!
+        create_type_builder_if_within_field!
         visit_node! :argument, node
       end
 
       def end_visit_field(node)
-        create_builder_if_within_field!
+        create_type_builder_if_within_field!
         end_visit_builder_node node
+      end
+
+      # Directives
+      # ========================================================================
+
+      def visit_directive(node)
+        create_type_builder_if_within_field!
+        visit_node! :directive, node
+      end
+
+      def visit_directive_name(node)
+        directive_builder = DirectiveBuilder.new(
+          type_klass: node.value
+        )
+        current_builder.add_directive! directive_builder
+        @builder_stack.push directive_builder.arg_builder
       end
 
       # Util
@@ -268,7 +285,8 @@ module RailsQL
         :inline_fragment,
         :fragment_definition,
         :operation_definition,
-        :variable_definition
+        :variable_definition,
+        :directive
       ]).each do |k|
         alias_method :"end_visit_#{k}", :end_visit_builder_node
       end

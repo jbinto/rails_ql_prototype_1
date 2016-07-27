@@ -64,6 +64,33 @@ describe RailsQL::Builder::Visitor do
       end
     end
 
+
+    context "directives" do
+      it "parses directive on a field" do
+        expect(query_root_builder).to receive(:add_child_builder!).with(
+          name: "hero",
+          field_alias: nil
+        )
+        visit_graphql "query { hero @dancy }"
+      end
+
+      it "parses directive on an aliased field" do
+        # expect(query_root_builder).to receive(:add_child_builder!).with(
+        #   name: "hero",
+        #   field_alias: "megaman"
+        # )
+        visit_graphql "query { danceMaster: hero @dancy }"
+      end
+
+      it "parses multiple directives on a field" do
+        # expect(query_root_builder).to receive(:add_child_builder!).with(
+        #   name: "hero",
+        #   field_alias: "megaman"
+        # )
+        visit_graphql "query { hero @dancy @dancy @fancy }"
+      end
+    end
+
     context "inline fragments" do
       def expect_inline_fragment(name: "moo", field_alias: nil)
         @fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"

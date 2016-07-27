@@ -44,6 +44,7 @@ module RailsQL
         @fragment_name = opts[:fragment_name]
         @unresolved_variables = {}
         @unresolved_fragments = []
+        @directive_builders = []
 
         @arg_type_builder = TypeBuilder.new(
           type_klass: @args_definition
@@ -102,7 +103,11 @@ module RailsQL
       end
 
       def add_fragment_builder!(fragment_builder)
-        @fragment_builders << builder
+        @fragment_builders << fragment_builder
+      end
+
+      def add_directive_builder!(directive_builder)
+        @directive_builders << directive_builder
       end
 
       # def resolve_variables!(variable_values)
