@@ -56,13 +56,9 @@ module RailsQL
     end
 
     def resolve_child_types!
+      # Top to bottom recursion
       run_callbacks :resolve do
-        # Top to bottom recursion
-        fields.each do |k, field|
-          field.parent_type = self
-          field.resolve_models_and_dup_type!
-          field.types.each &:resolve_child_types!
-        end
+        fields.values.each &:resolve_child_types!
       end
     end
 
@@ -70,10 +66,7 @@ module RailsQL
       kind = self.class.type_definition.kind
       if kind == :OBJECT
         json = fields.reduce({}) do |json, (k, field)|
-          child_json = field.types.as_json
-          json.merge(
-            k.to_s => field.singular? ? child_json.first : child_json
-          )
+          field.inject_json parent_json: json, key: k.to_s
         end
       elsif kind == :ENUM || kind == :SCALAR
         json = model.as_json

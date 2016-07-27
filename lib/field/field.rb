@@ -13,6 +13,19 @@ module RailsQL
         validate_args!
       end
 
+      def resolve_child_types!(parent_type:)
+        @parent_type = parent_type
+        resolve_models_and_dup_type!
+        types.each &:resolve_child_types!
+      end
+
+      def inject_json(parent_json:, key:)
+        child_json = types.as_json
+        parent_json.merge(
+          key => field.singular? ? child_json.first : child_json
+        )
+      end
+
       def type_args
         @type_args ||= @prototype_type.args.symbolize_keys
       end

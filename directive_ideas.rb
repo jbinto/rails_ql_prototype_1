@@ -55,32 +55,6 @@ StoryType instance (model = A) {
   }
 }
 
-class Directive
-  def field_name
-    # TODO
-  end
-
-  def self.args
-    # TODO
-  end
-
-  def child_type
-    # TODO
-  end
-
-  def query(parent_type, args, child_query)
-    child_query
-  end
-
-  def resolve_child_types!
-    child_type.resolve_child_types!
-  end
-
-  def inject_into_parent_json(parent_json)
-    parent_json.merge child_json
-  end
-end
-
 module RailsQL
   class AsyncProvider
     attr_accessor :provider
