@@ -210,26 +210,29 @@ module RailsQL
         @alias_and_name.name = node.value
       end
 
-      def consume_field_alias_and_name!
-        child_builder = current_builder.add_child_builder!(
-          name: @alias_and_name.name,
-          alias: @alias_and_name.alias
-        )
-        @builder_stack.push child_builder
-        @alias_and_name = nil
+      def create_builder_if_within_field!
+        if @node_stack.last == :field && @alias_and_name.present?
+          child_builder = current_builder.add_child_builder!(
+            name: @alias_and_name.name,
+            field_alias: @alias_and_name.alias
+          )
+          @builder_stack.push child_builder
+          @alias_and_name = nil
+        end
       end
 
       def visit_selection_set(node)
-        if @node_stack.last == :field
-          consume_field_alias_and_name!
-        end
+        create_builder_if_within_field!
         visit_node! :selection_set, node
       end
 
+      def visit_argument(node)
+        create_builder_if_within_field!
+        visit_node! :argument, node
+      end
+
       def end_visit_field(node)
-        if @node_stack.last == :field && @alias_and_name.present?
-          consume_field_alias_and_name!
-        end
+        create_builder_if_within_field!
         end_visit_builder_node node
       end
 
