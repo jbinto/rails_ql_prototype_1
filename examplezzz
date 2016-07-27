@@ -157,13 +157,13 @@ mutate {
 3. Add mutation support to Visitor [done]
 4. Add mutation root option to Runner [done]
 5. Switch to 8.0 (GodMutation for menu_item)
-6. __typename introspection
-9. Move Visitor#resolve_fragments to Builder#resolve_fragments
-13. Variable definition default values
 ---
 
 Work in Progress
-* Directives
+6. __typename introspection
+9. Move Visitor#resolve_fragments to Builder#resolve_fragments
+13. Variable definition default values
+* Directives on fields
 * Variables
   - order of variable definitions, how does visitor handle it?
     - must be defined at the top of an operation
@@ -195,6 +195,9 @@ Features
 * List and Non-Null as standalone anonomous types + syntax for fields
 10. Finish interfaces implementation (grep for TODO:)
 * line numbers in error messages
+* directive locations (eg. on query)
+* directives on Fragments, fragment spreads, inline fragments
+* field merging
 
 Security
 7. Update visitor to not convert any user inputted values to symbols
