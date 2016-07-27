@@ -28,7 +28,8 @@ describe RailsQL::Builder::Visitor do
   describe "#accept" do
     it "calls builder#add_child_builder! for each child field node" do
       expect(query_root_builder).to receive(:add_child_builder!).with(
-        name: 'hero'
+        name: 'hero',
+        field_alias: nil
       )
 
       visit_graphql "query { hero }"
@@ -38,7 +39,7 @@ describe RailsQL::Builder::Visitor do
       it "calls builder#add_child_builder! for each child field node" do
         expect(query_root_builder).to receive(:add_child_builder!).with(
           name: "hero",
-          alias: "megaman"
+          field_alias: "megaman"
         )
         visit_graphql "query { megaman: hero }"
       end
@@ -48,15 +49,15 @@ describe RailsQL::Builder::Visitor do
 
         expect(query_root_builder).to receive(:add_child_builder!).with(
           name: "hero",
-          alias: "megaman"
+          field_alias: "megaman"
         ).and_return type_builder
         expect(type_builder).to receive(:add_child_builder!).with(
           name: "reasons",
-          alias: "stuff"
+          field_alias: "stuff"
         )
         expect(type_builder).to receive(:add_child_builder!).with(
           name: "wat",
-          alias: nil
+          field_alias: nil
         )
 
         visit_graphql "query { megaman: hero {stuff: reasons, wat} }"
@@ -64,7 +65,7 @@ describe RailsQL::Builder::Visitor do
     end
 
     context "inline fragments" do
-      def expect_inline_fragment(name: "moo")
+      def expect_inline_fragment(name: "moo", field_alias: nil)
         @fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"
         type_builder = instance_double "RailsQL::Builder::FragmentBuilder"
 
@@ -74,7 +75,8 @@ describe RailsQL::Builder::Visitor do
           @fragment_builder
         ).and_return @fragment_builder
         expect(@fragment_builder).to receive(:add_child_builder!).with(
-          name: name
+          name: name,
+          field_alias: field_alias
         )
         allow(query_root_builder).to receive(:type_klass).and_return(
           :query_root_and_stuff
@@ -167,7 +169,8 @@ describe RailsQL::Builder::Visitor do
       context "when the fragment is defined before the spread" do
         it "builds fragment_builder and calls add_child_builder with field names" do
           expect(@fragment_builder).to receive(:add_child_builder!).with(
-            name: "name"
+            name: "name",
+            field_alias: nil
           )
           visit_graphql <<-GraphQL
             fragment heroFieldsFragment on Root { name }
@@ -179,7 +182,8 @@ describe RailsQL::Builder::Visitor do
       context "when the fragment is defined after the spread" do
         it "builds fragment_builder and calls add_child_builder with field names" do
           expect(@fragment_builder).to receive(:add_child_builder!).with(
-            name: "name"
+            name: "name",
+            field_alias: nil
           )
           visit_graphql <<-GraphQL
             query { ...heroFieldsFragment }
@@ -206,11 +210,10 @@ describe RailsQL::Builder::Visitor do
 
     context "when mutations are present" do
       it "follows query workflow but applies it to the mutation_root_builder" do
-        expect(query_root_builder).to_not receive(:add_child_builder!).with(
-          name: 'createHero'
-        )
+        expect(query_root_builder).to_not receive(:add_child_builder!)
         expect(mutation_root_builder).to receive(:add_child_builder!).with(
-          name: 'createHero'
+          name: 'createHero',
+          field_alias: nil
         )
 
         visit_graphql <<-GraphQL
@@ -372,10 +375,12 @@ describe RailsQL::Builder::Visitor do
         context "with names" do
           it "instantiates a root builder for each operation" do
             expect(mutation_root_builder).to receive(:add_child_builder!).with(
-              name: 'createHero'
+              name: 'createHero',
+              field_alias: nil
             )
             expect(query_root_builder).to receive(:add_child_builder!).with(
-              name: 'name'
+              name: 'name',
+              field_alias: nil
             )
 
             visit_graphql <<-GraphQL
@@ -398,7 +403,8 @@ describe RailsQL::Builder::Visitor do
       it "adds variables references to the builder" do
         @hero_builder = instance_double "RailsQL::Type::Builder"
         expect(query_root_builder).to receive(:add_child_builder!).with(
-          name: 'createHero'
+          name: 'createHero',
+          field_alias: nil
         ).and_return @hero_builder
         expect(@hero_builder).to receive(:add_variable).with(
           argument_name: "hero",
