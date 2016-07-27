@@ -5,6 +5,16 @@ module RailsQL
 
       def initialize(field_definitions:)
         @field_definitions = field_definitions
+
+        # TODO: turn into array
+        #  verbatim stenography of rob follows:
+        #  (why? run through everything adding all the fields that get parsed as we walk the AST.
+        #  after fragments and variables resolved, check are there any duplicate field keys that
+        #  have incompatible data in them)
+
+        # right now field merging doesn't work, it clobbers conflicting fields (it should error out!)
+        # TODO: actually verify this; if this is true "field merging" works in the happy cases, it's the
+        # negative cases that don't work.
         @type_builders = {}
       end
 
