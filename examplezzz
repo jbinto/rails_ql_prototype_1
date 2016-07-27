@@ -157,20 +157,13 @@ mutate {
 3. Add mutation support to Visitor [done]
 4. Add mutation root option to Runner [done]
 5. Switch to 8.0 (GodMutation for menu_item)
----
-6. Introspection fix-up and additions
-7. Update visitor to not convert any user inputted values to symbols
-8. Fragment on <type> does not currently validate <type>. Validate it.
+6. __typename introspection
 9. Move Visitor#resolve_fragments to Builder#resolve_fragments
-10. Finish interfaces implementation (grep for TODO:)
-11. Fragments on arbitrary constant names should not cause Rails to try and load that constant.
-In other words fragment type lookups in the visitor should be based on a whitelist of all the types nested in the Root Prototypes
-instead of using RailsQL::Type::KlassFactory.
-12. plural args
 13. Variable definition default values
+---
 
-More Features
-* Type Name Introspection (__typename field on all types)
+Work in Progress
+* Directives
 * Variables
   - order of variable definitions, how does visitor handle it?
     - must be defined at the top of an operation
@@ -192,12 +185,24 @@ More Features
     - add arg to everywhere the variable is referenced
   - can you reference a variable within a variable's input object value?
     - no. Because variable values come through a side channel and are not GraphQL
-* List and Non-Null as standalone anonomous types + syntax for fields
-* Directives
 * Field Aliases
   - breaks sequel gem model querying
   - in railsQL, just use the alias name as the field key in type
     - eg: RootType has fields user_1: Field(name: "user"), user_2: Field(name: "user")
+
+Features
+12. plural args
+* List and Non-Null as standalone anonomous types + syntax for fields
+10. Finish interfaces implementation (grep for TODO:)
+* line numbers in error messages
+
+Security
+7. Update visitor to not convert any user inputted values to symbols
+11. Fragments on arbitrary constant names should not cause Rails to try and load that constant.
+In other words fragment type lookups in the visitor should be based on a whitelist of all the types nested in the Root Prototypes
+instead of using RailsQL::Type::KlassFactory.
+
+8. Fragment on <type> does not currently validate <type>. Validate it.
 
 Potential Resolve Builder Var solution :
 class Builder

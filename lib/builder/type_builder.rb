@@ -12,6 +12,8 @@ module RailsQL
         :fragments,
       )
 
+      attr_accessor :field_alias, :field_name
+
       def initialize(opts)
         opts = {
           # TODO: move ctx out of the type builder (type builders are re-usable)
@@ -27,7 +29,8 @@ module RailsQL
           # (input).
           # is_input is false if this type is used as a field (output).
           is_input: false,
-          model: nil
+          model: nil,
+          field_name: nil
         }.merge opts
         if opts[:type_klass].blank?
           raise "requires a :type_klass option"
@@ -72,9 +75,9 @@ module RailsQL
         return type
       end
 
-      def add_child_builder!(name:, model: nil)
+      def add_child_builder!(opts)
         annotate_exceptions do
-          @child_type_builders.create_and_add_builder! name: name, model: model
+          @child_type_builders.create_and_add_builder! opts
         end
       end
 

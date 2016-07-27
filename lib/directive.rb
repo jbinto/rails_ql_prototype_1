@@ -12,10 +12,10 @@ module RailsQL
     end
 
     [
-      :appended_parent_query
-      :resolve_child_types!
+      :appended_parent_query,
+      :resolve_child_types!,
       :inject_into_parent_json
-    ].each do
+    ].each do |k|
       delegate k, to: :field
     end
 

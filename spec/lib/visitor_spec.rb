@@ -27,9 +27,40 @@ describe RailsQL::Builder::Visitor do
 
   describe "#accept" do
     it "calls builder#add_child_builder! for each child field node" do
-      expect(query_root_builder).to receive(:add_child_builder!).with name: 'hero'
+      expect(query_root_builder).to receive(:add_child_builder!).with(
+        name: 'hero'
+      )
 
       visit_graphql "query { hero }"
+    end
+
+    context "aliases" do
+      it "calls builder#add_child_builder! for each child field node" do
+        expect(query_root_builder).to receive(:add_child_builder!).with(
+          name: "hero",
+          alias: "megaman"
+        )
+        visit_graphql "query { megaman: hero }"
+      end
+
+      it "parses nested fields" do
+        type_builder = instance_double "RailsQL::Builder::TypeBuilder"
+
+        expect(query_root_builder).to receive(:add_child_builder!).with(
+          name: "hero",
+          alias: "megaman"
+        ).and_return type_builder
+        expect(type_builder).to receive(:add_child_builder!).with(
+          name: "reasons",
+          alias: "stuff"
+        )
+        expect(type_builder).to receive(:add_child_builder!).with(
+          name: "wat",
+          alias: nil
+        )
+
+        visit_graphql "query { megaman: hero {stuff: reasons, wat} }"
+      end
     end
 
     context "inline fragments" do

@@ -15,7 +15,8 @@ module RailsQL
         :child_ctx,
         :union,
         :name,
-        :singular
+        :singular,
+        :introspection
       )
 
       def initialize(name, opts)
@@ -42,7 +43,8 @@ module RailsQL
           child_ctx: {},
           resolve: nil,
           query: nil,
-          default_value: nil # InputObject field definitions only
+          default_value: nil, # InputObject field definitions only
+          introspection: false
         }
         opts = defaults.merge(opts.slice *defaults.keys)
         if opts[:description]

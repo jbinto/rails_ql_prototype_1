@@ -196,11 +196,42 @@ module RailsQL
       # Fields
       # ========================================================================
 
-      def visit_field_name(node)
-        child_builder = current_builder.add_child_builder! name: node.value
-        @builder_stack.push child_builder
+      def visit_field(node)
+        @alias_and_name = OpenStruct.new(name: nil, alias: nil)
+        visit_node! :field, node
       end
 
+      def visit_field_name(node)
+        # Aliases parse identically to field names. If you visit two field
+        # names for one field then the second one is the field name.
+        if @alias_and_name.name.present?
+          @alias_and_name.alias = @alias_and_name.name
+        end
+        @alias_and_name.name = node.value
+      end
+
+      def consume_field_alias_and_name!
+        child_builder = current_builder.add_child_builder!(
+          name: @alias_and_name.name,
+          alias: @alias_and_name.alias
+        )
+        @builder_stack.push child_builder
+        @alias_and_name = nil
+      end
+
+      def visit_selection_set(node)
+        if @node_stack.last == :field
+          consume_field_alias_and_name!
+        end
+        visit_node! :selection_set, node
+      end
+
+      def end_visit_field(node)
+        if @node_stack.last == :field && @alias_and_name.present?
+          consume_field_alias_and_name!
+        end
+        end_visit_builder_node node
+      end
 
       # Util
       # ========================================================================
@@ -231,7 +262,6 @@ module RailsQL
 
       # Type builder pop aliases
       (INPUT_VALUE_SYMS + [
-        :field,
         :inline_fragment,
         :fragment_definition,
         :operation_definition,

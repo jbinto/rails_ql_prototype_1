@@ -98,7 +98,6 @@ module RailsQL
       def has_many(name, opts)
         field_definitions.add_plural_field_definition(name, opts)
       end
-
     end
   end
 end

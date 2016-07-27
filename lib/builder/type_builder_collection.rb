@@ -38,7 +38,7 @@ module RailsQL
     end
 
     def build_types!
-      
+
     end
   end
 end

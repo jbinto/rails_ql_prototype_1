@@ -39,7 +39,7 @@ module RailsQL
         instance_methods = Type.instance_methods
 
         name = name.to_s
-        if name.include?("__") && name != "__type" && name != "__schema"
+        if name.include?("__") && !opts[:introspection]
           raise(
             RailsQL::InvalidField,
             "#{name} is an invalid field; names must not be " +
