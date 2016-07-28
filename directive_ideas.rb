@@ -84,18 +84,21 @@ end
 
 class SkipDirective < RailsQL::Directive
   args -> (args) {
-    args.field :if, type: "Boolean"
+    args.field(:if,
+      required: true,
+      type: "Boolean"
+    )
   }
 
   def skip?
     args[:if]
   end
 
-  def query(parent_type, args, child_query)
+  def appended_parent_query
     skip? ? nil : super
   end
 
-  def resolve_child_types!
+  def resolve_child_types!(parent_type:)
     skip? ? RailsQL::DeferedObject.new : super
   end
 
@@ -105,9 +108,11 @@ class SkipDirective < RailsQL::Directive
 end
 
 class IncludeDirective < SkipDirective
+
   def skip?
     !args[:if]
   end
+
 end
 
 
