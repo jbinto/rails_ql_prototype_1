@@ -139,7 +139,7 @@ describe RailsQL::Builder::Visitor do
       end
 
       context "on an operation" do
-        it "adds the directive to the operation" do
+        it "adds the directive to the query" do
           directive_builder = expect_directive_builder(
             type_klass: "dancy",
             on: query_root_builder
@@ -151,6 +151,20 @@ describe RailsQL::Builder::Visitor do
           )
 
           visit_graphql "query @dancy { hero }"
+        end
+
+        it "adds the directive to the mutation" do
+          directive_builder = expect_directive_builder(
+            type_klass: "dancy",
+            on: mutation_root_builder
+          )
+
+          expect(mutation_root_builder).to receive(:add_child_builder!).with(
+            name: "createHero",
+            field_alias: nil
+          )
+
+          visit_graphql "mutation A @dancy { createHero }"
         end
       end
 
