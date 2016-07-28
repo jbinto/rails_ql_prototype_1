@@ -66,6 +66,19 @@ describe RailsQL::Builder::Visitor do
 
 
     context "directives" do
+      def expect_directive_builder(type_klass:, on:)
+        directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
+        expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
+          type_klass: type_klass
+        ).and_return directive_builder
+        # XXX this should not be the same typebuilder for operations!
+        expect(on).to receive(:add_directive_builder!).with(
+          directive_builder
+        )
+        allow(directive_builder).to receive(:arg_builder)
+        return directive_builder
+      end
+
       context "on fields" do
         before :each do
           @hero_type_builder = instance_double RailsQL::Builder::TypeBuilder
@@ -74,20 +87,11 @@ describe RailsQL::Builder::Visitor do
             .and_return @hero_type_builder
         end
 
-        def expect_directive_builder(type_klass:)
-          directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
-          expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
-            type_klass: type_klass
-          ).and_return directive_builder
-          expect(@hero_type_builder).to receive(:add_directive_builder!).with(
-            directive_builder
-          )
-          allow(directive_builder).to receive(:arg_builder)
-          return directive_builder
-        end
-
         it "parses directive on a field" do
-          expect_directive_builder type_klass: "dancy"
+          expect_directive_builder(
+            type_klass: "dancy",
+            on: @hero_type_builder
+          )
           visit_graphql "query { hero @dancy }"
         end
 
@@ -96,13 +100,20 @@ describe RailsQL::Builder::Visitor do
             name: "hero",
             field_alias: "danceMaster"
           )
-          expect_directive_builder type_klass: "dancy"
+          expect_directive_builder(
+            type_klass: "dancy",
+            on: @hero_type_builder
+          )
           visit_graphql "query { danceMaster: hero @dancy }"
         end
 
         it "parses directive with args on a field" do
+          directive_builder = expect_directive_builder(
+            type_klass: "dancy",
+            on: @hero_type_builder
+          )
+
           arg_builder = instance_double RailsQL::Builder::TypeBuilder
-          directive_builder = expect_directive_builder type_klass: "dancy"
           allow(directive_builder).to receive(:arg_builder).and_return(
             arg_builder
           )
@@ -116,9 +127,12 @@ describe RailsQL::Builder::Visitor do
         end
 
         it "parses multiple directives on a field" do
-          expect_directive_builder type_klass: "dancy"
-          expect_directive_builder type_klass: "dancy"
-          expect_directive_builder type_klass: "fancy"
+          ["dancy", "dancy", "fancy"].each do |type_klass|
+            expect_directive_builder(
+              type_klass: type_klass,
+              on: @hero_type_builder
+            )
+          end
 
           visit_graphql "query { hero @dancy @dancy @fancy }"
         end
@@ -126,28 +140,39 @@ describe RailsQL::Builder::Visitor do
 
       context "on an operation" do
         it "adds the directive to the operation" do
-          pending
+          directive_builder = expect_directive_builder(
+            type_klass: "dancy",
+            on: query_root_builder
+          )
+
+          expect(query_root_builder).to receive(:add_child_builder!).with(
+            name: "hero",
+            field_alias: nil
+          )
+
           visit_graphql "query @dancy { hero }"
         end
       end
 
       context "on a fragment spread" do
         it "adds the directive to the fragment spread" do
+          pending
+
           visit_graphql <<-GraphQL
             query { ...heroFragment @dancy }
             fragment heroFragment on Hero {name}
           GraphQL
-          pending
         end
       end
 
       context "on a fragment definition" do
         it "adds the directive to the fragment" do
+          pending
+
           visit_graphql <<-GraphQL
             query { ...heroFragment }
             fragment heroFragment on Hero @dancy {name}
           GraphQL
-          pending
         end
       end
 
