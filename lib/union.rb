@@ -1,4 +1,4 @@
-require_relative "./type.rb"
+require_relative "./type/type.rb"
 
 module RailsQL
   class Union < RailsQL::Type
