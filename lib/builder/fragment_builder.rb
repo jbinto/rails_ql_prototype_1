@@ -17,6 +17,7 @@ module RailsQL
         @fragment_name = fragment_name
         @inline = inline
         @defined = false
+        @directive_builders = []
       end
 
       def type_builder=(type_builder)
@@ -27,6 +28,10 @@ module RailsQL
         end
         @defined = true
         @type_builder=type_builder
+      end
+
+      def add_directive_builder!(directive_builder)
+        @directive_builders << directive_builder
       end
 
       def allow_redefinition

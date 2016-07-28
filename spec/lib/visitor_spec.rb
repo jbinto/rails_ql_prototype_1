@@ -168,20 +168,41 @@ describe RailsQL::Builder::Visitor do
         end
       end
 
-      context "on a fragment spread" do
-        it "adds the directive to the fragment spread" do
-          pending
-
-          visit_graphql <<-GraphQL
-            query { ...heroFragment @dancy }
-            fragment heroFragment on Hero {name}
-          GraphQL
-        end
-      end
+      # context "on a fragment spread" do
+      #   it "adds the directive to the fragment spread" do
+      #     pending
+      #
+      #     visit_graphql <<-GraphQL
+      #       query { ...heroFragment @dancy }
+      #       fragment heroFragment on Hero {name}
+      #     GraphQL
+      #   end
+      # end
 
       context "on a fragment definition" do
-        it "adds the directive to the fragment" do
-          pending
+        it "adds the directive to the fragment builder" do
+          # so much boilerplate...
+
+          ## arrange the mock type_builder for `Hero` type
+          type_builder = instance_double "RailsQL::Builder::TypeBuilder"
+          expect(RailsQL::Builder::TypeBuilder).to receive(:new).and_return(type_builder)
+
+          ## arrange the mock fragment_builder for `heroFragment`
+          fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"
+          expect(RailsQL::Builder::FragmentBuilder).to receive(:new).and_return(fragment_builder)
+
+          ## arrange the mock directive_builder for `Dancy`
+          directive_builder = instance_double "RailsQL::Builder::DirectiveBuilder"
+          expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).and_return(directive_builder)
+
+          ## don't overlap other tests / overtest: use allow instead of expect here to make rspec happy
+          allow(query_root_builder).to receive(:add_fragment_builder!)
+          allow(directive_builder).to receive(:arg_builder)
+          allow(fragment_builder).to receive(:add_child_builder!)
+          allow(fragment_builder).to receive(:type_builder=)
+
+          ## here is the only actual assertion! SO MUCH MOCKING UGH
+          expect(fragment_builder).to receive(:add_directive_builder!).with(directive_builder)
 
           visit_graphql <<-GraphQL
             query { ...heroFragment }
