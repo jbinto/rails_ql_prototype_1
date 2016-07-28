@@ -74,7 +74,12 @@ module RailsQL
       kind = self.class.type_definition.kind
       if kind == :OBJECT
         json = fields.reduce({}) do |json, (k, field)|
-          field.inject_json parent_json: json, key: k.to_s
+          if field.type.omit_from_json?
+            json
+          else
+            child_json = field.type.as_json
+            json.merge k.to_s => field.singular? ? child_json.first : child_json
+          end
         end
       elsif kind == :ENUM || kind == :SCALAR
         json = model.as_json
@@ -90,6 +95,10 @@ module RailsQL
 
     def parse_value!(value)
       value
+    end
+
+    def omit_from_json?
+      false
     end
   end
 end
