@@ -4,7 +4,7 @@ describe RailsQL::Type::KlassFactory do
   describe ".find" do
     context "when klass is a non-built-in data type" do
       it "returns the klass untouched" do
-        type = class_double RailsQL::Type::Type
+        type = class_double RailsQL::Type
         allow(type).to receive(:type?).and_return true
 
         results = described_class.find type

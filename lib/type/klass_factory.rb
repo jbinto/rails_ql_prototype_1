@@ -6,7 +6,7 @@ module RailsQL
           !klass.try(:type?) &&
           Scalar::Util.type_names.include?(klass.to_s.to_sym)
         )
-          klass = Type.const_get klass.to_s
+          klass = RailsQL::Scalar.const_get klass.to_s
         end
         if [Symbol, String].include? klass.class
           klass = klass.to_s.classify.constantize
