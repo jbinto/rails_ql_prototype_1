@@ -1,4 +1,5 @@
 require "spec_helper"
+require_relative "./visitor_spec_helper"
 
 describe RailsQL::Builder::Visitor do
   let(:query_root_builder) { instance_double "RailsQL::Builder::TypeBuilder" }
@@ -66,19 +67,6 @@ describe RailsQL::Builder::Visitor do
 
 
     context "directives" do
-      def expect_directive_builder(type_klass:, on:)
-        directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
-        expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
-          type_klass: type_klass
-        ).and_return directive_builder
-        # XXX this should not be the same typebuilder for operations!
-        expect(on).to receive(:add_directive_builder!).with(
-          directive_builder
-        )
-        allow(directive_builder).to receive(:arg_builder)
-        return directive_builder
-      end
-
       context "on fields" do
         before :each do
           @hero_type_builder = instance_double RailsQL::Builder::TypeBuilder
@@ -214,30 +202,6 @@ describe RailsQL::Builder::Visitor do
     end
 
     context "inline fragments" do
-      def expect_inline_fragment(name: "moo", field_alias: nil)
-        @fragment_builder = instance_double "RailsQL::Builder::FragmentBuilder"
-        type_builder = instance_double "RailsQL::Builder::FragmentBuilder"
-
-        expect(RailsQL::Builder::FragmentBuilder).to receive(:new)
-          .and_return @fragment_builder
-        expect(query_root_builder).to receive(:add_fragment_builder!).with(
-          @fragment_builder
-        ).and_return @fragment_builder
-        expect(@fragment_builder).to receive(:add_child_builder!).with(
-          name: name,
-          field_alias: field_alias
-        )
-        allow(query_root_builder).to receive(:type_klass).and_return(
-          :query_root_and_stuff
-        )
-        expect(RailsQL::Builder::TypeBuilder).to receive(:new).with(
-          type_klass: :query_root_and_stuff
-        ).and_return type_builder
-        expect(@fragment_builder).to receive(:type_builder=).with(
-          type_builder
-        )
-      end
-
       context "without a TypeCondition" do
         it "builds an inline fragment" do
           expect_inline_fragment
@@ -444,17 +408,6 @@ describe RailsQL::Builder::Visitor do
         # before :each do
         #   expect(query_builder)
         # end
-
-        def expect_default_value_builder(type_klass:, model:)
-          default_val_builder = instance_double "RailsQL::Builder::TypeBuilder"
-          expect(RailsQL::Builder::TypeBuilder).to receive(:new).with(
-            type_klass: type_klass,
-            model: model,
-            is_input: true
-          ).and_return default_val_builder
-          allow(default_val_builder).to receive(:is_input?).and_return true
-          return default_val_builder
-        end
 
         it "adds variable builders to the operation" do
           default_val_builder = expect_default_value_builder(
