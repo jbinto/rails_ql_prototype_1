@@ -2,7 +2,7 @@ module RailsQL
   module Builder
     class DirectiveBuilder
       attr_accessor(
-        :name, :arg_type_builder
+        :name, :arg_builder
       )
 
       def initialize(type_klass:)

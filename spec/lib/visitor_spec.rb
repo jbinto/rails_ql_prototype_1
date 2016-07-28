@@ -67,10 +67,21 @@ describe RailsQL::Builder::Visitor do
 
     context "directives" do
       it "parses directive on a field" do
+        type_builder = instance_double RailsQL::Builder::TypeBuilder
+        directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
+
         expect(query_root_builder).to receive(:add_child_builder!).with(
           name: "hero",
           field_alias: nil
+        ).and_return type_builder
+        expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
+          type_klass: "dancy"
+        ).and_return directive_builder
+        expect(type_builder).to receive(:add_directive_builder!).with(
+          directive_builder
         )
+        allow(directive_builder).to receive(:arg_builder)
+
         visit_graphql "query { hero @dancy }"
       end
 

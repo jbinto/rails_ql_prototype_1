@@ -249,7 +249,7 @@ module RailsQL
         directive_builder = DirectiveBuilder.new(
           type_klass: node.value
         )
-        current_builder.add_directive! directive_builder
+        current_builder.add_directive_builder! directive_builder
         @builder_stack.push directive_builder.arg_builder
       end
 
