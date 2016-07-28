@@ -189,14 +189,14 @@ Work in Progress
   - breaks sequel gem model querying
   - in railsQL, just use the alias name as the field key in type
     - eg: RootType has fields user_1: Field(name: "user"), user_2: Field(name: "user")
+* directive locations (eg. on query)
+* directives on Fragments, fragment spreads, inline fragments
 
 Features
 12. plural args
 * List and Non-Null as standalone anonomous types + syntax for fields
 10. Finish interfaces implementation (grep for TODO:)
 * line numbers in error messages
-* directive locations (eg. on query)
-* directives on Fragments, fragment spreads, inline fragments
 * field merging
 
 Security
