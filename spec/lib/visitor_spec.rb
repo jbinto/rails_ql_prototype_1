@@ -66,40 +66,92 @@ describe RailsQL::Builder::Visitor do
 
 
     context "directives" do
-      it "parses directive on a field" do
-        type_builder = instance_double RailsQL::Builder::TypeBuilder
-        directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
+      context "on fields" do
+        before :each do
+          @hero_type_builder = instance_double RailsQL::Builder::TypeBuilder
 
-        expect(query_root_builder).to receive(:add_child_builder!).with(
-          name: "hero",
-          field_alias: nil
-        ).and_return type_builder
-        expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
-          type_klass: "dancy"
-        ).and_return directive_builder
-        expect(type_builder).to receive(:add_directive_builder!).with(
-          directive_builder
-        )
-        allow(directive_builder).to receive(:arg_builder)
+          allow(query_root_builder).to receive(:add_child_builder!)
+            .and_return @hero_type_builder
+        end
 
-        visit_graphql "query { hero @dancy }"
+        it "parses directive on a field" do
+          directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
+          expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
+            type_klass: "dancy"
+          ).and_return directive_builder
+          expect(@hero_type_builder).to receive(:add_directive_builder!).with(
+            directive_builder
+          )
+          allow(directive_builder).to receive(:arg_builder)
+
+          visit_graphql "query { hero @dancy }"
+        end
+
+        it "parses directive on an aliased field" do
+          # expect(query_root_builder).to receive(:add_child_builder!).with(
+          #   name: "hero",
+          #   field_alias: "megaman"
+          # )
+          visit_graphql "query { danceMaster: hero @dancy }"
+        end
+
+        it "parses directive with args on a field" do
+          directive_builder = instance_double RailsQL::Builder::DirectiveBuilder
+          arg_builder = instance_double RailsQL::Builder::TypeBuilder
+          expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).with(
+            type_klass: "dancy"
+          ).and_return directive_builder
+          expect(@hero_type_builder).to receive(:add_directive_builder!).with(
+            directive_builder
+          )
+          allow(directive_builder).to receive(:arg_builder).and_return(
+            arg_builder
+          )
+          allow(arg_builder).to receive(:is_input?).and_return true
+          expect(arg_builder).to receive(:add_child_builder!).with(
+            name: "moo",
+            model: "foo"
+          )
+
+          visit_graphql "query { hero @dancy(moo: \"foo\") }"
+        end
+
+        it "parses multiple directives on a field" do
+          # expect(query_root_builder).to receive(:add_child_builder!).with(
+          #   name: "hero",
+          #   field_alias: "megaman"
+          # )
+          visit_graphql "query { hero @dancy @dancy @fancy }"
+        end
       end
 
-      it "parses directive on an aliased field" do
-        # expect(query_root_builder).to receive(:add_child_builder!).with(
-        #   name: "hero",
-        #   field_alias: "megaman"
-        # )
-        visit_graphql "query { danceMaster: hero @dancy }"
+      context "on an operation" do
+        it "adds the directive to the operation" do
+          pending
+          visit_graphql "query @dancy { hero }"
+        end
       end
 
-      it "parses multiple directives on a field" do
-        # expect(query_root_builder).to receive(:add_child_builder!).with(
-        #   name: "hero",
-        #   field_alias: "megaman"
-        # )
-        visit_graphql "query { hero @dancy @dancy @fancy }"
+      context "on a fragment spread" do
+        it "adds the directive to the fragment spread" do
+          visit_graphql <<-GraphQL
+            query { ...heroFragment @dancy }
+            fragment heroFragment on Hero {name}
+          GraphQL
+          pending
+        end
       end
+
+      context "on a fragment definition" do
+        it "adds the directive to the fragment" do
+          visit_graphql <<-GraphQL
+            query { ...heroFragment }
+            fragment heroFragment on Hero @dancy {name}
+          GraphQL
+          pending
+        end
+      end
+
     end
 
     context "inline fragments" do
