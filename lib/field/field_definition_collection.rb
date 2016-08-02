@@ -10,6 +10,7 @@ module RailsQL
       #   @field_definitions = HashWithIndifferentAccess.new
       # end
 
+      # note: Permissions will only be applied to the fields provided in `opts[:fields]`
       def add_permissions(operations, opts)
         operations = [operations].flatten
 
@@ -21,8 +22,8 @@ module RailsQL
         operations.each do |operation|
           opts[:fields].each do |field|
             if self[field]
-              self[field].send(
-                :"add_#{operation}_permission",
+              self[field].add_permission(
+                operation,
                 opts[:when]
               )
             else
