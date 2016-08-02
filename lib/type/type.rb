@@ -39,15 +39,8 @@ module RailsQL
       end
     end
 
-    def authorize_for!(action)
-      unauthorized = unauthorized_fields_for action
-      if unauthorized.present?
-        raise UnauthorizedQuery, "unauthorized fields: #{unauthorized.to_json}"
-      end
-    end
-
-    def unauthorized_fields_for(action)
-      self.fields.unauthorized_fields_for action, self
+    def unauthorized_fields_and_args_for(action)
+      fields.unauthorized_fields_and_args_for action, self
     end
 
     def root?

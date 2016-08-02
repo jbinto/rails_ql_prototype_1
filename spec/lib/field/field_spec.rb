@@ -19,13 +19,13 @@ describe RailsQL::Field::Field do
   end
 
   let(:type) do
-    type = instance_double 
+    type = instance_double
     allow(type).to receive(:args).and_return({})
     type
   end
 
   let(:parent_type) do
-    instance_double 
+    instance_double
   end
 
   let(:field) do
@@ -147,44 +147,55 @@ describe RailsQL::Field::Field do
     end
   end
 
-  describe "#has_read_permission?" do
-    it "instance_evals the lambdas of FieldDefinition#read_permissions in the context of the parent_type" do
+  describe "#can?" do
+    it <<-END_IT.strip_heredoc.gsub("\n", "") do
+      instance_evals the lambdas of FieldDefinition#permissions[action] in the
+      context of the parent_type
+    END_IT
       self_in_lambda = nil
       permission = ->{
         self_in_lambda = self
       }
-      expect(field_definition).to receive(:read_permissions).and_return [
-        permission
-      ]
-      field.has_read_permission?
+      expect(field_definition).to(
+        receive(:permissions).with(:query).and_return [
+          permission
+        ]
+      )
+      field.can? :query
       expect(self_in_lambda).to eq parent_type
     end
 
     context "when any permission evaluates to true" do
       it "returns true" do
-          expect(field_definition).to receive(:read_permissions).and_return [
-            ->{false},
-            ->{true},
-            ->{false}
-          ]
-          expect(field.has_read_permission?).to eq true
+          expect(field_definition).to(
+            receive(:permissions).with(:query).and_return [
+              ->{false},
+              ->{true},
+              ->{false}
+            ]
+          )
+          expect(field.can? :query).to eq true
       end
     end
 
     context "when all permissions evaluates to false" do
       it "returns false" do
-          expect(field_definition).to receive(:read_permissions).and_return [
+        expect(field_definition).to(
+          receive(:permissions).with(:query).and_return [
             ->{false}
           ]
-          expect(field.has_read_permission?).to eq false
+        )
+        expect(field.can? :query).to eq false
       end
     end
 
     context "when there are no permissions" do
       it "returns false" do
-          expect(field_definition).to receive(:read_permissions).and_return [
-          ]
-          expect(field.has_read_permission?).to eq false
+          expect(field_definition).to(
+            receive(:permissions).with(:query).and_return [
+            ]
+          )
+          expect(field.can? :query).to eq false
       end
     end
 
