@@ -2,10 +2,9 @@ require "spec_helper"
 
 describe RailsQL::Field::FieldDefinitionCollection do
 
-    let(:collection) {
-      described_class.new
-    }
-
+  let(:collection) {
+    described_class.new
+  }
 
   describe "#add_field_definition" do
     it "adds field definitions" do
