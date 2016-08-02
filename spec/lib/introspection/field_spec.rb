@@ -9,7 +9,7 @@ describe RailsQL::Introspection::Field do
   end
 
   let(:type) do
-    type_klass = class_double RailsQL::Type::Type
+    type_klass = class_double 
     allow(type_klass).to receive(:type?).and_return true
     allow(type_klass).to receive(:type_definition).and_return(
       OpenStruct.new(

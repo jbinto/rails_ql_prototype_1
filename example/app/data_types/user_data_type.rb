@@ -1,4 +1,4 @@
-class UserType < RailsQL::Type::Type
+class UserType < 
   initial_query ->{User.all}
 
   has_many(:to_dos,

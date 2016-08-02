@@ -21,7 +21,7 @@ module RailsQL
 
       def initialize(name, opts)
         @name = name
-        @read_permissions = []
+        @permissions = {query: [], mutate: [], input: []}
 
         opts.slice(:child_ctx).each do |k, v|
           next if v.blank? || v.respond_to?(:keys)
@@ -73,8 +73,8 @@ module RailsQL
         @deprecated
       end
 
-      def add_read_permission(lambda)
-        @read_permissions << lambda
+      def add_permission(operation, permission_lambda)
+        @permissions[operation] << permission_lambda
       end
 
       def nullable?
@@ -85,9 +85,9 @@ module RailsQL
         @singular
       end
 
-      def read_permissions
-        if @read_permissions.present?
-          @read_permissions.clone
+      def permissions
+        if @permissions.present?
+          @permissions.clone
         else
           [->{false}]
         end

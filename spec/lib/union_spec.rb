@@ -23,10 +23,10 @@ describe RailsQL::Type::Union do
     before :each do
       Sword = Class.new
       Crossbow = Class.new
-      SwordType = Class.new RailsQL::Type::Type
+      SwordType = Class.new 
       SwordType.field :damage, type: "Int"
       SwordType.can :read, fields: [:damage]
-      CrossbowType = Class.new RailsQL::Type::Type
+      CrossbowType = Class.new 
       CrossbowType.field :damage, type: "Int"
       CrossbowType.field :range, type: "Int"
       CrossbowType.can :read, fields: [:damage, :range]

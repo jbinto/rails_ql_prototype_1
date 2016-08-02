@@ -21,7 +21,7 @@ describe RailsQL::Introspection::Type do
   end
 
   let(:type_klass) do
-    klass = class_double RailsQL::Type::Type
+    klass = class_double 
     allow(klass).to receive(:type_definition).and_return OpenStruct.new(
       name: "Panda",
       kind: :OBJECT,

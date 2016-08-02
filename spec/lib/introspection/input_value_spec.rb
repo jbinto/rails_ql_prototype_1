@@ -16,7 +16,7 @@ describe RailsQL::Introspection::InputValue do
 
   # TODO: not implemented yet:
   # let(:type) do
-  #   type = class_double RailsQL::Type::Type
+  #   type = class_double 
   #   allow(type).to receive(:type?).and_return true
   #   allow(type).to receive(:name).and_return "UnicornAwesomeness"
   #   type

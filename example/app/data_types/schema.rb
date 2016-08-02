@@ -1,4 +1,4 @@
-class Schema < RailsQL::Type::Type
+class Schema < 
   include RailsQL::Introspection
 
   has_one(:my,

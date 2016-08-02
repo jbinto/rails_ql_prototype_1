@@ -77,7 +77,7 @@ module RailsQL
 
       # Adds a FieldDefinition to the data type
       #
-      #   class UserType < RailsQL::Type::Type
+      #   class UserType < 
       #
       #     field(:email,
       #       type: RailsQL::Type::String

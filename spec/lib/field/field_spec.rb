@@ -19,13 +19,13 @@ describe RailsQL::Field::Field do
   end
 
   let(:type) do
-    type = instance_double RailsQL::Type::Type
+    type = instance_double 
     allow(type).to receive(:args).and_return({})
     type
   end
 
   let(:parent_type) do
-    instance_double RailsQL::Type::Type
+    instance_double 
   end
 
   let(:field) do
