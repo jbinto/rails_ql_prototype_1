@@ -66,8 +66,12 @@ module RailsQL
         if @evaled_args.present?
           @evaled_args
         else
+          args_lambda = @args || ->(aio) {aio}
           anonymous_input_object = Class.new RailsQL::Type::AnonymousInputObject
-          @evaled_args = type_klass.instance_exec @args, anonymous_input_object
+          @evaled_args = type_klass.instance_exec(
+            anonymous_input_object,
+            &args_lambda
+          )
         end
       end
 

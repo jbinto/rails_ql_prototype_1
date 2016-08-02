@@ -34,22 +34,16 @@ describe RailsQL::Field::FieldDefinition do
   end
 
   describe "#args" do
-    it "returns an annonomous input object if no :args lambda is provided" do
+    it "returns an anonymous input object if no :args lambda is provided" do
       villian_type = instance_double RailsQL::Type
       input_object = class_double RailsQL::Type::AnonymousInputObject
-      args_lambda = ->(things){}
-      field = described_class.new "villian", args: args_lambda
+      field = described_class.new "villian", {}
 
       expect(field).to(
         receive(:type_klass).and_return villian_type
       )
       expect(Class).to(
         receive(:new).with(RailsQL::Type::AnonymousInputObject).and_return(
-          input_object
-        )
-      )
-      expect(villian_type).to(
-        receive(:instance_exec).with(args_lambda, input_object).and_return(
           input_object
         )
       )
@@ -60,10 +54,20 @@ describe RailsQL::Field::FieldDefinition do
       evaluates the :args lambda passed to the initializer in the context of
       the type passing it the anonymous input object as an argument
     END_IT
-      args_lambda = instance_double Lambda
-
+      villian_type = instance_double RailsQL::Type
+      input_object = class_double RailsQL::Type::AnonymousInputObject
+      args_lambda = ->(args){:input_object_would_go_here}
       field = described_class.new "villian", args: args_lambda
-      field.args
+
+      expect(field).to(
+        receive(:type_klass).and_return villian_type
+      )
+      expect(Class).to(
+        receive(:new).with(RailsQL::Type::AnonymousInputObject).and_return(
+          input_object
+        )
+      )
+      expect(field.args).to eq :input_object_would_go_here
     end
   end
 
