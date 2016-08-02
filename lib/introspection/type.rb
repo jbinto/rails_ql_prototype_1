@@ -96,7 +96,7 @@ module RailsQL
         }
       )
 
-      can :read, fields: [
+      can :query, fields: [
         :kind,
         :name,
         :fields,

@@ -71,7 +71,7 @@ module RailsQL
           .uniq
       end
 
-      can :read, fields: [
+      can :query, fields: [
         :types,
         :queryType,
         :mutationType,

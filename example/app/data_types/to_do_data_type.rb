@@ -12,6 +12,6 @@ class ToDoType <
   field :status, type: :String
   field :content, type: :String
 
-  can :read, fields: [:id, :user, :status, :content]
+  can :query, fields: [:id, :user, :status, :content]
 
 end

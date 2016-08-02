@@ -27,6 +27,6 @@ class UserType <
   field :email, type: :String
   field :admin, type: :Boolean
 
-  can :read, fields: [:id, :to_dos, :email, :admin]
+  can :query, fields: [:id, :to_dos, :email, :admin]
 
 end

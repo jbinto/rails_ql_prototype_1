@@ -1,3 +1,6 @@
+require_relative "./kind.rb"
+require_relative "../field/field_definition_collection.rb"
+
 module RailsQL
   class Type
     module ClassMethods
@@ -7,6 +10,10 @@ module RailsQL
 
       def description(description=nil)
         @description = description.strip_heredoc
+      end
+
+      def anonymous(anonymous)
+        @anonymous = anonymous
       end
 
       def kind(kind)
@@ -77,7 +84,7 @@ module RailsQL
 
       # Adds a FieldDefinition to the data type
       #
-      #   class UserType < 
+      #   class UserType <
       #
       #     field(:email,
       #       type: RailsQL::Type::String
@@ -98,6 +105,7 @@ module RailsQL
       def has_many(name, opts)
         field_definitions.add_plural_field_definition(name, opts)
       end
+
     end
   end
 end

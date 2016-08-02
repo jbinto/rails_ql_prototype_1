@@ -23,7 +23,7 @@ module RailsQL
           resolve: ->(args, child_query){self.class}
         )
 
-        can :read, fields: [:__type, :__schema]
+        can :query, fields: [:__type, :__schema]
       end
 
     end
