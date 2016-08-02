@@ -37,19 +37,6 @@ describe RailsQL::Field::Field do
     )
   end
 
-  describe "#validate_args!" do
-    it "calls field_definition#args#validate_input_args! with the type args" do
-      field
-      allow(field).to receive(:type_args).and_return(random_arg_field: 3)
-      expect(field_definition).to receive(:args).and_return input_obj_klass
-      expect(input_obj_klass).to receive(:validate_input_args!).with(
-        random_arg_field: 3
-      )
-
-      field.validate_args!
-    end
-  end
-
   describe "#resolve_models_and_dup_type!" do
     context "when #resolve_models is not empty" do
       it "clones the type #resolve_models.count times" do
