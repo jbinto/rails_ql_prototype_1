@@ -1,12 +1,13 @@
 require "spec_helper"
 
-describe RailsQL::Type::Can do
-  let(:type_klass) {
-    klass = Class.new RailsQL::Type::Type
-    klass.field :example_field, type: class_double(RailsQL::Type::Type)
-    klass.has_one :child_type, type: klass
-    klass
-  }
+describe RailsQL::Field::FieldDefinitionCollection do
+
+    let(:type_klass) {
+      klass = Class.new RailsQL::Type::Type
+      klass.field :example_field, type: class_double(RailsQL::Type::Type)
+      klass.has_one :child_type, type: klass
+      klass
+    }
 
   describe ".can" do
     context "when :read" do
@@ -136,7 +137,4 @@ describe RailsQL::Type::Can do
       skip
     end
   end
-
 end
-
-

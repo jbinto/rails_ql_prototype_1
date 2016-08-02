@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe RailsQL::Type::InputObject do
+describe RailsQL::Type do
   let(:input_obj_klass) {Class.new described_class}
 
   describe "#validate_input_args!" do
