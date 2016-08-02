@@ -7,14 +7,6 @@ module RailsQL
     extend ActiveModel::Callbacks
     extend RailsQL::Type::ClassMethods
 
-    # Introspection
-    field(:__typename,
-      resolve: ->(args, child_query) {
-        self.class.field_definition.name
-      },
-      introspection: true
-    )
-
     define_model_callbacks :resolve
     before_resolve :authorize_query!, if: :root?
 

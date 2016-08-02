@@ -1,5 +1,5 @@
-require_relative "../../type/klass_factory.rb"
-require_relative "../../type/type.rb"
+require_relative "../type/klass_factory.rb"
+require_relative "../type/type.rb"
 
 module RailsQL
   module Field
@@ -24,7 +24,7 @@ module RailsQL
       end
 
       attr_reader(
-        *default_opts.keys.except(:args),
+        *self.default_opts.except(:args).keys,
         :name,
         :permissions
       )
@@ -34,7 +34,8 @@ module RailsQL
       alias_method :singular?, :singular
 
       def initialize(name, opts)
-        opts = default_opts.merge opts.slice *default_opts.keys
+        defaults = self.class.default_opts
+        opts = defaults.merge opts.slice *defaults.keys
 
         unless opts[:child_ctx].respond_to?(:keys)
           raise "ctx must be a Hash"
@@ -76,9 +77,9 @@ module RailsQL
       def add_permission!(operation, permission_lambda)
         valid_ops = @permissions.keys
         unless valid_ops.include? operation
-          raise <<-MSG.strip_heredoc
-            #{operation} is not a valid operation.
-            Must be one of :query, :mutate or :input"
+          raise <<-MSG.strip_heredoc.gsub("\n", " ").strip
+            Cannot add #{operation} to #{@name}.
+            Operation must be one of :query, :mutate or :input"
           MSG
         end
         @permissions[operation] << permission_lambda

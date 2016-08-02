@@ -1,3 +1,5 @@
+require_relative "../field/field_definition_collection.rb"
+
 module RailsQL
   class Type
     module ClassMethods
@@ -77,7 +79,7 @@ module RailsQL
 
       # Adds a FieldDefinition to the data type
       #
-      #   class UserType < 
+      #   class UserType <
       #
       #     field(:email,
       #       type: RailsQL::Type::String
@@ -98,6 +100,7 @@ module RailsQL
       def has_many(name, opts)
         field_definitions.add_plural_field_definition(name, opts)
       end
+
     end
   end
 end

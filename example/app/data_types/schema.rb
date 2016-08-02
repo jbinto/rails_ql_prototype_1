@@ -11,7 +11,7 @@ class Schema <
     resolve: ->(args, child_query) {:all}
   )
 
-  can :read, fields: [:my]
-  can :read, fields: [:all], when: -> {ctx[:current_user].admin?}
+  can :query, fields: [:my]
+  can :query, fields: [:all], when: -> {ctx[:current_user].admin?}
 
 end

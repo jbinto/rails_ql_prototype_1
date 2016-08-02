@@ -29,6 +29,6 @@ class AllNamespace <
     }
   )
 
-  can :read, fields: [:users, :user, :to_dos, :to_do]
+  can :query, fields: [:users, :user, :to_dos, :to_do]
 
 end

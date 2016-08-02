@@ -25,18 +25,18 @@ describe RailsQL::Type::Union do
       Crossbow = Class.new
       SwordType = Class.new 
       SwordType.field :damage, type: "Int"
-      SwordType.can :read, fields: [:damage]
+      SwordType.can :query, fields: [:damage]
       CrossbowType = Class.new 
       CrossbowType.field :damage, type: "Int"
       CrossbowType.field :range, type: "Int"
-      CrossbowType.can :read, fields: [:damage, :range]
+      CrossbowType.can :query, fields: [:damage, :range]
       type_klass.unions(
         {name: "sword", type: "SwordType", model_klass: "Sword"},
         {name: "crossbow", type: "CrossbowType",
           model_klass: ->{"Crossbow"}
         }
       )
-      type_klass.can :read, fields: [:sword, :crossbow]
+      type_klass.can :query, fields: [:sword, :crossbow]
       @runner = RailsQL::Runner.new(
         query_root: type_klass,
         mutation_root: type_klass

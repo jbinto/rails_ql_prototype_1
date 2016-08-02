@@ -12,7 +12,7 @@ describe RailsQL::Field::FieldDefinitionCollection do
       # field_definition = instance_double RailsQL::Field::FieldDefinition
       expect(RailsQL::Field::FieldDefinition).to receive(:new).with(:superhero, {})
         # .and_return(field_definition)
-      # allow(field_definition).to receive(:add_permission)
+      # allow(field_definition).to receive(:add_permission!)
 
       collection.add_field_definition "superhero", {}
     end
@@ -74,7 +74,7 @@ describe RailsQL::Field::FieldDefinitionCollection do
         superhero_field_definition = add_mock_field_definition "superhero"
 
         # now, assert that our `field_definition` had `add_permissions` called on it
-        expect(superhero_field_definition).to receive(:add_permission).with(
+        expect(superhero_field_definition).to receive(:add_permission!).with(
           :query,
           anything    # e.g. opts[:when] default lambda
         )
@@ -90,11 +90,11 @@ describe RailsQL::Field::FieldDefinitionCollection do
 
         # now, assert that all of our `field_definition`s had `add_permission` called on it
         # multiple times, once for each operation
-        expect(superhero_field_definition).to receive(:add_permission).with(:query, anything)
-        expect(superhero_field_definition).to receive(:add_permission).with(:mutate, anything)
+        expect(superhero_field_definition).to receive(:add_permission!).with(:query, anything)
+        expect(superhero_field_definition).to receive(:add_permission!).with(:mutate, anything)
 
-        expect(villian_field_definition).to receive(:add_permission).with(:query, anything)
-        expect(villian_field_definition).to receive(:add_permission).with(:mutate, anything)
+        expect(villian_field_definition).to receive(:add_permission!).with(:query, anything)
+        expect(villian_field_definition).to receive(:add_permission!).with(:mutate, anything)
 
         collection.add_permissions [:query, :mutate], {
           fields: ["superhero", "villian"]

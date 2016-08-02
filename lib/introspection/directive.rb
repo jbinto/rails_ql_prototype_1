@@ -34,7 +34,7 @@ module RailsQL
           }
         )
 
-        can :read, fields: [
+        can :query, fields: [
           :name,
           :description,
           :locations,

@@ -22,7 +22,7 @@ module RailsQL
         operations.each do |operation|
           opts[:fields].each do |field|
             if self[field]
-              self[field].add_permission(
+              self[field].add_permission!(
                 operation,
                 opts[:when]
               )
@@ -57,7 +57,7 @@ module RailsQL
           )
         end
 
-        self[name] = FieldDefinition.new name.to_sym, opts
+        self[name] = RailsQL::Field::FieldDefinition.new name.to_sym, opts
       end
 
       def add_plural_field_definition(name, opts)
