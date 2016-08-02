@@ -1,55 +1,57 @@
+require_relative "../../type/klass_factory.rb"
+require_relative "../../type/type.rb"
+
 module RailsQL
   module Field
     class FieldDefinition
-      attr_writer(
-        :deprecated
-      )
-      attr_accessor(
-        :deprecation_reason
-      )
+
+      def self.default_opts
+        {
+          type: nil,
+          description: nil,
+          args: nil,
+          resolve: nil,
+          query: nil,
+          nullable: true,
+          deprecated: false,
+          deprecation_reason: "",
+          singular: true,
+          union: false,
+          child_ctx: {},
+          default_value: nil, # InputObject field definitions only
+          introspection: false
+        }
+      end
+
       attr_reader(
-        :type,
-        :args,
-        :description,
-        :nullable,
-        :child_ctx,
-        :union,
+        *default_opts.keys.except(:args),
         :name,
-        :singular,
-        :introspection
+        :permissions
       )
+
+      alias_method :deprecated?, :deprecated
+      alias_method :nullable?, :nullable
+      alias_method :singular?, :singular
 
       def initialize(name, opts)
-        @name = name
-        @permissions = {query: [], mutate: [], input: []}
+        opts = default_opts.merge opts.slice *default_opts.keys
 
-        opts.slice(:child_ctx).each do |k, v|
-          next if v.blank? || v.respond_to?(:keys)
-          raise ":#{k} must be a Hash"
+        unless opts[:child_ctx].respond_to?(:keys)
+          raise "ctx must be a Hash"
         end
+
         opts.slice(:args, :resolve, :query).each do |k, v|
           next if v.blank? || v.respond_to?(:call)
           raise ":#{k} must be either nil or a Lambda"
         end
 
-        defaults = {
-          type: "#{name.to_s.singularize.classify}Type",
-          description: nil,
-          args: ->(args){},
-          nullable: true,
-          deprecated: false,
-          singular: true,
-          union: false,
-          child_ctx: {},
-          resolve: nil,
-          query: nil,
-          default_value: nil, # InputObject field definitions only
-          introspection: false
-        }
-        opts = defaults.merge(opts.slice *defaults.keys)
-        if opts[:description]
-          opts[:description] = opts[:description].gsub(/\n\s+/, "\n").strip
-        end
+        @name = name
+        @permissions = {query: [], mutate: [], input: []}.freeze
+
+        opts[:type] ||= "#{name.to_s.singularize.classify}Type"
+
+        opts[:description] = opts[:description].try :strip_heredoc
+
         opts.each do |key, value|
           instance_variable_set "@#{key}", value
         end
@@ -60,37 +62,26 @@ module RailsQL
       end
 
       def args
-        @evaled_args ||=(
+        if @evaled_args.present?
+          @evaled_args
+        else
           anonymous_input_object = Class.new(RailsQL::Type) do
             kind :input_object
             anonymous true
           end
-          type.instance_exec anonymous_input_object, &@args
-        )
-      end
-
-      def deprecated?
-        @deprecated
-      end
-
-      def add_permission(operation, permission_lambda)
-        @permissions[operation] << permission_lambda
-      end
-
-      def nullable?
-        @nullable
-      end
-
-      def singular?
-        @singular
-      end
-
-      def permissions
-        if @permissions.present?
-          @permissions.clone
-        else
-          [->{false}]
+          @evaled_args = type.instance_exec anonymous_input_object, &@args
         end
+      end
+
+      def add_permission!(operation, permission_lambda)
+        valid_ops = @permissions.keys
+        unless valid_ops.include? operation
+          raise <<-MSG.strip_heredoc
+            #{operation} is not a valid operation.
+            Must be one of :query, :mutate or :input"
+          MSG
+        end
+        @permissions[operation] << permission_lambda
       end
 
       def append_to_query(parent_type:, args: {}, child_query: nil)
@@ -101,7 +92,11 @@ module RailsQL
             &@query
           )
         else
-          parent_type.query
+          default_query(
+            parent_type: parent_type,
+            args: args,
+            child_query: child_query
+          )
         end
       end
 
@@ -112,7 +107,23 @@ module RailsQL
             child_query,
             &@resolve
           )
-        elsif parent_type.respond_to? @name
+        else
+          default_resolve(
+            parent_type: parent_type,
+            args: args,
+            child_query: child_query
+          )
+        end
+      end
+
+      private
+
+      def default_query(parent_type:, args: {}, child_query: nil)
+        parent_type.query
+      end
+
+      def default_resolve(parent_type:, args: {}, child_query: nil)
+        if parent_type.respond_to? @name
           parent_type.send @name
         elsif parent_type.model.respond_to? @name
           parent_type.model.send @name
@@ -124,6 +135,7 @@ module RailsQL
           )
         end
       end
+
     end
   end
 end
