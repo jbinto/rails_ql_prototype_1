@@ -1,3 +1,4 @@
+require_relative "./kind.rb"
 require_relative "../field/field_definition_collection.rb"
 
 module RailsQL
@@ -9,6 +10,10 @@ module RailsQL
 
       def description(description=nil)
         @description = description.strip_heredoc
+      end
+
+      def anonymous(anonymous)
+        @anonymous = anonymous
       end
 
       def kind(kind)

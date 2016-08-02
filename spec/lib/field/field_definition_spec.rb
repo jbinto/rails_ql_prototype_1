@@ -2,7 +2,6 @@ require "spec_helper"
 
 describe RailsQL::Field::FieldDefinition do
   describe "#initialize" do
-
     {
       args: :hash,
       child_ctx: :hash,
@@ -10,26 +9,61 @@ describe RailsQL::Field::FieldDefinition do
       query: :lambda
     }.each do |opt_name, type|
       it "throws an error if :#{opt_name} is not a #{type}" do
+        type_object = instance_double RailsQL::Type
         expect{
-          described_class.new "things", type: double, opt_name => "dinosaur"
-        }.to raise_error
+          described_class.new "things", type: type_object, opt_name => "dinosaur"
+        }.to raise_error(RuntimeError, /must be/)
       end
     end
-
   end
 
   describe "#type_klass" do
     it "uses the klass factory to find the class by name" do
+      field = described_class.new "villian", type: "Character"
+      expect(RailsQL::Type::KlassFactory).to receive(:find).with("Character")
 
+      field.type_klass
+    end
+
+    it "guesses the type if one is not provided" do
+      field = described_class.new "villian", {}
+      expect(RailsQL::Type::KlassFactory).to receive(:find).with("VillianType")
+
+      field.type_klass
     end
   end
 
   describe "#args" do
+    it "returns an annonomous input object if no :args lambda is provided" do
+      villian_type = instance_double RailsQL::Type
+      input_object = class_double RailsQL::Type::AnonymousInputObject
+      args_lambda = ->(things){}
+      field = described_class.new "villian", args: args_lambda
+
+      expect(field).to(
+        receive(:type_klass).and_return villian_type
+      )
+      expect(Class).to(
+        receive(:new).with(RailsQL::Type::AnonymousInputObject).and_return(
+          input_object
+        )
+      )
+      expect(villian_type).to(
+        receive(:instance_exec).with(args_lambda, input_object).and_return(
+          input_object
+        )
+      )
+      expect(field.args).to eq input_object
+    end
+
     it <<-END_IT.strip_heredoc do
       evaluates the :args lambda passed to the initializer in the context of
-      an anonymous input object
+      the type passing it the anonymous input object as an argument
     END_IT
+      args_lambda = instance_double Lambda
 
+      field = described_class.new "villian", args: args_lambda
+      field.args
     end
   end
 

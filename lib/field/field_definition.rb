@@ -59,18 +59,15 @@ module RailsQL
       end
 
       def type_klass
-        KlassFactory.find @type
+        RailsQL::Type::KlassFactory.find @type
       end
 
       def args
         if @evaled_args.present?
           @evaled_args
         else
-          anonymous_input_object = Class.new(RailsQL::Type) do
-            kind :input_object
-            anonymous true
-          end
-         @evaled_args = type.instance_exec anonymous_input_object, &@args
+          anonymous_input_object = Class.new RailsQL::Type::AnonymousInputObject
+          @evaled_args = type_klass.instance_exec @args, anonymous_input_object
         end
       end
 
