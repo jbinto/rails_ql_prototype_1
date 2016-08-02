@@ -74,12 +74,21 @@ describe RailsQL::Field::FieldDefinition do
   describe "#add_permission!" do
     context "for a valid operation" do
       it "appends the permissions to #permissions[operation]" do
+        field = described_class.new "villian", {}
+        true_lambda = ->(){true}
+        field.add_permission!(:query, true_lambda)
 
+        # XXX TODO: why is `permissions[:query]` an array?
+        expect(field.permissions[:query]).to eq([true_lambda])
       end
     end
 
     context "for an invalid operation" do
       it "raises an error" do
+        field = described_class.new "villian", {}
+        expect{
+          field.add_permission!(:delete, ->(){true})
+        }.to raise_error(RuntimeError, /Cannot add delete to villian/)
 
       end
     end

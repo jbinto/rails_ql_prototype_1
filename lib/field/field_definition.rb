@@ -83,6 +83,8 @@ module RailsQL
             Operation must be one of :query, :mutate or :input"
           MSG
         end
+        ## XXX TODO: why are there multiple permission_lambdas?
+        ## shouldn't there be just one per operation?
         @permissions[operation] << permission_lambda
       end
 
