@@ -200,7 +200,24 @@ describe RailsQL::Field::FieldDefinition do
           )).to eq "parent_model_stuff_field"
         end
       end
+
+      context "when parent_type.model does not respond to field name" do
+        it "raises an error" do
+          type = instance_double RailsQL::Type
+          parent_model = double
+          allow(type).to receive(:model).and_return parent_model
+
+          field_definition = described_class.new "field_not_on_model", resolve: nil
+
+          expect {
+            field_definition.resolve(
+              parent_type: type,
+              args: double,
+              child_query: double
+            )
+          }.to raise_error(RailsQL::NullResolve)
+        end
+      end
     end
   end
-
 end
