@@ -107,6 +107,7 @@ module RailsQL
       end
 
       def add_directive_builder!(directive_builder)
+        raise "TODO"
         @directive_builders << directive_builder
       end
 
