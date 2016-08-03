@@ -7,7 +7,7 @@ describe RailsQL::Field::FieldCollection do
 
   describe "#unauthorized_fields_for" do
     context "when there are unauthorized args" do
-      it <<~END_IT.gsub("\n", "") do
+      it <<-END_IT.strip_heredoc.gsub("\n", "") do
         returns a hash in the form
         {field_name => \"__args\" => {arg_name => true}}}
       END_IT

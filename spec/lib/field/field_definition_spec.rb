@@ -50,7 +50,7 @@ describe RailsQL::Field::FieldDefinition do
       expect(field.args).to eq input_object
     end
 
-    it <<~END_IT do
+    it <<-END_IT.strip_heredoc do
       evaluates the :args lambda passed to the initializer in the context of
       the type passing it the anonymous input object as an argument
     END_IT
@@ -97,13 +97,13 @@ describe RailsQL::Field::FieldDefinition do
 
   describe "#append_to_query" do
     context "when field_definition has a query defined" do
-      it <<~END_IT do
+      it <<-END_IT.strip_heredoc do
         instance execs the field_definition#query in the context of the parent
         data type
       END_IT
         type = instance_double RailsQL::Type
         args = {}
-        query = double  # XXX instance_double?
+        query = double
 
         field_definition_query = ->(actual_args, actual_query){
           # e.g. [args, query, type]
@@ -138,7 +138,7 @@ describe RailsQL::Field::FieldDefinition do
 
   describe "#resolve" do
     context "when field_definition has a resolve defined" do
-      it <<~END_IT do
+      it <<-END_IT.strip_heredoc do
         instance execs the field_definition#resolve in the context of the
         parent data type
       END_IT

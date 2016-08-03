@@ -9,7 +9,7 @@ module RailsQL
       end
 
       def description(description=nil)
-        @description = description
+        @description = description.strip_heredoc
       end
 
       def anonymous(anonymous)
@@ -21,7 +21,7 @@ module RailsQL
         if kind_values.include? kind
           @kind = kind
         else
-          raise <<~eos
+          raise <<-eos.strip_heredoc
             #{kind} is not a valid kind. Must be one of
             #{kind_values.join ", "}
           eos

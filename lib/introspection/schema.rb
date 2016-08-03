@@ -5,14 +5,14 @@ module RailsQL
   module Introspection
     class Schema  < RailsQL::Type
       type_name "__Schema"
-      description <<~eos
+      description <<-eos
         A GraphQL Schema defines the capabilities of a GraphQL server. It
         exposes all available types and directives on the server, as well as
         the entry points for query and mutation operations.
       eos
 
       has_many(:types,
-        description: <<~eos,
+        description: <<-eos,
           A list of all types supported by this server.
         eos
         type: "RailsQL::Introspection::Type",
@@ -22,7 +22,7 @@ module RailsQL
       )
 
       field(:queryType,
-        description: <<~eos,
+        description: <<-eos,
           The type that query operations will be rooted at.
         eos
         type: "RailsQL::Introspection::Type",
@@ -33,7 +33,7 @@ module RailsQL
 
       # TODO: mutations
       field(:mutationType,
-        description: <<~eos,
+        description: <<-eos,
           If this server supports mutation, the type that mutation operations
           will be rooted at.
         eos
@@ -45,7 +45,7 @@ module RailsQL
 
       # TODO: directives
       field(:directives,
-        description: <<~eos,
+        description: <<-eos,
           A list of all directives supported by this server.
         eos
         type: "RailsQL::Introspection::Directive",
