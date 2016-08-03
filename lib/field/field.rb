@@ -1,7 +1,7 @@
 module RailsQL
   module Field
     class Field
-      attr_reader :prototype_type, :types, :field_definition. :args_type
+      attr_reader :prototype_type, :types, :field_definition, :args_type
       attr_accessor :parent_type
 
       delegate(
@@ -50,8 +50,8 @@ module RailsQL
         end
       end
 
-      def child_field_collections
-        populated_types.map(&:field_collection)
+      def child_field_collection
+        prototype_type.field_collection
       end
 
       private

@@ -4,15 +4,40 @@ describe RailsQL::Field::FieldCollection do
 
   let(:type) {instance_double RailsQL::Type}
   let(:field) {instance_double RailsQL::Field::Field}
+  let(:arg_type) {instance_double RailsQL::Field::Field}
 
   describe "#unauthorized_fields_for" do
-    context "when there are unauthorized args" do
+    context "when there is an unauthorized arg" do
       it <<-END_IT.strip_heredoc.gsub("\n", "") do
         returns a hash in the form
         {field_name => \"__args\" => {arg_name => true}}}
       END_IT
-        pending "Jesse  🕵🕸=>📝💾=>🏆🏆🏆🏌"
-        fail
+        empty_collection = described_class.new
+
+        field_collection = described_class.new
+        field_collection["cow"] = field
+
+        args_collection = described_class.new
+        args_collection["moo"] = arg_type
+
+        # First call of #unauthorized_fields_and_args_for for the field collection
+        allow(field).to receive(:can?).with(:query).and_return true
+        allow(field).to receive(:child_field_collection).and_return empty_collection
+        allow(field).to receive_message_chain(
+          :args_type,
+          :child_field_collection,
+        ).and_return args_collection
+
+        # Second call of #unauthorized_fields_and_args_for for the argument collection
+        allow(arg_type).to receive(:can?).with(:query).and_return false
+
+        expect(field_collection.unauthorized_fields_and_args_for(:query)).to eq(
+          "cow" => {
+            "__args" => {
+              "moo" => true
+            }
+          }
+        )
       end
     end
 
