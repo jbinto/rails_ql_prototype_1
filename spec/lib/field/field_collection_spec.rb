@@ -20,9 +20,13 @@ describe RailsQL::Field::FieldCollection do
       END_IT
         field_collection["cow"] = field_1
         args_collection["moo"] = arg_type_1
+        args_collection["restricted_moo"] = arg_type_2
 
         # First call of #unauthorized_fields_and_args_for for the field collection
         allow(field_1).to receive(:can?).with(:query).and_return true
+
+        # Since `field_1` can be queried, it will try child fields and arguments.
+        # Do not try to simultate nested fields here, use empty_collection.
         allow(field_1).to receive(:child_field_collection).and_return empty_collection
         allow(field_1).to receive_message_chain(
           :args_type,
@@ -30,12 +34,24 @@ describe RailsQL::Field::FieldCollection do
         ).and_return args_collection
 
         # Second call of #unauthorized_fields_and_args_for for the argument collection
-        allow(arg_type_1).to receive(:can?).with(:query).and_return false
+        allow(arg_type_1).to receive(:can?).with(:query).and_return true
+
+        # Since `arg_type_1` can be queried, it will now try child fields and arguments.
+        # Do not try to simultate nested arguments here, use empty_collection.
+        allow(arg_type_1).to receive(:child_field_collection).and_return empty_collection
+        allow(arg_type_1).to receive_message_chain(
+          :args_type,
+          :child_field_collection
+        ).and_return empty_collection
+
+        # We can skip the child fields and arguments setup for `arg_type_2`
+        # since it short circuits when it finds the field can't be queried.
+        allow(arg_type_2).to receive(:can?).with(:query).and_return false
 
         expect(field_collection.unauthorized_fields_and_args_for(:query)).to eq(
           "cow" => {
             "__args" => {
-              "moo" => true
+              "restricted_moo" => true
             }
           }
         )
