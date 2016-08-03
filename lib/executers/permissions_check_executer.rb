@@ -20,18 +20,23 @@ module RailsQL
       private
       def unauthorized_fields_and_args_for(action, parent:)
         parent.fields.reduce(HashWithIndifferentAccess.new) do |h, (k, child)|
-          json = parent.can?(action, child.name) ? nil : true
-          json ||= {}.merge(
-            *child.fields.map{|collection|
-              collection.unauthorized_fields_for action
-            }
-          )
-          args_collection = field.args.field_collection
-          unauthorized_args = args_collection.unauthorized_fields_for action
+          if parent.can? action, child.name
+            json = {}
+            unauthorized_fields = unauthorized_fields_and_args_for(
+              action
+              parent: child
+            )
+            unauthorized_args = unauthorized_fields_and_args_for(
+              :input,
+              parent: child_type.args_type
+            )
 
-          if json.is_a?(Hash) && unauthorized_args.present?
-            json["__args"] = unauthorized_args
+            json.merge! *unauthorized_fields if unauthorized_fields.present?
+            json["__args"] = unauthorized_args if unauthorized_args.present?
+          else
+            json = true
           end
+
           h[k] = json if json.present?
           h
         end

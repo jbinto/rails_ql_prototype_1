@@ -8,11 +8,6 @@ module RailsQL
     attr_reader :args, :ctx, :anonymous, :model
     attr_accessor :fields, :query
 
-    delegates(
-      :unauthorized_fields_and_args_for,
-      to: :fields
-    )
-
     def initialize(
       ctx: {},
       root: false,
