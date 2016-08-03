@@ -121,7 +121,7 @@ module RailsQL
       #   type_name: variable_type_name
       # )
       # unless valid
-      #   msg = <<-ERROR.strip_heredoc
+      #   msg = <<~ERROR
       #     #{variable_name} is of the wrong type #{variable_type_name} for
       #     #{argument_name} on #{type_klass.type_definition.type_name}"
       #   ERROR
@@ -166,7 +166,7 @@ module RailsQL
           # error out if the type of the fragment is incompatible with the type of
           # this builder
           else
-            msg = <<-ERROR.strip_heredoc
+            msg = <<~ERROR
               Fragment is defined on #{fragment_type_name}
               but fragment spread is on an incompatible type
               (#{type_klass.type_definition.type_name})
@@ -187,7 +187,7 @@ module RailsQL
             )
           end
         rescue Exception => e
-          msg = <<-ERROR.strip_heredoc
+          msg = <<~ERROR
             #{e.message} on #{@type_klass} in fragment
             #{fragment_builder.fragment_name}
           ERROR

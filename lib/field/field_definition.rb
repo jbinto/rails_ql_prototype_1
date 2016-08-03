@@ -51,8 +51,6 @@ module RailsQL
 
         opts[:type] ||= "#{name.to_s.singularize.classify}Type"
 
-        opts[:description] = opts[:description].try :strip_heredoc
-
         opts.each do |key, value|
           instance_variable_set "@#{key}", value
         end
@@ -78,10 +76,8 @@ module RailsQL
       def add_permission!(operation, permission_lambda)
         valid_ops = @permissions.keys
         unless valid_ops.include? operation
-          raise <<-MSG.strip_heredoc.gsub("\n", " ").strip
-            Cannot add #{operation} to #{@name}.
-            Operation must be one of :query, :mutate or :input"
-          MSG
+          raise "Cannot add #{operation} to #{@name}."\
+            "Operation must be one of :query, :mutate or :input"
         end
         ## XXX TODO: why are there multiple permission_lambdas?
         ## shouldn't there be just one per operation?
@@ -90,6 +86,7 @@ module RailsQL
 
       def append_to_query(parent_type:, args: {}, child_query: nil)
         if @query.present?
+          # XXX e.g. calls @query(args, child_query) with self=parent_type
           parent_type.instance_exec(
             args,
             child_query,

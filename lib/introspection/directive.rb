@@ -7,7 +7,7 @@ module RailsQL
       class Directive  < RailsQL::Type
         type_name "__Directive"
 
-        description <<-eos
+        description <<~eos
         eos
 
         field(:name,

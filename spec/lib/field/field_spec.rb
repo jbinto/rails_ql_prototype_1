@@ -135,7 +135,7 @@ describe RailsQL::Field::Field do
   end
 
   describe "#can?" do
-    it <<-END_IT.strip_heredoc.gsub("\n", "") do
+    it <<~END_IT.gsub("\n", "") do
       instance_evals the lambdas of FieldDefinition#permissions[action] in the
       context of the parent_type
     END_IT

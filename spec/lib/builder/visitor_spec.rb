@@ -160,7 +160,7 @@ describe RailsQL::Builder::Visitor do
       #   it "adds the directive to the fragment spread" do
       #     pending
       #
-      #     visit_graphql <<-GraphQL
+      #     visit_graphql <<~GraphQL
       #       query { ...heroFragment @dancy }
       #       fragment heroFragment on Hero {name}
       #     GraphQL
@@ -192,7 +192,7 @@ describe RailsQL::Builder::Visitor do
           ## here is the only actual assertion! SO MUCH MOCKING UGH
           expect(fragment_builder).to receive(:add_directive_builder!).with(directive_builder)
 
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query { ...heroFragment }
             fragment heroFragment on Hero @dancy {name}
           GraphQL
@@ -205,7 +205,7 @@ describe RailsQL::Builder::Visitor do
       context "without a TypeCondition" do
         it "builds an inline fragment" do
           expect_inline_fragment
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query {
               ... {
                 moo
@@ -218,7 +218,7 @@ describe RailsQL::Builder::Visitor do
           fail
           expect_inline_fragment
           expect_inline_fragment name: "moo2"
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query {
               ... {
                 moo
@@ -243,7 +243,7 @@ describe RailsQL::Builder::Visitor do
             type_builder
           )
 
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query {
               ... on CowRoot {
                 moo
@@ -285,7 +285,7 @@ describe RailsQL::Builder::Visitor do
             name: "name",
             field_alias: nil
           )
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             fragment heroFieldsFragment on Root { name }
             query { ...heroFieldsFragment }
           GraphQL
@@ -298,7 +298,7 @@ describe RailsQL::Builder::Visitor do
             name: "name",
             field_alias: nil
           )
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query { ...heroFieldsFragment }
             fragment heroFieldsFragment on Root { name }
          GraphQL
@@ -311,7 +311,7 @@ describe RailsQL::Builder::Visitor do
             @fragment_builder
           ).and_return @fragment_builder
 
-          expect{ visit_graphql(<<-GraphQL) }.to raise_error
+          expect{ visit_graphql(<<~GraphQL) }.to raise_error
             query { ...heroFieldsFragment }
             fragment heroFieldsFragment on Root {
               ...heroFieldsFragment
@@ -329,7 +329,7 @@ describe RailsQL::Builder::Visitor do
           field_alias: nil
         )
 
-        visit_graphql <<-GraphQL
+        visit_graphql <<~GraphQL
           mutation {
             createHero
           }
@@ -380,7 +380,7 @@ describe RailsQL::Builder::Visitor do
       end
 
       it "sets the operation name to nil for anonomous operations" do
-        visit_graphql <<-GraphQL
+        visit_graphql <<~GraphQL
           query {name}
         GraphQL
 
@@ -388,7 +388,7 @@ describe RailsQL::Builder::Visitor do
       end
 
       it "sets the operation name" do
-        visit_graphql <<-GraphQL
+        visit_graphql <<~GraphQL
           query Thing {name}
         GraphQL
 
@@ -396,7 +396,7 @@ describe RailsQL::Builder::Visitor do
       end
 
       it "sets the operation's operation_type" do
-        visit_graphql <<-GraphQL
+        visit_graphql <<~GraphQL
           mutation {name}
         GraphQL
 
@@ -415,7 +415,7 @@ describe RailsQL::Builder::Visitor do
             model: "1337"
           )
 
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query($cow: CowType95 = 1337, $pig: WatType) {lol}
           GraphQL
 
@@ -441,7 +441,7 @@ describe RailsQL::Builder::Visitor do
             model: "wat"
           )
 
-          visit_graphql <<-GraphQL
+          visit_graphql <<~GraphQL
             query($cow: CowType95 = {test: "wat"}) {lol}
           GraphQL
 
@@ -463,7 +463,7 @@ describe RailsQL::Builder::Visitor do
               receive(:add_child_builder!).and_return hero_builder
             )
 
-            expect{ visit_graphql <<-GraphQL }.to raise_error
+            expect{ visit_graphql <<~GraphQL }.to raise_error
               query {
                 hero {name}
               }
@@ -485,7 +485,7 @@ describe RailsQL::Builder::Visitor do
               field_alias: nil
             )
 
-            visit_graphql <<-GraphQL
+            visit_graphql <<~GraphQL
               mutation A {
                 createHero
               }
@@ -512,7 +512,7 @@ describe RailsQL::Builder::Visitor do
           argument_name: "hero",
           variable_name: "cow"
         )
-        visit_graphql <<-GraphQL
+        visit_graphql <<~GraphQL
           query {
             createHero(hero: $cow)
           }

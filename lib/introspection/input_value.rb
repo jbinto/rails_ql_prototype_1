@@ -6,7 +6,7 @@ module RailsQL
     class InputValue  < RailsQL::Type
       type_name "__InputValue"
 
-      description <<-eos
+      description <<~eos
         Object and Interface types are described by a list of Fields, each of
         which has a name, potentially a list of arguments, and a return type.
       eos

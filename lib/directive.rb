@@ -29,7 +29,7 @@ module RailsQL
       ]
       invalid_locations = locations - valid_locations
       if invalid_locations.present?
-        raise <<-ERROR
+        raise <<~ERROR
           locations #{invalid_locations.join(",")} are not one of
           #{valid_locations.join(",")}
         ERROR

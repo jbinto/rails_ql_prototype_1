@@ -6,7 +6,7 @@ module RailsQL
     class Type  < RailsQL::Type
       type_name "__Type"
 
-      description <<-eos
+      description <<~eos
         The fundamental unit of any GraphQL Schema is the type. There are many
         kinds of types in GraphQL. Depending on the kind of a type,
         certain fields describe information about that type. Scalar types

@@ -3,7 +3,7 @@ module RailsQL
     class Boolean  < RailsQL::Type
       kind :scalar
       type_name "Boolean"
-      description <<-DESC.strip_heredoc
+      description <<~DESC
         The `Boolean` scalar type represents `true` or `false`.
       DESC
 
