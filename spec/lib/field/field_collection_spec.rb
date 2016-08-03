@@ -100,17 +100,22 @@ describe RailsQL::Field::FieldCollection do
 
   context "when there are no unauthorized fields" do
     it "returns an empty hash" do
-      allow(type).to receive(:fields).and_return stuff: field
+      field_collection["cow"] = field_1
+      field_collection["horse"] = field_2
 
-      allow(field).to receive(:can?).with(:query).and_return true
-      allow(field).to(
-        receive_message_chain(:types, :first, :unauthorized_query_fields)
-          .and_return(things: true)
-      )
+      allow(field_1).to receive(:can?).with(:query).and_return true
+      allow(field_2).to receive(:can?).with(:query).and_return true
 
-      expect(type.unauthorized_query_fields).to eq(
-        "stuff" => {"things" => true}
-      )
+      # Simulate no child fields or arguments for field_1 and field_2
+      [field_1, field_2].each do |f|
+        allow(f).to receive(:child_field_collection).and_return empty_collection
+        allow(f).to receive_message_chain(
+          :args_type,
+          :child_field_collection
+        ).and_return empty_collection
+      end
+
+      expect(field_collection.unauthorized_fields_and_args_for :query).to eq({})
     end
   end
 
