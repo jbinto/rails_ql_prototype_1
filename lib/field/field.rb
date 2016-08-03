@@ -4,13 +4,17 @@ module RailsQL
       attr_reader :prototype_type, :types, :field_definition
       attr_accessor :parent_type
 
+      delegate(
+        :nullable?,
+        :singular?,
+        to: :field_definition
+      )
+
       def initialize(opts)
         @field_definition = opts[:field_definition]
         @parent_type = opts[:parent_type]
         @prototype_type = opts[:type]
         @name = opts[:name]
-
-        validate_args!
       end
 
       def resolve_child_types!(parent_type:)
@@ -20,21 +24,7 @@ module RailsQL
       end
 
       def type_args
-        @type_args ||= @prototype_type.args.symbolize_keys
-      end
-
-      def validate_args!
-        return if type_args.empty?
-
-        @field_definition.args.validate_input_args! type_args
-      end
-
-      def nullable?
-        @field_definition.nullable?
-      end
-
-      def singular?
-        @field_definition.singular?
+        @type_args ||= @prototype_type.args
       end
 
       def appended_parent_query
@@ -55,6 +45,18 @@ module RailsQL
         return [] if models.nil?
         return models.is_a?(Array) ? models : [models]
       end
+
+      def can?(action)
+        @field_definition.permissions[action].any? do |permission|
+          @parent_type.instance_exec &permission
+        end
+      end
+
+      def child_field_collections
+        populated_types.map(&:field_collection)
+      end
+
+      private
 
       def resolve_models_and_dup_type!
         models = resolved_models
@@ -80,15 +82,6 @@ module RailsQL
         end
       end
 
-      def has_read_permission?
-        @field_definition.read_permissions.any? do |permission|
-          @parent_type.instance_exec &permission
-        end
-      end
-
-      def child_field_collections
-        populated_types.map(&:field_collection)
-      end
     end
   end
 end

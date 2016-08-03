@@ -19,13 +19,13 @@ describe RailsQL::Field::Field do
   end
 
   let(:type) do
-    type = instance_double 
+    type = instance_double
     allow(type).to receive(:args).and_return({})
     type
   end
 
   let(:parent_type) do
-    instance_double 
+    instance_double
   end
 
   let(:field) do
@@ -35,19 +35,6 @@ describe RailsQL::Field::Field do
       parent_type: parent_type,
       name: "field_name"
     )
-  end
-
-  describe "#validate_args!" do
-    it "calls field_definition#args#validate_input_args! with the type args" do
-      field
-      allow(field).to receive(:type_args).and_return(random_arg_field: 3)
-      expect(field_definition).to receive(:args).and_return input_obj_klass
-      expect(input_obj_klass).to receive(:validate_input_args!).with(
-        random_arg_field: 3
-      )
-
-      field.validate_args!
-    end
   end
 
   describe "#resolve_models_and_dup_type!" do
@@ -147,44 +134,55 @@ describe RailsQL::Field::Field do
     end
   end
 
-  describe "#has_read_permission?" do
-    it "instance_evals the lambdas of FieldDefinition#read_permissions in the context of the parent_type" do
+  describe "#can?" do
+    it <<-END_IT.strip_heredoc.gsub("\n", "") do
+      instance_evals the lambdas of FieldDefinition#permissions[action] in the
+      context of the parent_type
+    END_IT
       self_in_lambda = nil
       permission = ->{
         self_in_lambda = self
       }
-      expect(field_definition).to receive(:read_permissions).and_return [
-        permission
-      ]
-      field.has_read_permission?
+      expect(field_definition).to(
+        receive(:permissions).with(:query).and_return [
+          permission
+        ]
+      )
+      field.can? :query
       expect(self_in_lambda).to eq parent_type
     end
 
     context "when any permission evaluates to true" do
       it "returns true" do
-          expect(field_definition).to receive(:read_permissions).and_return [
-            ->{false},
-            ->{true},
-            ->{false}
-          ]
-          expect(field.has_read_permission?).to eq true
+          expect(field_definition).to(
+            receive(:permissions).with(:query).and_return [
+              ->{false},
+              ->{true},
+              ->{false}
+            ]
+          )
+          expect(field.can? :query).to eq true
       end
     end
 
     context "when all permissions evaluates to false" do
       it "returns false" do
-          expect(field_definition).to receive(:read_permissions).and_return [
+        expect(field_definition).to(
+          receive(:permissions).with(:query).and_return [
             ->{false}
           ]
-          expect(field.has_read_permission?).to eq false
+        )
+        expect(field.can? :query).to eq false
       end
     end
 
     context "when there are no permissions" do
       it "returns false" do
-          expect(field_definition).to receive(:read_permissions).and_return [
-          ]
-          expect(field.has_read_permission?).to eq false
+          expect(field_definition).to(
+            receive(:permissions).with(:query).and_return [
+            ]
+          )
+          expect(field.can? :query).to eq false
       end
     end
 

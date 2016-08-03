@@ -201,6 +201,33 @@ describe RailsQL::Type do
 
   end
 
+  describe "#authorize_query!" do
+    context "when unauthorized_query_fields is not empty" do
+      it "raises UnauthorizedQuery error" do
+        allow(type).to receive(:unauthorized_query_fields).and_return(
+          example_field: true
+        )
+
+        expect{type.authorize_query!}.to raise_error
+      end
+    end
+
+    context "when unauthorized_query_fields is empty" do
+      it "does not raise an error" do
+        allow(type).to receive(:unauthorized_query_fields).and_return(
+          HashWithIndifferentAccess.new
+        )
+
+        expect{type.authorize_query!}.not_to raise_error
+      end
+    end
+  end
+
+  describe "#authorize_mutation!" do
+    pending "mutations"
+    skip
+  end
+
   describe "#as_json" do
     context "when kind is defaulted to :OBJECT" do
       it "reduces over #as_json on fields" do
