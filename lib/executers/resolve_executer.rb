@@ -3,17 +3,18 @@ module RailsQL
     class ResolveExecuter < Executer
 
       def execute!
-        stack = child_nodes_for @root
+        stack = child_resolve_nodes_for @root
 
         # Iterate from the root type to the scalar leaves of the type tree
         stack.each do |node|
           [child, parent] = node.slice :child, :parent
 
-          stack << child_nodes_for child
+          stack << child_resolve_nodes_for child
           child.model =
             if child.resolve_lambda.present?
               # todo: Directives could make use of around_resolve hooks to
-              # stop resolution.
+              # stop resolution if there were hooks here.
+              # eg. parent.trigger :around_resolve do ... end
               parent.instance_exec(
                 child.args,
                 parent.query,
@@ -23,6 +24,7 @@ module RailsQL
               default_resolve_for! node
             end
         end
+        return self
       end
 
       private

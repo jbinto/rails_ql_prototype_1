@@ -50,6 +50,7 @@ module RailsQL
           kind: @kind || :OBJECT,
           enum_values: @enum_values || {},
           description: @description,
+          of_type: @of_type
         )
       end
 

@@ -3,24 +3,16 @@ module RailsQL
     class List < Type
 
       def initialize(opts={})
-        @of_type = opts[:prototype_type].class
+        @prototype_type = opts[:prototype_type]
         super opts
       end
 
-      def resolve_child_types!
-        dup_fields_for_model!
-        # Top to bottom recursion
-        @fields.values.each &:resolve_child_types!
+      def query_tree_children
+        [@prototype_type]
       end
 
-      def as_json
-        return @fields.map &:as_json
-      end
-
-      private
-
-      def dup_fields_for_model!(models)
-        @fields = model.map do |singular_model|
+      def resolve_tree_children
+        @list_values ||= model.map do |singular_model|
           field = prototype_field.deep_dup
           # field.type = prototype_field.type.deep_dup
           # field.type.fields = prototype_field.type.fields.deep_dup
@@ -28,6 +20,14 @@ module RailsQL
           field.model = singular_model
           field
         end
+      end
+
+      def can?(action, field_name)
+        field_name == nil
+      end
+
+      def as_json
+        return @list_values.map &:as_json
       end
 
     end

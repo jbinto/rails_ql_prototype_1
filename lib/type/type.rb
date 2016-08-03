@@ -6,7 +6,7 @@ module RailsQL
     extend RailsQL::Type::ClassMethods
 
     attr_reader :args, :ctx, :anonymous, :model
-    attr_accessor :fields, :query
+    attr_accessor :field_types, :query
 
     def initialize(
       ctx: {},
@@ -58,6 +58,14 @@ module RailsQL
       @args_type.as_json
     end
 
+    def query_tree_children
+      field_types.values
+    end
+
+    def resolve_tree_children
+      field_types.values
+    end
+
     def can?(action, field_name)
       field_definitions[field_name].permissions[action].any? do |permission|
         instance_exec &permission
@@ -67,7 +75,7 @@ module RailsQL
     def as_json
       kind = self.class.type_definition.kind
       if kind == :OBJECT
-        json = fields.reduce({}) do |json, (k, field)|
+        json = field_types.reduce({}) do |json, (k, field)|
           if field.type.omit_from_json?
             json
           else

@@ -1,5 +1,6 @@
 module RailsQL
   class Runner
+
     def initialize(query_root:, mutation_root:)
       @query_root = query_root
       @mutation_root = mutation_root
@@ -36,15 +37,30 @@ module RailsQL
       if visitor.operations.length > 1
         raise "Can not execute multiple operations in one query document"
       end
-      root_builder = visitor.operations.first.root_builder
+      operation = visitor.operations.first
+      root_builder = operation.root_builder
+      # Normalization
       root = root_builder
-        .resolve_fragments!
-        .resolve_variables!
+        .normalize_fragments!
+        .normalize_variables!
         .build_type!
-      root.build_query!
-      root.resolve_child_types!
-
-      return root
+      # Execution
+      executers = {}
+      [
+        query: RailsQL::Executers::QueryExecuter,
+        resolve: RailsQL::Executers::ResolveExecuter,
+        permissions_check: RailsQL::Executers::PermissionsCheckExecuter
+      ].each do |k, executer|
+        executers[k] = executer.new(
+          root: root,
+          operation_type: operation.operation_type
+        ).execute!
+      }
+      unauth = executers[:permissions_check].unauthorized_fields_and_args
+      return OpenStruct.new(
+        as_json: root.as_json
+        unauthorized_fields_and_args: unauth
+      )
     end
 
   end

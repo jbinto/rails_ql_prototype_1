@@ -4,22 +4,16 @@ module RailsQL
       attr_reader :unauthorized_fields_and_args
 
       def execute!
-        @unauthorized_fields_and_args =
-          unauthorized_fields_and_args_for(@operation, parent: @root)
-        # stack = child_nodes_for @root
-        #
-        # # Iterate from the root type to the scalar leaves of the type tree
-        # stack.each do |node|
-        #   [child, parent] = node.slice :child, :parent
-        #
-        #   parent.can? action, child.name
-        #
-        # end
+        @unauthorized_fields_and_args ||= unauthorized_fields_and_args_for(
+          @operation_type,
+          parent: @root
+        )
+        return self
       end
 
       private
       def unauthorized_fields_and_args_for(action, parent:)
-        parent.fields.reduce(HashWithIndifferentAccess.new) do |h, (k, child)|
+        parent.query_tree_children.reduce({}) do |h, child|
           if parent.can? action, child.name
             json = {}
             unauthorized_fields = unauthorized_fields_and_args_for(
