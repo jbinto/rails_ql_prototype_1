@@ -15,14 +15,14 @@ describe RailsQL::Field::FieldCollection do
   describe "#unauthorized_fields_for" do
     context "when there is an unauthorized arg" do
       it <<-END_IT.strip_heredoc.gsub("\n", "") do
-        returns a hash in the form
+        returns a hash containing the unauthorized args in the form
         {field_name => "__args" => {arg_name => true}}}
       END_IT
         field_collection["cow"] = field_1
         args_collection["moo"] = arg_type_1
         args_collection["restricted_moo"] = arg_type_2
 
-        # First call of #unauthorized_fields_and_args_for for the field collection
+        # First call of #unauthorized_fields_and_args_for (for the field collection)
         allow(field_1).to receive(:can?).with(:query).and_return true
 
         # Since `field_1` can be queried, it will try child fields and arguments.
@@ -33,7 +33,7 @@ describe RailsQL::Field::FieldCollection do
           :child_field_collection,
         ).and_return args_collection
 
-        # Second call of #unauthorized_fields_and_args_for for the argument collection
+        # Second call of #unauthorized_fields_and_args_for (for the argument collection)
         allow(arg_type_1).to receive(:can?).with(:query).and_return true
 
         # Since `arg_type_1` can be queried, it will now try child fields and arguments.
@@ -65,11 +65,18 @@ describe RailsQL::Field::FieldCollection do
 
         # First (only) call of #unauthorized_fields_and_args_for for the field collection
         allow(field_1).to receive(:can?).with(:query).and_return false
-        allow(field_2).to receive(:can?).with(:query).and_return false
+        allow(field_2).to receive(:can?).with(:query).and_return true
+
+        # Simulate no child fields or arguments for field_2
+        allow(field_2).to receive(:child_field_collection).and_return empty_collection
+        allow(field_2).to receive_message_chain(
+          :args_type,
+          :child_field_collection
+        ).and_return empty_collection
+
 
         expect(field_collection.unauthorized_fields_and_args_for :query).to eq(
-          "cow" => true,
-          "horse" => true
+          "cow" => true
         )
       end
     end
