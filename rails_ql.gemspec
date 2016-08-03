@@ -7,8 +7,6 @@ Gem::Specification.new do |s|
     # [">= 0.0.2"]
   s.add_runtime_dependency "activesupport",
     [">= 4.0.0"]
-  s.add_runtime_dependency "activemodel",
-    [">= 4.0.0"]
 
   s.add_development_dependency "rspec",
     [">= 3.4.0"]

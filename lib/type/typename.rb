@@ -5,7 +5,7 @@ module RailsQL
     # Introspection
     field(:__typename,
       resolve: ->(args, child_query) {
-        self.class.field_definition.name
+        self.type_name
       },
       introspection: true
     )

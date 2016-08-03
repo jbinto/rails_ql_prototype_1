@@ -88,58 +88,6 @@ module RailsQL
         @permissions[operation] << permission_lambda
       end
 
-      def append_to_query(parent_type:, args: {}, child_query: nil)
-        if @query.present?
-          parent_type.instance_exec(
-            args,
-            child_query,
-            &@query
-          )
-        else
-          default_query(
-            parent_type: parent_type,
-            args: args,
-            child_query: child_query
-          )
-        end
-      end
-
-      def resolve(parent_type:, args: {}, child_query: nil)
-        if @resolve.present?
-          parent_type.instance_exec(
-            args,
-            child_query,
-            &@resolve
-          )
-        else
-          default_resolve(
-            parent_type: parent_type,
-            args: args,
-            child_query: child_query
-          )
-        end
-      end
-
-      private
-
-      def default_query(parent_type:, args: {}, child_query: nil)
-        parent_type.query
-      end
-
-      def default_resolve(parent_type:, args: {}, child_query: nil)
-        if parent_type.respond_to? @name
-          parent_type.send @name
-        elsif parent_type.model.respond_to? @name
-          parent_type.model.send @name
-        else
-          raise(
-            RailsQL::NullResolve,
-            "#{parent_type.class}##{@name} does not have an explicit " +
-            "resolve, nor does the model respond to :#{@name}."
-          )
-        end
-      end
-
     end
   end
 end

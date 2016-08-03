@@ -1,35 +1,41 @@
-require "active_model/callbacks"
 require_relative "./class_methods.rb"
 require_relative "../field/field_collection.rb"
 
 module RailsQL
   class Type
-    extend ActiveModel::Callbacks
     extend RailsQL::Type::ClassMethods
 
-    define_model_callbacks :resolve
-    before_resolve :authorize_query!, if: :root?
+    attr_reader :args, :ctx, :anonymous, :model
+    attr_accessor :fields, :query
 
-    attr_reader :args, :ctx, :query, :anonymous, :model
-    attr_accessor :fields
+    delegates(
+      :unauthorized_fields_and_args_for,
+      to: :fields
+    )
 
-    delegates :unauthorized_fields_and_args_for, to: :fields
+    def initialize(
+      ctx: {},
+      root: false,
+      anonymous: false,
+      field_definition: nil,
+      args_type: nil,
+    )
 
-    def initialize(opts={})
-      opts = {
-        # child_types: {},
-        args: {},
-        ctx: {},
-        root: false,
-        anonymous: false
-      }.merge opts
-
-      @args = HashWithIndifferentAccess.new(opts[:args]).freeze
       @ctx = HashWithIndifferentAccess.new opts[:ctx]
       @root = opts[:root]
       @anonymous = opts[:anonymous]
+      @field_definition = opts[:field_definition]
+      @args_type = opts[:args_type]
+      @name = opts[:name]
+    end
+
+    def type_name
+      self.class.field_definition.name
+    end
+
+    def initial_query
       if self.class.get_initial_query.present?
-        @query = instance_exec &self.class.get_initial_query
+        instance_exec &self.class.get_initial_query
       end
     end
 
@@ -45,18 +51,21 @@ module RailsQL
       @root
     end
 
-    def build_query!
-      # Bottom to top recursion
-      fields.each do |k, field|
-        @query = field.appended_parent_query
-      end
-      return @query
+    def query_lambda
+      @field_definition.try :query_lambda
     end
 
-    def resolve_child_types!
-      # Top to bottom recursion
-      run_callbacks :resolve do
-        fields.values.each &:resolve_child_types!
+    def resolve_lambda
+      @field_definition.try :resolve
+    end
+
+    def args
+      @args_type.as_json
+    end
+
+    def can?(action, field_name)
+      field_definitions[field_name].permissions[action].any? do |permission|
+        instance_exec &permission
       end
     end
 
