@@ -33,8 +33,8 @@ describe RailsQL::Field::FieldDefinition do
     end
   end
 
-  describe "#args" do
-    it "returns an anonymous input object if no :args lambda is provided" do
+  describe "#args_klass" do
+    it "returns an anonymous input object if no :args_klass lambda is provided" do
       villian_type = instance_double RailsQL::Type
       input_object = class_double RailsQL::Type::AnonymousInputObject
       field = described_class.new "villian", {}
@@ -47,7 +47,7 @@ describe RailsQL::Field::FieldDefinition do
           input_object
         )
       )
-      expect(field.args).to eq input_object
+      expect(field.args_klass).to eq input_object
     end
 
     it <<-END_IT.strip_heredoc do
@@ -67,7 +67,7 @@ describe RailsQL::Field::FieldDefinition do
           input_object
         )
       )
-      expect(field.args).to eq :input_object_would_go_here
+      expect(field.args_klass).to eq :input_object_would_go_here
     end
   end
 

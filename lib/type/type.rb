@@ -13,9 +13,11 @@ module RailsQL
     attr_reader :args, :ctx, :query, :anonymous, :model
     attr_accessor :fields
 
+    delegates :unauthorized_fields_and_args_for, to: :fields
+
     def initialize(opts={})
       opts = {
-        child_types: {},
+        # child_types: {},
         args: {},
         ctx: {},
         root: false,
@@ -31,8 +33,12 @@ module RailsQL
       end
     end
 
-    def unauthorized_fields_and_args_for(action)
-      fields.unauthorized_fields_and_args_for action, self
+    def model=(value)
+      @model = parse_value! value
+    end
+
+    def omit_from_json?
+      false
     end
 
     def root?
@@ -42,10 +48,9 @@ module RailsQL
     def build_query!
       # Bottom to top recursion
       fields.each do |k, field|
-        field.prototype_type.build_query!
         @query = field.appended_parent_query
       end
-      return query
+      return @query
     end
 
     def resolve_child_types!
@@ -74,16 +79,11 @@ module RailsQL
       return json
     end
 
-    def model=(value)
-      @model = parse_value! value
-    end
+    private
 
     def parse_value!(value)
       value
     end
 
-    def omit_from_json?
-      false
-    end
   end
 end

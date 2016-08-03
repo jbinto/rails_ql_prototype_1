@@ -62,13 +62,13 @@ module RailsQL
         RailsQL::Type::KlassFactory.find @type
       end
 
-      def args
-        if @evaled_args.present?
-          @evaled_args
+      def args_klass
+        if @args_klass.present?
+          @args_klass
         else
           args_lambda = @args || ->(aio) {aio}
           anonymous_input_object = Class.new RailsQL::Type::AnonymousInputObject
-          @evaled_args = type_klass.instance_exec(
+          @args_klass = type_klass.instance_exec(
             anonymous_input_object,
             &args_lambda
           )
