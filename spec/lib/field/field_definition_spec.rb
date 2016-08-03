@@ -106,6 +106,7 @@ describe RailsQL::Field::FieldDefinition do
         query = double
 
         field_definition_query = ->(actual_args, actual_query){
+          # e.g. [args, query, type]
           [actual_args, actual_query, self]
         }
         field_definition = described_class.new("stuff",
@@ -123,14 +124,14 @@ describe RailsQL::Field::FieldDefinition do
     context "when field_definition does not have a query defined" do
       it "returns the parent_query untouched" do
         type = instance_double RailsQL::Type
-        expect(type).to receive(:query).and_return "parent_query"
+        expect(type).to receive(:query).and_return "parent_query_goes_here"
         field_definition = described_class.new "stuff", query: nil
 
         expect(field_definition.append_to_query(
           parent_type: type,
           args: double,
           child_query: double
-        )).to eq "parent_query"
+        )).to eq "parent_query_goes_here"
       end
     end
   end
@@ -167,7 +168,7 @@ describe RailsQL::Field::FieldDefinition do
           # don't use stubs because base does not define field_name
           type.instance_eval do
             def stuff
-              "parent_model"
+              "parent_model_stuff_field"
             end
           end
           field_definition = described_class.new "stuff", resolve: nil
@@ -176,7 +177,7 @@ describe RailsQL::Field::FieldDefinition do
             parent_type: type,
             args: double,
             child_query: double
-          )).to eq "parent_model"
+          )).to eq "parent_model_stuff_field"
         end
       end
 
@@ -184,17 +185,19 @@ describe RailsQL::Field::FieldDefinition do
         it "returns parent_type.model#field_name" do
           parent_model = double
           expect(parent_model).to receive(:stuff).and_return(
-            "parent_model_field"
+            "parent_model_stuff_field"
           )
           type = instance_double RailsQL::Type
-          expect(type).to receive(:model).twice.and_return parent_model
+          # XXX: twice because `respond_to?` is considered "receiving"
+          # expect(type).to receive(:model).twice.and_return parent_model
+          allow(type).to receive(:model).and_return parent_model
           field_definition = described_class.new "stuff", resolve: nil
 
           expect(field_definition.resolve(
             parent_type: type,
             args: double,
             child_query: double
-          )).to eq "parent_model_field"
+          )).to eq "parent_model_stuff_field"
         end
       end
     end
