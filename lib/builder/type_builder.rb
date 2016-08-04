@@ -16,13 +16,13 @@ module RailsQL
 
       def initialize(
           # The name of the field or nil for anonomous input objects and roots
-          name: nil
+          name: nil,
           root: false,
           # is_input is true if this type is used as an argument to a field
           # (input).
           # is_input is false if this type is used as a field (output).
           is_input: false,
-          model: nil,
+          model: nil
         )
         @name = name
         @root = root
@@ -174,11 +174,12 @@ module RailsQL
       def annotate_exceptions
         yield
       rescue Exception => e
-        if @name?
-          raise e, "#{e.message} on #{@name}", e.backtrace
-        else
+        ## XXX rob: this doesn't compile
+        # if @name?
+        #   raise e, "#{e.message} on #{@name}", e.backtrace
+        # else
           raise e
-        end
+        # end
       end
 
     end
