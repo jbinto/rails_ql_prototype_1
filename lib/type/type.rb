@@ -12,19 +12,24 @@ module RailsQL
       root: false,
       anonymous: false,
       field_definition: nil,
-      args_type: nil
+      args_type:,
+      field_types: {}
     )
-
       @ctx = HashWithIndifferentAccess.new opts[:ctx]
-      @root = opts[:root]
-      @anonymous = opts[:anonymous]
-      @field_definition = opts[:field_definition]
-      @args_type = opts[:args_type]
-      @name = opts[:name]
+      @root = root
+      @anonymous = anonymous
+      @field_definition = field_definition
+      @args_type = args_type
+      @field_types = field_types
+      @name = name
     end
 
     def type_name
       self.class.field_definition.name
+    end
+
+    def field_name
+      self.field_definition.name
     end
 
     def initial_query

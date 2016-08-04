@@ -15,12 +15,12 @@ module RailsQL
         raise "RailsQL::Runner.execute! requires a :query option"
       end
 
-      query_root_builder = Type::Builder.new(
+      query_root_builder = Builder::TypeBuilder.new(
         type_klass: @query_root,
         ctx: opts[:ctx],
         root: true
       )
-      mutation_root_builder = Type::Builder.new(
+      mutation_root_builder = Builder::TypeBuilder.new(
         type_klass: @mutation_root,
         ctx: opts[:ctx],
         root: true
@@ -56,11 +56,13 @@ module RailsQL
           operation_type: operation.operation_type
         ).execute!
       end
-      unauth = executers[:permissions_check].unauthorized_fields_and_args
-      return OpenStruct.new(
-        as_json: root.as_json,
-        unauthorized_fields_and_args: unauth
-      )
+      unauth_errors = executers[:permissions_check].unauthorized_fields_and_args
+      if unauth_errors.present?
+        raise RailsQL::Forbidden.new("Access Forbidden",
+          errors_json: unauth_errors
+        )
+      end
+      return root
     end
 
   end

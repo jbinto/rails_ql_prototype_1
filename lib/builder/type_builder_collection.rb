@@ -15,7 +15,7 @@ module RailsQL
         # right now field merging doesn't work, it clobbers conflicting fields (it should error out!)
         # TODO: actually verify this; if this is true "field merging" works in the happy cases, it's the
         # negative cases that don't work.
-        @type_builders = {}
+        @type_builders = []
       end
 
       # idempotent
@@ -24,11 +24,11 @@ module RailsQL
         if field_definition.blank?
           raise "Invalid key #{name}"
         end
-        return @type_builders[name] if @type_builders[name].present?
 
         type_klass = field_definition.type
 
         type_builder = TypeBuilder.new(
+          field_definition: field_definition,
           type_klass: type_klass,
           args_definition: field_definition.args,
           ctx: @ctx.merge(field_definition.child_ctx),
@@ -36,19 +36,26 @@ module RailsQL
           model: model
         )
 
-        @type_builders[name] = type_builder
+        @type_builders << type_builder
         return type_builder
       end
     end
 
     # idempotent
     def add_existing_builder!(name:, type_builder:)
-      @type_builders[name] = type_builder
-      return type_builder
+      @type_builders << type_builder
     end
 
     def build_types!
-
+      # TODO: field merging should go here
+      # Basically take 2 or more type builders, compare them and then
+      # combine them and their child type builders recursively into new objects
+      types = {}
+      @type_builders.each do |type_builder|
+        types[type_builder.field_definition.name] = type_builder.build_type!
+      end
+      return types
     end
+
   end
 end

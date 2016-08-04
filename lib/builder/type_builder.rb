@@ -14,13 +14,12 @@ module RailsQL
 
       attr_accessor :field_alias, :field_name
 
-      def initialize(opts)
-        opts = {
+      def initialize(
+          # The type the builder will instantiate in Builder#type
+          type_klass:
           # TODO: move ctx out of the type builder (type builders are re-usable)
           ctx: nil,
           root: nil,
-          # The type the builder will instantiate in Builder#type
-          type_klass: nil,
           # The anonomous input object from the field definition for the field
           # this builder is constructing. Not used for builders where the type
           # is being used as an argument to a field.
@@ -30,27 +29,24 @@ module RailsQL
           # is_input is false if this type is used as a field (output).
           is_input: false,
           model: nil,
-          field_name: nil
-        }.merge opts
-        if opts[:type_klass].blank?
-          raise "requires a :type_klass option"
-        end
-        @type_klass = ::RailsQL::Type::KlassFactory.find opts[:type_klass]
-        @args_definition = opts[:args_definition]
-        @ctx = opts[:ctx]
-        @root = opts[:root]
-        @is_input = opts[:is_input]
-        @model = opts[:model]
-        @fragment_name = opts[:fragment_name]
+          field_definition: nil
+        )
+        @type_klass = ::RailsQL::Type::KlassFactory.find type_klass
+        @ctx = ctx
+        @root = root
+        @args_definition = args_definition
+        @is_input = is_input
+        @model = model
+        @field_definition = field_definition
         @unresolved_variables = {}
-        @unresolved_fragments = []
         @directive_builders = []
+        @fragment_builders = []
 
         @arg_type_builder = TypeBuilder.new(
           type_klass: @args_definition
         )
         @child_type_builders = TypeBuilderCollection.new(
-          field_definitions: type_klass.field_definitions
+          field_definitions: @type_klass.field_definitions
         )
       end
 
@@ -61,18 +57,15 @@ module RailsQL
       # Builds and returns an instance of type_klass. Can be called multiple
       # times to build multiple instances of the Type.
       def build_type!
-        type = type_klass.new(
-          args: @arg_type_builder.build_type!,
+        type = @type_klass.new(
           ctx: @ctx,
-          root: @root
+          root: @root,
+          field_definition: @field_definition,
+          args_type: @arg_type_builder.build_type!,
+          field_types: @child_type_builders.build_types!
         )
         type.model = @model if @is_input
         # add child fields
-        field_collection_builder = FieldCollectionBuilder.new(
-          parent_type: type,
-          child_type_builders: @child_type_builders
-        )
-        type.fields = field_collection_builder.build_fields!
         return type
       end
 
@@ -99,6 +92,7 @@ module RailsQL
       end
 
       def add_variable!(argument_name:, variable_name:)
+        raise "TODO: variables"
         @variables[argument_name] = variable_name
       end
 
@@ -107,7 +101,7 @@ module RailsQL
       end
 
       def add_directive_builder!(directive_builder)
-        raise "TODO"
+        raise "TODO: move directives stuff to directive builders"
         @directive_builders << directive_builder
       end
 
@@ -157,17 +151,17 @@ module RailsQL
             # ap "UNION"
             # ap fragment_klass
             # ap type_klass
-            fragment_type_name = fragment_klass.type_definition.type_name
+            fragment_type_name = fragment_klass.type_name
             child_builder = add_child_builder! fragment_type_name
             child_builder.add_fragment_builder! builder
           # Non-union types simply add the fragment to the builder for later
           # resolution (see TypeBuilder#resolve_fragments!)
           elsif fragment_klass == type_klass
             resolve_fragment! fragment_builder
-          # error out if the type of the fragment is incompatible with the type of
-          # this builder
+          # error out if the type of the fragment is incompatible with the
+          # type of this builder
           else
-            msg = <<-ERROR.strip_heredoc
+            msg = <<-ERROR.strip_heredoc.gsub("\n", "").strip
               Fragment is defined on #{fragment_type_name}
               but fragment spread is on an incompatible type
               (#{type_klass.type_definition.type_name})
