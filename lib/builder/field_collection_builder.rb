@@ -1,5 +1,8 @@
-require_relative "../field/field_collection.rb"
-require_relative "../field/field.rb"
+## File won't work without these requires,
+## assume it's obsolete??
+
+# require_relative "../field/field_collection.rb"
+# require_relative "../field/field.rb"
 
 module RailsQL
   module Builder

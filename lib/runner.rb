@@ -55,10 +55,10 @@ module RailsQL
           root: root,
           operation_type: operation.operation_type
         ).execute!
-      }
+      end
       unauth = executers[:permissions_check].unauthorized_fields_and_args
       return OpenStruct.new(
-        as_json: root.as_json
+        as_json: root.as_json,
         unauthorized_fields_and_args: unauth
       )
     end

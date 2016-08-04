@@ -7,9 +7,9 @@ module RailsQL
 
         # Iterate from the root type to the scalar leaves of the type tree
         stack.each do |node|
-          [child, parent] = node.slice :child, :parent
+          child, parent = node.slice(:child, :parent)
 
-          stack << child_resolve_nodes_for child
+          stack << child_resolve_nodes_for(child)
           child.model =
             if child.resolve_lambda.present?
               # todo: Directives could make use of around_resolve hooks to

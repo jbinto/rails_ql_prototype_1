@@ -3,6 +3,7 @@ require 'graphql/parser'
 
 # load concerns first so classes can reference them
 [
+  './executers/*.rb', # XXX load order?
   './**/concerns/*.rb',
   './errors/*.rb',
   './field/*.rb',

@@ -17,7 +17,7 @@ module RailsQL
           if parent.can? action, child.name
             json = {}
             unauthorized_fields = unauthorized_fields_and_args_for(
-              action
+              action,
               parent: child
             )
             unauthorized_args = unauthorized_fields_and_args_for(

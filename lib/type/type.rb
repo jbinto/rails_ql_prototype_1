@@ -1,5 +1,4 @@
 require_relative "./class_methods.rb"
-require_relative "../field/field_collection.rb"
 
 module RailsQL
   class Type
@@ -13,7 +12,7 @@ module RailsQL
       root: false,
       anonymous: false,
       field_definition: nil,
-      args_type: nil,
+      args_type: nil
     )
 
       @ctx = HashWithIndifferentAccess.new opts[:ctx]
