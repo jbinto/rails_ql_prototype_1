@@ -14,7 +14,7 @@ module RailsQL
       private
       def unauthorized_fields_and_args_for(action, parent:)
         parent.query_tree_children.reduce({}) do |h, child|
-          if parent.can? action, child.name
+          if parent.can? action, child.field_name
             json = {}
             unauthorized_fields = unauthorized_fields_and_args_for(
               action,
@@ -22,7 +22,7 @@ module RailsQL
             )
             unauthorized_args = unauthorized_fields_and_args_for(
               :input,
-              parent: child_type.args_type
+              parent: child.args_type
             )
 
             json.merge! *unauthorized_fields if unauthorized_fields.present?
@@ -31,7 +31,8 @@ module RailsQL
             json = true
           end
 
-          h[k] = json if json.present?
+          # XXX h[k] ??
+          h[child.field_name] = json if json.present?
           h
         end
       end

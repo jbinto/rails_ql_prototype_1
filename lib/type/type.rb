@@ -4,7 +4,7 @@ module RailsQL
   class Type
     extend RailsQL::Type::ClassMethods
 
-    attr_reader :args, :ctx, :anonymous, :model
+    attr_reader :args, :ctx, :anonymous, :model, :field_name, :args_type
     attr_accessor :field_types, :query
 
     def initialize(
