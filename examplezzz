@@ -152,17 +152,41 @@ mutate {
 
 
 # --------
-1. Refactor Base and InputObject, FieldDefinition and InputFieldDefinition to combine shared-logic [in progress]
-2. Implement can :mutate and can :query (aliases), can :input [in progress]
 3. Add mutation support to Visitor [done]
 4. Add mutation root option to Runner [done]
-5. Switch to 8.0 (GodMutation for menu_item)
 ---
 
 Work in Progress
-6. __typename introspection
-9. Move Visitor#resolve_fragments to Builder#resolve_fragments
-13. Variable definition default values
+* Mutations
+* Input Objects
+* Refactor Base and InputObject, FieldDefinition and InputFieldDefinition to combine shared-logic [in progress]
+* Implement can :mutate and can :query (aliases), can :input [in progress]
+* List and Non-Null as standalone anonomous types + syntax for fields
+
+TODO in Very Near Future:
+* Add arg list parsing to the visitor + tests
+* refactor FieldDefinition for List and Non-Null
+* refactor TypeBuilder for List and Non-Null
+* write Type test skeleton
+* write TypeBuilder test skeleton
+* write TypeBuilderCollection test skeleton
+* write QueryExecuter test skeleton
+* write ResolveExecuter test skeleton
+* write Runner test skeleton
+* implement Type tests
+* implement TypeBuilder tests
+* implement TypeBuilderCollection tests
+* implement QueryExecuter tests
+* implement ResolveExecuter tests
+* implement Runner tests
+* update Visitor tests
+* update introspection types
+* update introspection type tests
+
+WIP but on hold ATM
+* __typename introspection
+* Move Visitor#resolve_fragments to Builder#resolve_fragments
+* Variable definition default values
 * Directives on fields
 * Variables
   - order of variable definitions, how does visitor handle it?
@@ -193,8 +217,6 @@ Work in Progress
 * directives on Fragments, fragment spreads, inline fragments
 
 Features
-12. plural args
-* List and Non-Null as standalone anonomous types + syntax for fields
 * line numbers in error messages
 * field merging
 * unions should not have fields (implementation is all wrong). They should have potential types instead.
