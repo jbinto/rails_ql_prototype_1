@@ -4,9 +4,12 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
   let(:root) {instance_double RailsQL::Type, to_s: "RootTypeDouble"}
 
   def field_with_no_children_and_no_args(name:)
-    f = instance_double RailsQL::Type, to_s: "FieldWithNoArgsTypeDouble_#{name}"
-    allow(f).to receive(:field_name).and_return name
-    allow(f).to receive(:query_tree_children).and_return []
+    f = instance_double(RailsQL::Type,
+      to_s: "FieldWithNoArgsTypeDouble_#{name}",
+      field_or_arg_name: name,
+      aliased_as: "#{name}_alias",
+      query_tree_children: []
+    )
     allow(f).to receive_message_chain(
       :args_type,
       :query_tree_children
@@ -15,45 +18,41 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
   end
 
   def field_with_args(name:, args_can_input:)
-    # f = instance_double RailsQL::Type, to_s: "FieldWithArgsTypeDouble_#{name}"
-    # allow(f).to receive(:field_name).and_return name
-    # allow(f).to receive(:query_tree_children).and_return []
-    # allow(f).to receive_message_chain(
-    #   :args_type,
-    #   :query_tree_children
-    # ).and_return []
-    # f
-
     f = instance_double(RailsQL::Type,
       to_s: "Field_#{name}",
-      field_name: name,
+      field_or_arg_name: name,
+      aliased_as: "#{name}_alias",
       query_tree_children: []
     )
 
     anon_input_object = instance_double(RailsQL::Type::AnonymousInputObject,
-      to_s: "AnnonomousInputObject_#{name}",
+      to_s: "AnonymousInputObject_#{name}",
       query_tree_children: []
     )
     allow(f).to receive(:args_type).and_return anon_input_object
 
-    args = []
-    args_can_input.each do |name, can_input|
-      arg = instance_double RailsQL::Type, to_s: "Arg_#{name}"
-      allow(arg).to receive(:field_name).and_return name
+    args = args_can_input.map do |arg_name, can_input|
+      arg = instance_double(RailsQL::Type,
+        to_s: "Arg_#{arg_name}",
+        field_or_arg_name: arg_name,
+        aliased_as: arg_name,
+        query_tree_children: []
+      )
 
-      # Allow a can? check on f for the arg `name` on the args_type
-      allow(anon_input_object).to receive(
-        :can?
-      ).with(:input, name).and_return can_input
+      # Allow a can? check on f for the arg `arg_name` on the args_type
+      allow(anon_input_object).to(
+        receive(:can?).with(:input, arg_name).and_return can_input
+      )
 
-      # Nothing nested inside args
-      allow(arg).to receive(:query_tree_children).and_return []
+      # Args on args are not allowed in GraphQL
+      # BAD: args on args: `query {cow( moo(moo2: true) )}`
+      # GOOD: input objects: `query {cow( moo: {moo2: true} )}`
       allow(arg).to receive_message_chain(
         :args_type,
         :query_tree_children
       ).and_return []
 
-      args << arg
+      arg
     end
 
     allow(anon_input_object).to receive(
@@ -89,7 +88,7 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
         test_executer(
           root: root,
           expected: {
-            "cow" => {
+            "cow_alias" => {
               "__args" => {
                 "restricted_moo" => true
               }
@@ -112,7 +111,7 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
 
         test_executer(
           root: root,
-          expected: {"cow" => true}
+          expected: {"cow_alias" => true}
         )
       end
     end
@@ -124,7 +123,6 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
         allow(root).to receive(:query_tree_children).and_return(
           [field_1, field_2]
         )
-
         allow(root).to receive(:can?).with(:query, "cow").and_return true
         allow(root).to receive(:can?).with(:query, "horse").and_return true
 
@@ -137,8 +135,19 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
 
     context "when there are args and they are all authorized" do
       it "returns an empty hash" do
-        pending
-        fail
+        field = field_with_args(
+          name: "cow",
+          args_can_input: {
+            "moo" => true
+          }
+        )
+        allow(root).to receive(:query_tree_children).and_return [field]
+        allow(root).to receive(:can?).with(:query, "cow").and_return true
+
+        test_executer(
+          root: root,
+          expected: {}
+        )
       end
     end
   end
