@@ -58,7 +58,7 @@ module RailsQL
               :add_arg_builder!
             end
           input_builder = current_builder.send(method,
-            field_name: @current_name,
+            name: @current_name,
             model: node.try(:value)
           )
           @builder_stack.push input_builder
@@ -214,7 +214,7 @@ module RailsQL
       def create_type_builder_if_within_field!
         if @node_stack.last == :field && @alias_and_name.present?
           child_builder = current_builder.add_child_builder!(
-            field_name: @alias_and_name.name,
+            name: @alias_and_name.name,
             field_alias: @alias_and_name.alias
           )
           @builder_stack.push child_builder

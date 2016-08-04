@@ -19,8 +19,8 @@ module RailsQL
       end
 
       # idempotent
-      def create_and_add_builder!(field_name:, field_alias:, model: nil)
-        field_definition = field_definitions[field_name]
+      def create_and_add_builder!(name:, field_alias:, model: nil)
+        field_definition = field_definitions[name]
         if field_definition.blank?
           raise "Invalid key #{name}"
         end
