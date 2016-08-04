@@ -15,31 +15,48 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
   end
 
   def field_with_args(name:, args_can_input:)
-    f = instance_double RailsQL::Type, to_s: "FieldTypeDouble_#{name}"
-    expect(f).to receive(:field_name).and_return name
-    expect(f).to receive(:query_tree_children).and_return []
+    # f = instance_double RailsQL::Type, to_s: "FieldWithArgsTypeDouble_#{name}"
+    # allow(f).to receive(:field_name).and_return name
+    # allow(f).to receive(:query_tree_children).and_return []
+    # allow(f).to receive_message_chain(
+    #   :args_type,
+    #   :query_tree_children
+    # ).and_return []
+    # f
+
+    f = instance_double(RailsQL::Type,
+      to_s: "Field_#{name}",
+      field_name: name,
+      query_tree_children: []
+    )
+
+    anon_input_object = instance_double(RailsQL::Type::AnonymousInputObject,
+      to_s: "AnnonomousInputObject_#{name}",
+      query_tree_children: []
+    )
+    allow(f).to receive(:args_type).and_return anon_input_object
 
     args = []
     args_can_input.each do |name, can_input|
-      arg = instance_double RailsQL::Type, to_s: "ArgsTypeDouble_#{name}"
-      expect(arg).to receive(:field_name).and_return name
+      arg = instance_double RailsQL::Type, to_s: "Arg_#{name}"
+      allow(arg).to receive(:field_name).and_return name
 
-      # Set the parent field's can?
-      expect(f).to receive_message_chain(:args_type, :can?).with(:input, name)
-        .and_return can_input
+      # Allow a can? check on f for the arg `name` on the args_type
+      allow(anon_input_object).to receive(
+        :can?
+      ).with(:input, name).and_return can_input
 
       # Nothing nested inside args
       allow(arg).to receive(:query_tree_children).and_return []
       allow(arg).to receive_message_chain(
         :args_type,
-        :query_type_children
+        :query_tree_children
       ).and_return []
 
       args << arg
     end
 
-    allow(f).to receive_message_chain(
-      :args_type,
+    allow(anon_input_object).to receive(
       :query_tree_children
     ).and_return(args)
 
@@ -58,13 +75,14 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
   describe "#unauthorized_fields_and_args_for" do
     context "when there is an unauthorized arg" do
       it %|returns a hash {field_name => "__args" => {arg_name => true}}| do
-        field = field_with_args({
+        # cow(moo: true, restricted_moo: false)
+        field = field_with_args(
           name: "cow",
           args_can_input: {
             "moo" => true,
             "restricted_moo" => false
           }
-        })
+        )
         allow(root).to receive(:query_tree_children).and_return [field]
         allow(root).to receive(:can?).with(:query, "cow").and_return true
 
@@ -114,6 +132,13 @@ describe RailsQL::Executers::PermissionsCheckExecuter do
           root: root,
           expected: {}
         )
+      end
+    end
+
+    context "when there are args and they are all authorized" do
+      it "returns an empty hash" do
+        pending
+        fail
       end
     end
   end
