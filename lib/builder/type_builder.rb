@@ -1,5 +1,5 @@
 require_relative "./type_builder_collection.rb"
-require_relative "./field_collection_builder.rb"
+# require_relative "./field_collection_builder.rb"
 require_relative "../type/klass_factory.rb"
 
 module RailsQL
@@ -16,7 +16,7 @@ module RailsQL
 
       def initialize(
           # The type the builder will instantiate in Builder#type
-          type_klass:
+          type_klass: nil,
           # TODO: move ctx out of the type builder (type builders are re-usable)
           ctx: nil,
           root: false,
