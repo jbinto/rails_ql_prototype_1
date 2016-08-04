@@ -195,9 +195,10 @@ Work in Progress
 Features
 12. plural args
 * List and Non-Null as standalone anonomous types + syntax for fields
-10. Finish interfaces implementation (grep for TODO:)
 * line numbers in error messages
 * field merging
+* unions should not have fields (implementation is all wrong). They should have potential types instead.
+* interfaces
 
 Security
 7. Update visitor to not convert any user inputted values to symbols
