@@ -19,8 +19,8 @@ module RailsQL
       end
 
       # idempotent
-      def create_and_add_builder!(name:, model: nil)
-        field_definition = field_definitions[name]
+      def create_and_add_builder!(field_name:, field_alias:, model: nil)
+        field_definition = field_definitions[field_name]
         if field_definition.blank?
           raise "Invalid key #{name}"
         end
@@ -28,8 +28,9 @@ module RailsQL
         type_klass = field_definition.type
 
         type_builder = TypeBuilder.new(
-          field_definition: field_definition,
           type_klass: type_klass,
+          field_alias: field_alias,
+          field_definition: field_definition,
           args_definition: field_definition.args,
           ctx: @ctx.merge(field_definition.child_ctx),
           root: false,

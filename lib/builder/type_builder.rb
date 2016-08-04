@@ -12,18 +12,18 @@ module RailsQL
         :fragments,
       )
 
-      attr_accessor :field_alias, :field_name
+      attr_accessor :field_alias
 
       def initialize(
           # The type the builder will instantiate in Builder#type
           type_klass:
           # TODO: move ctx out of the type builder (type builders are re-usable)
           ctx: nil,
-          root: nil,
+          root: false,
           # The anonomous input object from the field definition for the field
           # this builder is constructing. Not used for builders where the type
           # is being used as an argument to a field.
-          args_definition: nil,
+          args_type_klass: nil,
           # is_input is true if this type is used as an argument to a field
           # (input).
           # is_input is false if this type is used as a field (output).
@@ -34,7 +34,7 @@ module RailsQL
         @type_klass = ::RailsQL::Type::KlassFactory.find type_klass
         @ctx = ctx
         @root = root
-        @args_definition = args_definition
+        @args_type_klass = args_type_klass
         @is_input = is_input
         @model = model
         @field_definition = field_definition
@@ -42,9 +42,13 @@ module RailsQL
         @directive_builders = []
         @fragment_builders = []
 
-        @arg_type_builder = TypeBuilder.new(
-          type_klass: @args_definition
-        )
+        unless @is_input
+          @arg_type_builder = TypeBuilder.new(
+            type_klass: @args_type_klass,
+            ctx: @ctx,
+            is_input: true
+          )
+        end
         @child_type_builders = TypeBuilderCollection.new(
           field_definitions: @type_klass.field_definitions
         )
@@ -54,6 +58,10 @@ module RailsQL
         return @is_input
       end
 
+      def field_name
+        @field_definition.name
+      end
+
       # Builds and returns an instance of type_klass. Can be called multiple
       # times to build multiple instances of the Type.
       def build_type!
@@ -61,6 +69,7 @@ module RailsQL
           ctx: @ctx,
           root: @root,
           field_definition: @field_definition,
+          field_alias: @field_alias || @field_name,
           args_type: @arg_type_builder.build_type!,
           field_types: @child_type_builders.build_types!
         )
@@ -92,7 +101,6 @@ module RailsQL
       end
 
       def add_variable!(argument_name:, variable_name:)
-        raise "TODO: variables"
         @variables[argument_name] = variable_name
       end
 
@@ -100,40 +108,30 @@ module RailsQL
         @fragment_builders << fragment_builder
       end
 
-      def add_directive_builder!(directive_builder)
-        raise "TODO: move directives stuff to directive builders"
-        @directive_builders << directive_builder
-      end
-
-      # def resolve_variables!(variable_values)
-      # if !operation.variable_definitions.keys.include? node.value
-      #   raise(UndefinedVariable,
-      #     "#{node.value} was not defined as a variable in the operation"
-      #   )
+      # def add_directive_builder!(directive_builder)
+      #   raise "TODO: move directives stuff to directive builders"
+      #   @directive_builders << directive_builder
       # end
-      # valid = @args_definition.valid_child_type?(
-      #   name: argument_name,
-      #   type_name: variable_type_name
-      # )
-      # unless valid
-      #   msg = <<-ERROR.strip_heredoc
-      #     #{variable_name} is of the wrong type #{variable_type_name} for
-      #     #{argument_name} on #{type_klass.type_definition.type_name}"
-      #   ERROR
-      #   raise ArgTypeError, msg
-      # end
-
-      #   # IDEA: write a variable parser that goes through a hash and calls
-      #   # the visitor at each step
+      #
+      # def resolve_variables!(variable_definitions:, variable_values:)
       #   @variables.each do |argument_name, variable_name|
-      #     value = variable_values[variable_name]
-      #     if value.is_a? Hash
-      #       value.each do |k, v|
-      #       end
+      #     unless variable_definitions.include? variable_name
+      #       raise(RailsQL::UndefinedVariable,
+      #         "#{name} was not defined as a variable in the operation"
+      #       )
       #     end
-      #     add_arg_builder! name: argument_name, model: value
+      #     valid = @args_type_klass.valid_child_type?(
+      #       name: argument_name,
+      #       type_name: variable_type_name
+      #     )
+      #     unless valid
+      #       msg = <<-ERROR.strip_heredoc
+      #         #{variable_name} is of the wrong type #{variable_type_name} for
+      #         #{argument_name} on #{type_klass.type_definition.type_name}"
+      #       ERROR
+      #       raise ArgTypeError, msg
+      #     end
       #   end
-      #   return self
       # end
 
       def resolve_fragments!
