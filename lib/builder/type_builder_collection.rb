@@ -1,11 +1,8 @@
 module RailsQL
   module Builder
     class TypeBuilderCollection
-      attr_reader :builders, :field_definitions
 
-      def initialize(field_definitions:)
-        @field_definitions = field_definitions
-
+      def initialize
         # TODO: turn into array
         #  verbatim stenography of rob follows:
         #  (why? run through everything adding all the fields that get parsed as we walk the AST.
@@ -20,19 +17,9 @@ module RailsQL
 
       # idempotent
       def create_and_add_builder!(name:, field_alias:, model: nil)
-        field_definition = field_definitions[name]
-        if field_definition.blank?
-          raise "Invalid key #{name}"
-        end
-
-        type_klass = field_definition.type
-
         type_builder = TypeBuilder.new(
-          type_klass: type_klass,
+          name: name,
           field_alias: field_alias,
-          field_definition: field_definition,
-          args_definition: field_definition.args,
-          ctx: @ctx.merge(field_definition.child_ctx),
           root: false,
           model: model
         )
@@ -47,13 +34,22 @@ module RailsQL
       @type_builders << type_builder
     end
 
-    def build_types!
+    def build_types!(field_definitions:, ctx:)
       # TODO: field merging should go here
       # Basically take 2 or more type builders, compare them and then
       # combine them and their child type builders recursively into new objects
       types = {}
       @type_builders.each do |type_builder|
-        types[type_builder.field_definition.name] = type_builder.build_type!
+        field_definition = field_definitions[type_builder.name]
+        if field_definition.blank?
+          raise "Invalid key #{type_builder.name}"
+        end
+
+        type = type_builder.build_type!(
+          field_definition: field_definition,
+          type_klass: field_definition.type_klass
+        )
+        types[type_builder.field_definition.name] = type
       end
       return types
     end

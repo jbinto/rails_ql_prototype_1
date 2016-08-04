@@ -12,66 +12,57 @@ module RailsQL
         :fragments,
       )
 
-      attr_accessor :field_alias
+      attr_accessor :field_alias, :name
 
       def initialize(
-          # The type the builder will instantiate in Builder#type
-          type_klass:
-          # TODO: move ctx out of the type builder (type builders are re-usable)
-          ctx: nil,
+          # The name of the field or nil for anonomous input objects and roots
+          name: nil
           root: false,
-          # The anonomous input object from the field definition for the field
-          # this builder is constructing. Not used for builders where the type
-          # is being used as an argument to a field.
-          args_type_klass: nil,
           # is_input is true if this type is used as an argument to a field
           # (input).
           # is_input is false if this type is used as a field (output).
           is_input: false,
           model: nil,
-          field_definition: nil
         )
-        @type_klass = ::RailsQL::Type::KlassFactory.find type_klass
-        @ctx = ctx
+        @name = name
         @root = root
-        @args_type_klass = args_type_klass
         @is_input = is_input
         @model = model
-        @field_definition = field_definition
-        @unresolved_variables = {}
+        @variables = {}
         @directive_builders = []
         @fragment_builders = []
 
         unless @is_input
           @arg_type_builder = TypeBuilder.new(
-            type_klass: @args_type_klass,
-            ctx: @ctx,
             is_input: true
           )
         end
-        @child_type_builders = TypeBuilderCollection.new(
-          field_definitions: @type_klass.field_definitions
-        )
+        @child_type_builders = TypeBuilderCollection.new
       end
 
       def is_input?
         return @is_input
       end
 
-      def field_name
-        @field_definition.name
-      end
-
       # Builds and returns an instance of type_klass. Can be called multiple
       # times to build multiple instances of the Type.
-      def build_type!
-        type = @type_klass.new(
-          ctx: @ctx,
+      def build_type!(field_definition:, type_klass:, ctx:)
+        child_ctx = ctx.merge field_definition.child_ctx
+        field_types = @child_type_builders.build_types!(
+          field_definitions: type_klass.field_definitions
+        )
+        args_type = @arg_type_builder.build_type!(
+          field_definition: nil,
+          type_klass: field_definition.args_type_klass,
+          ctx: child_ctx
+        )
+        type = type_klass.new(
+          ctx: child_ctx,
           root: @root,
-          field_definition: @field_definition,
-          field_alias: @field_alias || @field_name,
-          args_type: @arg_type_builder.build_type!,
-          field_types: @child_type_builders.build_types!
+          field_definition: field_definition,
+          field_alias: @field_alias || @name,
+          args_type: args_type,
+          field_types: field_types
         )
         type.model = @model if @is_input
         # add child fields
@@ -87,16 +78,6 @@ module RailsQL
       def add_arg_builder!(name:, model:)
         annotate_exceptions do
           @arg_type_builder.add_child_builder! name: name, model: model
-        end
-      end
-
-      def annotate_exceptions
-        yield
-      rescue Exception => e
-        if @type_klass.anonomous
-          raise e
-        else
-          raise e, "#{e.message} on #{@type_klass}", e.backtrace
         end
       end
 
@@ -134,7 +115,7 @@ module RailsQL
       #   end
       # end
 
-      def resolve_fragments!
+      def resolve_fragments!(type_klass)
         @fragment_builders.each do |name, fragment_builder|
           if fragment_builder.type_builder.blank?
             raise(InvalidFragment,
@@ -170,6 +151,8 @@ module RailsQL
         return self
       end
 
+      private
+
       def resolve_fragment!(fragment_builder)
         # TODO: fragments on interface types
         begin
@@ -185,6 +168,16 @@ module RailsQL
             #{fragment_builder.fragment_name}
           ERROR
           raise e, msg, e.backtrace
+        end
+      end
+
+      def annotate_exceptions
+        yield
+      rescue Exception => e
+        if @name?
+          raise e, "#{e.message} on #{@name}", e.backtrace
+        else
+          raise e
         end
       end
 
