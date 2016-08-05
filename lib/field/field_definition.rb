@@ -12,10 +12,8 @@ module RailsQL
           args: nil,
           resolve: nil,
           query: nil,
-          nullable: true,
           deprecated: false,
           deprecation_reason: "",
-          singular: true,
           union: false,
           child_ctx: {},
           default_value: nil, # InputObject field definitions only
@@ -30,8 +28,6 @@ module RailsQL
       )
 
       alias_method :deprecated?, :deprecated
-      alias_method :nullable?, :nullable
-      alias_method :singular?, :singular
 
       def initialize(name, opts)
         defaults = self.class.default_opts
