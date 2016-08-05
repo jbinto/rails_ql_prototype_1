@@ -2,23 +2,24 @@ module RailsQL
   class Type
     class List < Type
 
+      attr_accessor :of_type
+
       def initialize(opts={})
-        @prototype_type = opts[:prototype_type]
+        @modified_type = opts[:modified_type]
         super opts
       end
 
       def query_tree_children
-        [@prototype_type]
+        [@modified_type]
       end
 
       def resolve_tree_children
-        @list_values ||= model.map do |singular_model|
-          field = prototype_field.deep_dup
-          # field.type = prototype_field.type.deep_dup
-          # field.type.fields = prototype_field.type.fields.deep_dup
-          field.parent_type = self
-          field.model = singular_model
-          field
+        @list ||= model.map do |singular_model|
+          type = @modified_type.deep_dup
+          # type.type = @modified_type.type.deep_dup
+          # type.type.fields = @modified_type.type.fields.deep_dup
+          type.model = singular_model
+          type
         end
       end
 

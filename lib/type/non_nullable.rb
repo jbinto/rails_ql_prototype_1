@@ -1,17 +1,20 @@
 module RailsQL
   class Type
     class NonNullable < Type
+
+      attr_accessor :of_type
+
       def initialize(opts={})
-        @child_type = opts[:child_type]
+        @modified_type = opts[:modified_type]
         super opts
       end
 
       def query_tree_children
-        [@child_type]
+        [@modified_type]
       end
 
       def resolve_tree_children
-        [@child_type]
+        [@modified_type]
       end
 
       def model=(value)
@@ -20,7 +23,7 @@ module RailsQL
       end
 
       def as_json
-        json = @child_type.as_json
+        json = @modified_type.as_json
         raise_cannot_be_nil! if json.nil?
         return json
       end

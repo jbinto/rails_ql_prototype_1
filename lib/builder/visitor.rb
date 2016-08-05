@@ -198,7 +198,7 @@ module RailsQL
       # ========================================================================
 
       def visit_field(node)
-        @alias_and_name = OpenStruct.new(name: nil, alias: nil)
+        @alias_and_name = OpenStruct.new(name: nil, aliased_as: nil)
         visit_node! :field, node
       end
 
@@ -206,7 +206,7 @@ module RailsQL
         # Aliases parse identically to field names. If you visit two field
         # names for one field then the second one is the field name.
         if @alias_and_name.name.present?
-          @alias_and_name.alias = @alias_and_name.name
+          @alias_and_name.aliased_as = @alias_and_name.name
         end
         @alias_and_name.name = node.value
       end
@@ -215,7 +215,7 @@ module RailsQL
         if @node_stack.last == :field && @alias_and_name.present?
           child_builder = current_builder.add_child_builder!(
             name: @alias_and_name.name,
-            field_alias: @alias_and_name.alias
+            aliased_as: @alias_and_name.aliased_as
           )
           @builder_stack.push child_builder
           @alias_and_name = nil
@@ -280,7 +280,7 @@ module RailsQL
         end_visit_node!
       end
 
-      # Type builder pop aliases
+      # @builder_stack.pop aliases
       (INPUT_VALUE_SYMS + [
         :inline_fragment,
         :fragment_definition,

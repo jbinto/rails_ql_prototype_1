@@ -6,17 +6,15 @@ module RailsQL
   module Builder
     class TypeBuilder
       attr_reader(
-        :type_klass,
         :child_type_builders,
         :variables,
         :fragments,
       )
 
-      attr_accessor :field_alias, :name
-
       def initialize(
           # The name of the field or nil for anonomous input objects and roots
           name: nil,
+          aliased_as: nil
           root: false,
           # is_input is true if this type is used as an argument to a field
           # (input).
@@ -25,6 +23,7 @@ module RailsQL
           model: nil
         )
         @name = name
+        @aliased_as = aliased_as
         @root = root
         @is_input = is_input
         @model = model
@@ -48,22 +47,45 @@ module RailsQL
       # times to build multiple instances of the Type.
       def build_type!(field_definition:, type_klass:, ctx:)
         child_ctx = ctx.merge field_definition.child_ctx
-        field_types = @child_type_builders.build_types!(
-          field_definitions: type_klass.field_definitions
-        )
         args_type = @arg_type_builder.build_type!(
           field_definition: nil,
           type_klass: field_definition.args_type_klass,
           ctx: child_ctx
         )
-        type = type_klass.new(
+        type_opts = {
           ctx: child_ctx,
           root: @root,
           field_definition: field_definition,
           field_alias: @field_alias || @name,
-          args_type: args_type,
-          field_types: field_types
-        )
+          args_type: args_type
+        }
+        if type_klass.is_a? RailsQL::Type::List && @is_input
+          # input lists
+          type_opts[:resolved_list_of_modified_types] = @model.each {|singular_model|
+          TypeBuilder.new(
+            is_input: true
+            model: singular_model
+          ).build_type!(
+            field_definition: nil,
+            type_klass: KlassFactory.find(type_klass.of_type),
+            ctx: child_ctx
+          )
+        elsif type_klass.responds_to? :of_type
+          # Non-nullable args, non-nullable fields and field lists
+          type_opts[:modified_type] = TypeBuilder.new(
+            is_input: @is_input
+          ).build_type!(
+            field_definition: nil,
+            type_klass: KlassFactory.find(type_klass.of_type),
+            ctx: child_ctx
+          )
+        else
+          # All types except lists and non-nullable
+          type_opts[:field_types] = @child_type_builders.build_types!(
+            field_definitions: type_klass.field_definitions
+          )
+        end
+        type = type_klass.new type_opts
         type.model = @model if @is_input
         # add child fields
         return type

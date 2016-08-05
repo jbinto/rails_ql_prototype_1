@@ -92,7 +92,7 @@ module RailsQL
         description: "NON_NULL and LIST only",
         type: "RailsQL::Introspection::Type",
         resolve: ->(args, child_query) {
-          model.type_definition.of_type
+          model.try :of_type
         }
       )
 
