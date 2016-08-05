@@ -6,6 +6,7 @@ module RailsQL
 
       def initialize(opts={})
         @modified_type = opts[:modified_type]
+        @list = opts[:list_of_resolved_types]
         super opts
       end
 

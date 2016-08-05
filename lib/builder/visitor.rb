@@ -48,9 +48,11 @@ module RailsQL
 
       # This is used directly by the variables_parser
       def visit_arg_value(node)
-        if current_builder.is_a? VariableBuilder
-          visit_variable_definition_default_value node
-        else
+        # TODO: variables
+        # if current_builder.is_a? VariableBuilder
+        #   visit_variable_definition_default_value node
+        # else
+        if true
           method =
             if current_builder.is_input?
               :add_child_builder!

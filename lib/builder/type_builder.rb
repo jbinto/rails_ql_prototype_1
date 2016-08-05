@@ -14,7 +14,7 @@ module RailsQL
       def initialize(
           # The name of the field or nil for anonomous input objects and roots
           name: nil,
-          aliased_as: nil
+          aliased_as: nil,
           root: false,
           # is_input is true if this type is used as an argument to a field
           # (input).
@@ -61,15 +61,12 @@ module RailsQL
         }
         if type_klass.is_a? RailsQL::Type::List && @is_input
           # input lists
-          type_opts[:resolved_list_of_modified_types] = @model.each {|singular_model|
-          TypeBuilder.new(
-            is_input: true
-            model: singular_model
-          ).build_type!(
-            field_definition: nil,
-            type_klass: KlassFactory.find(type_klass.of_type),
-            ctx: child_ctx
+          # TODO!
+          list = @child_type_builders.build_types!(
+            field_definitions: type_klass.of_type
           )
+          type_opts[:list_of_resolved_types] = list
+          # type_opts[:resolved_list_of_modified_types] = list
         elsif type_klass.responds_to? :of_type
           # Non-nullable args, non-nullable fields and field lists
           type_opts[:modified_type] = TypeBuilder.new(
