@@ -12,18 +12,17 @@ module RailsQL
       # Iterate depth first - from the scalar leaves to root type of the type
       # tree
       def recurse_into_child(parent:, child:)
-        # binding.pry
         child.query = child.initial_query
         child_query_nodes_for(child).each do |grandchild_node|
           recurse_into_child grandchild_node
         end
-        # if child.query_lambda.present?
-        #   parent.query = parent.instance_exec(
-        #     child.args,
-        #     parent.query,
-        #     &child.query_lambda
-        #   )
-        # end
+        if child.query_lambda.present?
+          parent.query = parent.instance_exec(
+            child.args,
+            child.query,
+            &child.query_lambda
+          )
+        end
       end
 
     end
