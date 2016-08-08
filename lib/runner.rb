@@ -40,15 +40,20 @@ module RailsQL
       end
       operation = visitor.operations.first
       root_builder = operation.root_builder
-      # Normalization
-      root = root_builder
-        .normalize_fragments!
-        .normalize_variables!
-        .build_type!(
-          field_definition: nil,
-          type_klass: root_types[operation.operation_type],
-          ctx: opts[:ctx]
-        )
+      # Normalize variable and fragment builders into type builders (TODO!)
+      # root = root_builder
+      #   .normalize_fragments!
+      #   .normalize_variables!
+      # OR
+      # RailQL::Builder::FragmentNormalizer.normalize!(operation)
+      # RailQL::Builder::VariablesNormalizer.normalize!(operation)
+
+      # Build types
+      root = RailQL::Builder::TypeFactory.build!(
+        type_klass: root_types[operation.operation_type],
+        builder: root_builder,
+        ctx: opts[:ctx]
+      )
       # Execution
       executers = {}
       [
