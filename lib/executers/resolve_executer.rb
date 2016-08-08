@@ -19,8 +19,8 @@ module RailsQL
             # eg. parent.trigger :around_resolve do ... end
             parent.instance_exec(
               child.args,
-              parent.query,
-              child.resolve_lambda
+              child.query,
+              &child.resolve_lambda
             )
           else
             default_resolve_for! node
