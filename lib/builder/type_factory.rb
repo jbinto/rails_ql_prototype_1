@@ -42,6 +42,8 @@ module RailsQL
         return type
       end
 
+      private
+
       def self.build_modifier_type_opts!(
         type_klass:,
         builder:,
