@@ -160,6 +160,38 @@ describe RailsQL::Executers::QueryExecuter do
 
         run_query_executer_test(root: root)
       end
+
+      it "passes correct args to query_lambda" do
+        # e.g. { root { heroes(super: true, since: 1970) }}
+        heroes = node_with_no_children name: "Hero"
+        root = node_with_children [heroes], name: "Root"
+
+        stub_query_lambda(on: heroes, name: "heroes")
+        stub_query_lambda_with_nil(on: root)
+
+        stub_query_var(on: heroes, query: "Heroes.all")
+
+        allow(heroes).to receive(:args).and_return({
+          super: true,
+          since: 1970,
+        })
+
+        # don't worry about any other fields e.g. child_query
+        # just concerned with args here
+        expect(root).to receive(:query=).with hash_including({
+          args: {
+            super: true,
+            since: 1970
+          }
+        })
+
+        # tangential to this test
+        ignore_initial_query(on: root)
+        ignore_initial_query(on: heroes)
+
+        run_query_executer_test(root: root)
+      end
+
     end
   end
 
