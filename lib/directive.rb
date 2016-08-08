@@ -7,11 +7,11 @@
 module RailsQL
   class Directive < RailsQL::Type
 
-    attr_reader :target, :args
+    attr_reader :modified_type
 
-    def initialize(target:, args:)
-      @target = target
-      @args = args
+    def initialize(modified_type:, **opts)
+      @modified_type = modified_type
+      super **opts
     end
 
     def self.description(description)
@@ -51,7 +51,7 @@ module RailsQL
       :resolve_child_types!,
       :inject_into_parent_json
     ].each do |k|
-      delegate k, to: :target
+      delegate k, to: :modified_type
     end
 
   end

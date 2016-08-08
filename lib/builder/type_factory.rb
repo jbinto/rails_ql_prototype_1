@@ -13,19 +13,13 @@ module RailsQL
       # Recursively build and return an instance of `type_klass` and it's
       # children based on the builder, field definition and ctx.
       def build!(field_definition: nil, type_klass:, builder:, ctx:)
-        if builder.is_a? FragmentBuilder
-          validate_fragment_builder!(
-            type_klass: type_klass,
-            builder: builder
-          )
-        end
-        # Build ctx and opts to be passed to the type klass constructor
+        # Build ctx and opts to be passed to the `type_klass` constructor
         child_ctx = ctx.merge(field_definition.try(child_ctx) || {})
         opts = {
           ctx: child_ctx,
           root: builder.try(:root) || false,
           field_definition: field_definition,
-          field_alias: @field_alias || @name,
+          field_alias: @field_alias || @name
         }
         # Fields have an arg type builder. Recursively build the fields
         # arguments and their nested input objects (if any exist).
@@ -37,7 +31,8 @@ module RailsQL
           )
         end
         # Build the children for modifier types (ie. lists and non-nullable)
-        if type_klass.responds_to? :of_type
+        # and directives
+        if type_klass.responds_to?(:of_type) || builder.is_a?(DirectiveBuilder)
           opts = opts.merge build_modifier_type_opts!(
             type_klass: type_klass,
             builder: builder,
@@ -58,25 +53,6 @@ module RailsQL
       end
 
       private
-
-      def validate_fragment_builder!(
-        type_klass: type_klass,
-        builder: builder
-      )
-        if builder.type_builder.blank?
-          raise(InvalidFragment,
-            "Fragment #{fragment_builder.fragment_name} is not defined"
-          )
-        end
-        if builder.fragment_defined_on != type_klass.type_definition.type_name
-          msg = <<-ERROR.strip_heredoc.gsub("\n", "").strip
-            Fragment is defined on #{builder.fragment_defined_on}
-            but fragment spread is on an incompatible type
-            (#{type_klass.type_definition.type_name})
-          ERROR
-          raise InvalidFragment, msg
-        end
-      end
 
       def build_modifier_type_opts!(
         type_klass:,
