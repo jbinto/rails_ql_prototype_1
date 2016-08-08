@@ -14,7 +14,6 @@ module RailsQL
           query: nil,
           deprecated: false,
           deprecation_reason: "",
-          union: false,
           child_ctx: {},
           default_value: nil, # InputObject field definitions only
           introspection: false

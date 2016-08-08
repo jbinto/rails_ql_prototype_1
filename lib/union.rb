@@ -1,63 +1,54 @@
 require_relative "./type/type.rb"
+require_relative "./field/field_definition.rb"
 
 module RailsQL
   class Union < RailsQL::Type
-    type_name "Union"
-    description <<-eos
-      GraphQL Unions represent an object that could be one of a list of
-      GraphQL Object types, but provides for no guaranteed fields
-      between those types. They also differ from interfaces in that Object
-      types declare what interfaces they implement, but are not aware of what
-      unions contain them.
+    kind :union
 
-      With interfaces and objects, only those fields defined on the type can
-      be queried directly; to query other fields on an interface, typed
-      fragments must be used. This is the same as for unions, but unions do
-      not define any fields, so no fields may be queried on this type
-      without the use of typed fragments.
-    eos
+    attr_reader :unioned_types
+
+    def initialize(unioned_types:, **opts)
+      @unioned_types = unioned_types
+      super opts
+    end
+
+    def query_tree_children
+      @unioned_types
+    end
+
+    # example useage:
+    # def resolve_tree_children
+    #   model.is_a? Desert ? union_types[:dessert] : union_types[:entre]
+    # end
+    def resolve_tree_children
+      raise "Unions must overwrite #resolve_tree_children"
+    end
 
     def as_json
-      json = super
-
-      return json[@resolved_type]
+      resolve_tree_children.first.as_json
     end
 
-    # unions(
-    #   {name: "sword", type: "SwordType, model_klass: "Sword"},
-    #   {name: "cross_bow", type: "CrossBowType, model_klass: "CrossBow"}
+    def self.union_definitions
+      @union_definitions ||= {}
+    end
+
+    # example useage:
+    #
+    # unions(:dessert,
+    #   query: ->(args, child_query) {},
+    #   resolve: ->(args, child_query) {},
+    #   type_klass: "Dessert"
     # )
-    class << self
-      def unions(*union_definitions)
-        return nil if union_definitions.blank?
-
-        union_definitions = union_definitions.map &:symbolize_keys!
-
-        union_definitions.each do |union_definition|
-          field(union_definition[:name],
-            union_definition.slice(:type, :model_klass).merge(
-              union: true,
-              resolve: ->(args, child_query){
-                model_klass =
-                  if union_definition[:model_klass].kind_of? Proc
-                    self.instance_exec(
-                      &union_definition[:model_klass]
-                    ).to_s.constantize
-                    # union_definition[:model_klass].call.to_s.constantize
-                  else
-                    union_definition[:model_klass].to_s.constantize
-                  end
-                if model.kind_of? model_klass
-                  @resolved_type = union_definition[:name]
-                  model
-                else
-                  nil
-                end
-              }
-            )
-          )
-        end
-      end
+    #
+    # unions(:entre,
+    #   query: ->(args, child_query) {},
+    #   resolve: ->(args, child_query) {},
+    #   type_klass: "Dessert"
+    # )
+    def self.unions(*union_definition_opts)
+      name = union_definition_opts[:name]
+      union_definitions[name] = FieldDefinition.new union_definition_opts
     end
+
   end
 end
