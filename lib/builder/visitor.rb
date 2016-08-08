@@ -56,7 +56,7 @@ module RailsQL
         #   visit_variable_definition_default_value node
         # else
         if true
-          input_builder = current_builder.add_child_builder! TypeBuilder.new(
+          input_builder = current_builder.child_builders << TypeBuilder.new(
             name: @current_name,
             model: node.try(:value),
             is_input: true
@@ -209,8 +209,10 @@ module RailsQL
       end
 
       def create_type_builder_if_within_field!
+        # alias and name is only present if a type builder has not yet been
+        # defined
         if @node_stack.last == :field && @alias_and_name.present?
-          child_builder = current_builder.add_child_builder! TypeBuilder.new(
+          child_builder = current_builder.child_builders << TypeBuilder.new(
             name: @alias_and_name.name,
             aliased_as: @alias_and_name.aliased_as,
             arg_type_builder: TypeBuilder.new(
@@ -241,16 +243,27 @@ module RailsQL
       # ========================================================================
 
       def visit_directive(node)
-        create_type_builder_if_within_field!
         visit_node! :directive, node
       end
 
       def visit_directive_name(node)
-        directive_builder = DirectiveBuilder.new(
-          type_klass: node.value
+        directive_builder = TypeBuilder.new(
+          name: current_builder.name,
+          aliased_as: current_builder.aliased_as,
+          directive_name: node.value,
+          arg_type_builder: TypeBuilder.new(
+            is_input: true
+          )
         )
-        current_builder.add_directive_builder! directive_builder
-        @builder_stack.push directive_builder.arg_builder
+        if current_builder.directive?
+          current_builder.child_builders << directive_builder
+        else
+          current_builder.first_directive_builder = directive_builder
+        end
+        @builder_stack.push directive_builder
+        # replace the alias and name so that the modified type will receive an
+        # empty name and alias
+        @alias_and_name = OpenStruct.new(name: nil, aliased_as: nil)
       end
 
       # Util

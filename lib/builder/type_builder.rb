@@ -3,15 +3,21 @@ require_relative "../type/klass_factory.rb"
 module RailsQL
   module Builder
     class TypeBuilder
-      attr_accessor :name
+      attr_accessor(
+        :name,
+        :aliased_as,
+        :directive_name,
+        :first_directive_builder
+      )
 
       attr_reader(
-        :aliased_as,
-        :arg_type_builder,
-        :child_builders,
         :root,
-        :variables,
-        :fragments,
+        :arg_type_builder,
+        :is_input,
+        :is_directive,
+        :child_builders,
+        :fragment_builders,
+        :variables
       )
 
       def initialize(
@@ -32,20 +38,17 @@ module RailsQL
         @arg_type_builder = arg_type_builder
         @is_input = is_input
         @model = model
-        @variables = {}
-        @directive_builders = []
-        @fragment_builders = []
         @child_builders = []
+        @fragment_builders = []
+        @variables = {}
       end
 
       def is_input?
         return @is_input
       end
 
-      def add_child_builder!(builder)
-        annotate_exceptions do
-          @child_builders << builder
-        end
+      def directive?
+        directive_name.present?
       end
 
       def add_variable!(argument_name:, variable_name:)
@@ -54,6 +57,15 @@ module RailsQL
 
       def add_fragment_builder!(fragment_builder)
         @fragment_builders << fragment_builder
+      end
+
+      def last_directive_builder
+        if directive?
+          # each directive builder can only have one child directive builder
+          @child_builders.select(&:directive?).first.try :last_directive_builder
+        else
+          first_directive_builder.try :last_directive_builder
+        end
       end
 
       # TODO: directives and fragments
@@ -140,15 +152,6 @@ module RailsQL
     #     end
     #   end
     #
-      def annotate_exceptions
-        yield
-      rescue Exception => e
-        if @name.present?
-          raise e, "#{e.message} on #{@name}", e.backtrace
-        else
-          raise e
-        end
-      end
 
     end
   end
