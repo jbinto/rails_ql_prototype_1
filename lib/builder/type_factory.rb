@@ -52,7 +52,7 @@ module RailsQL
         opts = {}
         # build the list of types for input lists
         if type_klass.is_a? RailsQL::Type::List && builder.is_input?
-          list = builder.child_type_builders.map do |child_builder|
+          list = builder.child_builders.map do |child_builder|
             build!(
               type_klass: type_klass.of_type,
               builder: child_builder,
@@ -67,7 +67,7 @@ module RailsQL
             type_klass: type_klass.of_type,
             builder: OpenStruct.new(
               is_input: builder.is_input,
-              child_type_builders: []
+              child_builders: []
             ),
             ctx: child_ctx
           )
@@ -84,7 +84,7 @@ module RailsQL
         # Basically take 2 or more type builders, compare them and then
         # combine them and their child type builders recursively into new objects
         fields = {}
-        builder.child_type_builders.each do |child_builder|
+        builder.child_builders.each do |child_builder|
           field_definition = type_klass.field_definitions[child_builder.name]
           if field_definition.blank?
             raise "Invalid key #{type_builder.name}"

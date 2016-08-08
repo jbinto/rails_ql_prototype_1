@@ -7,7 +7,7 @@ module RailsQL
     class TypeBuilder
       attr_reader(
         :arg_type_builder,
-        :child_type_builders,
+        :child_builders,
         :variables,
         :fragments,
       )
@@ -17,6 +17,7 @@ module RailsQL
         name: nil,
         aliased_as: nil,
         root: false,
+        arg_type_builder: nil,
         # is_input is true if this type is used as an argument to a field
         # (input).
         # is_input is false if this type is used as a field (output).
@@ -26,27 +27,22 @@ module RailsQL
         @name = name
         @aliased_as = aliased_as
         @root = root
+        @arg_type_builder = arg_type_builder
         @is_input = is_input
         @model = model
         @variables = {}
         @directive_builders = []
         @fragment_builders = []
-
-        unless @is_input
-          @arg_type_builder = TypeBuilder.new(
-            is_input: true
-          )
-        end
-        @child_type_builders = TypeBuilderCollection.new
+        @child_builders = []
       end
 
       def is_input?
         return @is_input
       end
 
-      def add_child_builder!(opts)
+      def add_child_builder!(builder)
         annotate_exceptions do
-          @child_type_builders.create_and_add_builder! opts
+          @child_builders << builder
         end
       end
 
@@ -127,8 +123,8 @@ module RailsQL
     #   def resolve_fragment!(fragment_builder)
     #     # TODO: fragments on interface types
     #     begin
-    #       fragment_builder.child_type_builders do |name, child_builder|
-    #         @child_type_builders.add_existing_builder!(
+    #       fragment_builder.child_builders do |name, child_builder|
+    #         @child_builders.add_existing_builder!(
     #           name: name,
     #           type_builder: child_builder
     #         )

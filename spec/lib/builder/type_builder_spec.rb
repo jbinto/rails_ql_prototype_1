@@ -29,10 +29,10 @@ describe RailsQL::Builder::TypeBuilder do
   end
 
   describe "#add_child_builder!" do
-    it "wraps child_type_builders#create_and_add_builder!" do
+    it "wraps child_builders#create_and_add_builder!" do
     end
 
-    it "annotates child_type_builders#create_and_add_builder! errors" do
+    it "annotates child_builders#create_and_add_builder! errors" do
     end
   end
 
