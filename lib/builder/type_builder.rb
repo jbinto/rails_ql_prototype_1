@@ -1,5 +1,3 @@
-require_relative "./type_builder_collection.rb"
-# require_relative "./field_collection_builder.rb"
 require_relative "../type/klass_factory.rb"
 
 module RailsQL
@@ -149,6 +147,6 @@ module RailsQL
     #     # end
     #   end
     #
-    # end
+    end
   end
 end

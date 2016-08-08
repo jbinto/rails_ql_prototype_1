@@ -1,5 +1,5 @@
 module RailsQL
-  class Builder
+  module Builder
     class TypeFactory
 
       # Recursively build and return an instance of `type_klass` and it's
@@ -63,7 +63,7 @@ module RailsQL
         # Create the modified type for Non-nullable args, non-nullable fields
         # and field lists
         else
-          opts[:modified_type] = build!
+          opts[:modified_type] = build!(
             type_klass: type_klass.of_type,
             builder: OpenStruct.new(
               is_input: builder.is_input,
