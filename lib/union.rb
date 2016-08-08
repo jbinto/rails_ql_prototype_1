@@ -37,8 +37,6 @@ module RailsQL
           field(union_definition[:name],
             union_definition.slice(:type, :model_klass).merge(
               union: true,
-              nullable: true,
-              singular: true,
               resolve: ->(args, child_query){
                 model_klass =
                   if union_definition[:model_klass].kind_of? Proc

@@ -8,7 +8,10 @@ module RailsQL
       }
     end
 
-    def execute!(opts)
+    def execute!(
+      query:,
+      ctx: {}
+    )
       opts = {
         query: nil,
         ctx: {}

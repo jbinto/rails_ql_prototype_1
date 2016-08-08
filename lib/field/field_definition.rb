@@ -71,17 +71,15 @@ module RailsQL
         end
       end
 
-      def add_permission!(operation, permission_lambda)
+      def add_permission!(action, permission_lambda)
         valid_ops = @permissions.keys
-        unless valid_ops.include? operation
+        unless valid_ops.include? action
           raise <<-MSG.strip_heredoc.gsub("\n", " ").strip
-            Cannot add #{operation} to #{@name}.
+            Cannot add #{action} to #{@name}.
             Operation must be one of :query, :mutate or :input"
           MSG
         end
-        ## XXX TODO: why are there multiple permission_lambdas?
-        ## shouldn't there be just one per operation?
-        @permissions[operation] << permission_lambda
+        @permissions[action] << permission_lambda
       end
 
     end
