@@ -112,7 +112,7 @@ module RailsQL
       def build_fields_or_args!(
         type_klass:,
         builder:,
-        child_ctx:,
+        child_ctx:
       )
         fields = {}
         # Inject variable builders into the list of args (do nothing for fields)

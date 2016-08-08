@@ -21,8 +21,8 @@ module RailsQL
       private
 
       def validate_fragment_builder!(
-        type_klass: type_klass,
-        builder: builder
+        type_klass:,
+        builder:
       )
         if builder.type_builder.blank?
           raise(InvalidFragment,

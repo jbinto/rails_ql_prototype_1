@@ -6,7 +6,7 @@ module RailsQL
       attr_accessor :name
 
       attr_reader(
-        :aliased_as
+        :aliased_as,
         :arg_type_builder,
         :child_builders,
         :root,
