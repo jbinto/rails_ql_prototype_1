@@ -8,41 +8,60 @@ describe RailsQL::Executers::QueryExecuter do
     ).execute!
   end
 
+  def make_node(name)
+    instance_double RailsQL::Type, name
+  end
+
+  def node_with_no_children(name: "NodeWithNoChildren")
+    node = make_node name
+    expect(node).to receive(:query_tree_children).and_return([])
+    return node
+  end
+
+  def node_with_children(children, name: "NodeWithChildren")
+    node = make_node name
+    expect(node).to receive(:query_tree_children).and_return(children)
+    return node
+  end
+
+  def expect_initial_query(on:, with:)
+    expect(on).to receive(:initial_query).and_return with
+    expect(on).to receive(:query=).with(with)
+  end
+
+  def ignore_query_lambda(on:)
+    allow(on).to receive(:query_lambda).and_return nil
+  end
+
+  def ignore_initial_query(on:)
+    allow(on).to receive(:initial_query).and_return "initial_query"
+    allow(on).to receive(:query=).with "initial_query"
+  end
+
+  def ignore_args(on:)
+    allow(on).to receive(:args).and_return({})
+  end
+
+  def stub_query_lambda(on:, name:)
+    allow(on).to receive(:query_lambda).and_return(
+      ->(args, child_query){{
+        name: "#{name}_query_lambda",
+        args: args,
+        child_query: child_query,
+        self: self
+      }}
+    )
+  end
+
+  def stub_query_lambda_with_nil(on:)
+    expect(on).to receive(:query_lambda).and_return nil
+  end
+
+  def stub_query_var(on:, query:)
+    expect(on).to receive(:query).and_return(query)
+  end
+
   describe '#execute!' do
-    def make_node(name)
-      instance_double RailsQL::Type, name
-    end
-
-    def node_with_no_children(name: "NodeWithNoChildren")
-      node = make_node name
-      expect(node).to receive(:query_tree_children).and_return([])
-      return node
-    end
-
-    def node_with_children(children, name: "NodeWithChildren")
-      node = make_node name
-      expect(node).to receive(:query_tree_children).and_return(children)
-      return node
-    end
-
-    def expect_initial_query(on:, with:)
-      expect(on).to receive(:initial_query).and_return with
-      expect(on).to receive(:query=).with(with)
-    end
-
-    def ignore_query_lambda(on:)
-      allow(on).to receive(:query_lambda).and_return nil
-    end
-
-    def ignore_initial_query(on:)
-      allow(on).to receive(:initial_query).and_return "initial_query"
-      allow(on).to receive(:query=).with "initial_query"
-    end
-
-    def ignore_args(on:)
-      allow(on).to receive(:args).and_return({})
-    end
-
     context "initial query" do
       it "sets initial query on root" do
         # e.g. { root }
@@ -92,25 +111,6 @@ describe RailsQL::Executers::QueryExecuter do
     end
 
     context "execution of lambda" do
-      def stub_query_lambda(on:, name:)
-        allow(on).to receive(:query_lambda).and_return(
-          ->(args, child_query){{
-            name: "#{name}_query_lambda",
-            args: args,
-            child_query: child_query,
-            self: self
-          }}
-        )
-      end
-
-      def stub_query_lambda_with_nil(on:)
-        expect(on).to receive(:query_lambda).and_return nil
-      end
-
-      def stub_query_var(on:, query:)
-        expect(on).to receive(:query).and_return(query)
-      end
-
       it "executes query_lambda in the context of its parent" do
         # e.g. { root { drinks { beers }}
         # The query lambda defined on `beers` executes in `drink`s context.
@@ -191,8 +191,6 @@ describe RailsQL::Executers::QueryExecuter do
 
         run_query_executer_test(root: root)
       end
-
     end
   end
-
 end
