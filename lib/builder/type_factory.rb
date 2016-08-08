@@ -2,24 +2,9 @@ module RailsQL
   class Builder
     class TypeFactory
 
-      def self.build_root!(
-        root_type_klass:,
-        root_builder:,
-        ctx:
-      )
-        self.new.build!(
-          field_definition: nil,
-          type_klass: root_type_klass,
-          builder: root_builder,
-          ctx: ctx
-        )
-      end
-
-      private
-
       # Recursively build and return an instance of `type_klass` and it's
       # children based on the builder, field definition and ctx.
-      def build!(field_definition:, type_klass:, builder:, ctx:)
+      def self.build!(field_definition: nil, type_klass:, builder:, ctx:)
         child_ctx = ctx.merge(field_definition.try(child_ctx) || {})
         opts = {
           ctx: child_ctx,
@@ -31,7 +16,6 @@ module RailsQL
         # arguments and their nested input objects (if any exist).
         if builder.try(:arg_type_builder).present?
           opts[:args_type] = build!(
-            field_definition: nil,
             type_klass: field_definition.args_type_klass,
             builder: builder.arg_type_builder,
             ctx: child_ctx
@@ -58,7 +42,7 @@ module RailsQL
         return type
       end
 
-      def build_modifier_type_opts!(
+      def self.build_modifier_type_opts!(
         type_klass:,
         builder:,
         child_ctx:
@@ -68,7 +52,6 @@ module RailsQL
         if type_klass.is_a? RailsQL::Type::List && builder.is_input?
           list = builder.child_type_builders.map do |child_builder|
             build!(
-              field_definition: nil,
               type_klass: type_klass.of_type,
               builder: child_builder,
               ctx: child_ctx
@@ -79,7 +62,6 @@ module RailsQL
         # and field lists
         else
           opts[:modified_type] = build!
-            field_definition: nil,
             type_klass: type_klass.of_type,
             builder: OpenStruct.new(
               is_input: builder.is_input,
@@ -91,7 +73,7 @@ module RailsQL
         return opts
       end
 
-      def build_fields!(
+      def self.build_fields!(
         type_klass:,
         builder:,
         child_ctx:
