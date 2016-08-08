@@ -12,36 +12,57 @@ describe RailsQL::Executers::QueryExecuter do
 
   describe '#execute!' do
     context "with child nodes" do
-      def root_with_no_children
-        root = instance_double RailsQL::Type, "RootTypeDouble"
-        expect(root).to receive(:initial_query).and_return nil
-        expect(root).to receive(:query=).with(nil)
-        expect(root).to receive(:query_tree_children).and_return([])
-
-        return root
+      def make_node(name)
+        instance_double RailsQL::Type, name
       end
 
-      def root_with_children(fields)
-        root = instance_double RailsQL::Type, "RootWithChildren"
-        expect(root).to receive(:initial_query).and_return nil
-        expect(root).to receive(:query=).with(nil)
-        expect(root).to receive(:query_tree_children).and_return(fields)
+      def node_with_no_children(name: "NodeWithNoChildren")
+        node = make_node name
+        expect(node).to receive(:query_tree_children).and_return([])
+        return node
+      end
 
-        return root
+      def node_with_children(children, name: "NodeWithChildren")
+        node = make_node name
+        expect(node).to receive(:query_tree_children).and_return(children)
+        return node
+      end
+
+      def expect_initial_query(on:, with:)
+        expect(on).to receive(:initial_query).and_return with
+        expect(on).to receive(:query=).with(with)
       end
 
       it "sets initial query on root" do
-        root = root_with_no_children
+        # e.g. { root }
+        root = node_with_no_children name: "Root"
+
+        expect(root).to receive(:initial_query).and_return nil
+        expect(root).to receive(:query=).with(nil)
+
         run_query_executer_test(root: root)
       end
 
       it "sets initial query on children one-level deep" do
-        field_1 = instance_double RailsQL::Type, "Field"
-        root = root_with_children([field_1])
+        # e.g. { root { field_1 }}
+        field_1 = node_with_no_children name: "Field_1"
+        root = node_with_children([field_1])
 
-        expect(field_1).to receive(:initial_query).and_return("Foo.all")
-        expect(field_1).to receive(:query=).and_return("Foo.all")
-        expect(field_1).to receive(:query_tree_children).and_return []
+        expect_initial_query(on: root, with: nil)
+        expect_initial_query(on: field_1, with: "Moo.all")
+
+        run_query_executer_test(root: root)
+      end
+
+      it "sets initial query on children one-level deep" do
+        # e.g. { root { field_1 { field_1_a }}}
+        field_1_a = node_with_no_children name: "Field_1_a"
+        field_1 = node_with_children [field_1_a], name: "Field_1"
+        root = node_with_children [field_1], name: "Root"
+
+        expect_initial_query(on: root, with: nil)
+        expect_initial_query(on: field_1, with: "Field_1.all")
+        expect_initial_query(on: field_1_a, with: "Field_1_a.all")
 
         run_query_executer_test(root: root)
       end
