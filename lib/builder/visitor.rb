@@ -6,9 +6,7 @@ module RailsQL
 
       attr_reader :operations
 
-      def initialize(query_root_builder:, mutation_root_builder: nil)
-        @query_root_prototype = query_root_builder
-        @mutation_root_prototype = mutation_root_builder
+      def initialize
         @operations = []
         @fragment_builders = {}
         @builder_stack = []
@@ -58,7 +56,7 @@ module RailsQL
         #   visit_variable_definition_default_value node
         # else
         if true
-          input_builder = current_builder.add_child_builder!(
+          input_builder = current_builder.add_child_builder! TypeBuilder.new(
             name: @current_name,
             model: node.try(:value),
             is_input: true
@@ -136,16 +134,11 @@ module RailsQL
       # ========================================================================
 
       def visit_operation_definition(node)
-        prototype =
-          if node.operation == "mutation"
-            @mutation_root_prototype
-          elsif node.operation == "query" || node.operation == "subscription"
-            @query_root_prototype
-          else
-            raise "Operation not supported: #{node.operation}"
-          end
+        if ["query", "mutation", "subscription"].exclude? node.operation
+          raise "Operation not supported: #{node.operation}"
+        end
         operation = Operation.new
-        operation.root_builder = prototype.clone
+        operation.root_builder = TypeBuilder.new root: true
         operation.operation_type = node.operation.to_sym
         @operations << operation
         @builder_stack = [operation.root_builder]
@@ -217,9 +210,12 @@ module RailsQL
 
       def create_type_builder_if_within_field!
         if @node_stack.last == :field && @alias_and_name.present?
-          child_builder = current_builder.add_child_builder!(
+          child_builder = current_builder.add_child_builder! TypeBuilder.new(
             name: @alias_and_name.name,
-            aliased_as: @alias_and_name.aliased_as
+            aliased_as: @alias_and_name.aliased_as,
+            arg_type_builder: TypeBuilder.new(
+              is_input: true
+            )
           )
           @builder_stack.push child_builder
           @alias_and_name = nil
