@@ -6,6 +6,7 @@ module RailsQL
   module Builder
     class TypeBuilder
       attr_reader(
+        :arg_type_builder,
         :child_type_builders,
         :variables,
         :fragments,
@@ -46,7 +47,7 @@ module RailsQL
       # Builds and returns an instance of type_klass. Can be called multiple
       # times to build multiple instances of the Type.
       def build_type!(field_definition:, type_klass:, ctx:)
-        child_ctx = ctx.merge field_definition.child_ctx
+        child_ctx = ctx.merge(field_definition.try(child_ctx) || {})
         args_type = @arg_type_builder.build_type!(
           field_definition: nil,
           type_klass: field_definition.args_type_klass,
@@ -61,7 +62,7 @@ module RailsQL
         }
         if type_klass.is_a? RailsQL::Type::List && @is_input
           # input lists
-          # TODO!
+          # TODO! field_definitons != of_type
           list = @child_type_builders.build_types!(
             field_definitions: type_klass.of_type
           )
@@ -73,7 +74,7 @@ module RailsQL
             is_input: @is_input
           ).build_type!(
             field_definition: nil,
-            type_klass: KlassFactory.find(type_klass.of_type),
+            type_klass: type_klass.of_type,
             ctx: child_ctx
           )
         else
@@ -91,12 +92,6 @@ module RailsQL
       def add_child_builder!(opts)
         annotate_exceptions do
           @child_type_builders.create_and_add_builder! opts
-        end
-      end
-
-      def add_arg_builder!(name:, model:)
-        annotate_exceptions do
-          @arg_type_builder.add_child_builder! name: name, model: model
         end
       end
 

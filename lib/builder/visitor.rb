@@ -46,6 +46,11 @@ module RailsQL
       # Args
       # ========================================================================
 
+      def visit_argument(node)
+        @builder_stack.push current_builder.arg_type_builder
+        visit_node! :argument, node
+      end
+
       # This is used directly by the variables_parser
       def visit_arg_value(node)
         # TODO: variables
@@ -53,18 +58,14 @@ module RailsQL
         #   visit_variable_definition_default_value node
         # else
         if true
-          method =
-            if current_builder.is_input?
-              :add_child_builder!
-            else
-              :add_arg_builder!
-            end
-          input_builder = current_builder.send(method,
+          input_builder = current_builder.add_child_builder!(
             name: @current_name,
-            model: node.try(:value)
+            model: node.try(:value),
+            is_input: true
           )
           @builder_stack.push input_builder
         end
+        @current_name = nil
         visit_node! :arg_value, node
       end
 
@@ -77,7 +78,8 @@ module RailsQL
         :int_value,
         :boolean_value,
         :string_value,
-        :object_value
+        :object_value,
+        :list_value
       ]
 
       # input arg visit aliases
@@ -288,7 +290,8 @@ module RailsQL
         :fragment_definition,
         :operation_definition,
         :variable_definition,
-        :directive
+        :directive,
+        :argument
       ]).each do |k|
         alias_method :"end_visit_#{k}", :end_visit_builder_node
       end

@@ -15,14 +15,15 @@ module RailsQL
         raise "RailsQL::Runner.execute! requires a :query option"
       end
 
+      root_types = {
+        query: opts[:query_root],
+        mutation: opts[:mutation_root]
+      }
+
       query_root_builder = Builder::TypeBuilder.new(
-        type_klass: @query_root,
-        ctx: opts[:ctx],
         root: true
       )
       mutation_root_builder = Builder::TypeBuilder.new(
-        type_klass: @mutation_root,
-        ctx: opts[:ctx],
         root: true
       )
 
@@ -43,7 +44,11 @@ module RailsQL
       root = root_builder
         .normalize_fragments!
         .normalize_variables!
-        .build_type!
+        .build_type!(
+          field_definition: nil,
+          type_klass: root_types[operation.operation_type],
+          ctx: opts[:ctx]
+        )
       # Execution
       executers = {}
       [
