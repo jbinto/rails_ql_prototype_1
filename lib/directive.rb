@@ -14,10 +14,6 @@ module RailsQL
       super **opts
     end
 
-    def self.description(description)
-      @description = description
-    end
-
     def self.locations(locations)
       valid_locations = [
         :QUERY,
@@ -37,14 +33,13 @@ module RailsQL
       @locations = locations
     end
 
-    def self.args(args_lambda)
-      @anonymous_input_object ||= Class.new(RailsQL::Type) do
-        kind :input_object
-        anonymous true
-      end
-      args_lambda.call @anonymous_input_object
+    def self.anonymous_input_object
+      @anonymous_input_object ||= Class.new RailsQL::Type::AnonymousInputObject
     end
 
+    def self.args(args_lambda)
+      args_lambda.call anonymous_input_object
+    end
 
     [
       :appended_parent_query,
