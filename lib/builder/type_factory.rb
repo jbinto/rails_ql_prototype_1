@@ -2,13 +2,28 @@ module RailsQL
   module Builder
     class TypeFactory
 
+      def self.build!(variable_builders:, **build_args)
+        self.new(variable_builders: variable_builders).build! build_args
+      end
+
+      def initialize(variable_builders:)
+        @variable_builders = variable_builders
+      end
+
       # Recursively build and return an instance of `type_klass` and it's
       # children based on the builder, field definition and ctx.
-      def self.build!(field_definition: nil, type_klass:, builder:, ctx:)
+      def build!(field_definition: nil, type_klass:, builder:, ctx:)
+        if builder.is_a? FragmentBuilder
+          validate_fragment_builder!(
+            type_klass: type_klass,
+            builder: builder
+          )
+        end
+        # Build ctx and opts to be passed to the type klass constructor
         child_ctx = ctx.merge(field_definition.try(child_ctx) || {})
         opts = {
           ctx: child_ctx,
-          root: @root,
+          root: builder.try(:root) || false,
           field_definition: field_definition,
           field_alias: @field_alias || @name,
         }
@@ -30,7 +45,7 @@ module RailsQL
           )
         # Build fields for non-modifier types
         else
-          opts[:field_types] = build_fields!(
+          opts[:field_types] = build_fields_or_args!(
             type_klass: type_klass,
             builder: builder,
             child_ctx: child_ctx
@@ -44,7 +59,26 @@ module RailsQL
 
       private
 
-      def self.build_modifier_type_opts!(
+      def validate_fragment_builder!(
+        type_klass: type_klass,
+        builder: builder
+      )
+        if builder.type_builder.blank?
+          raise(InvalidFragment,
+            "Fragment #{fragment_builder.fragment_name} is not defined"
+          )
+        end
+        if builder.fragment_defined_on != type_klass.type_definition.type_name
+          msg = <<-ERROR.strip_heredoc.gsub("\n", "").strip
+            Fragment is defined on #{builder.fragment_defined_on}
+            but fragment spread is on an incompatible type
+            (#{type_klass.type_definition.type_name})
+          ERROR
+          raise InvalidFragment, msg
+        end
+      end
+
+      def build_modifier_type_opts!(
         type_klass:,
         builder:,
         child_ctx:
@@ -75,16 +109,30 @@ module RailsQL
         return opts
       end
 
-      def self.build_fields!(
+      def build_fields_or_args!(
         type_klass:,
         builder:,
-        child_ctx:
+        child_ctx:,
       )
+        fields = {}
+        # Inject variable builders into the list of args (do nothing for fields)
+        child_builders = builder.child_builders.clone
+        builder.variables.each do |argument_name, variable_name|
+          if @variable_builders[argument_name].blank?
+            raise MissingVariableDefinition, <<-ERROR
+              Variable not defined in operation: #{variable_name}
+            ERROR
+          end
+          variable_builder = @variable_builders[argument_name].dup
+          variable_builder.name = argument_name
+          variable_builder.aliased_as = argument_name
+          child_builders << variable_builder
+        end
+        # Build fields (or args)
         # TODO: field merging should go here
         # Basically take 2 or more type builders, compare them and then
         # combine them and their child type builders recursively into new objects
-        fields = {}
-        builder.child_builders.each do |child_builder|
+        child_builders.each do |child_builder|
           field_definition = type_klass.field_definitions[child_builder.name]
           if field_definition.blank?
             raise "Invalid key #{type_builder.name}"

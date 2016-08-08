@@ -8,7 +8,7 @@ module RailsQL
         to: :type_builder
       )
 
-      attr_reader :fragment_name, :type_builder
+      attr_reader :fragment_name, :fragment_defined_on, :type_builder
 
       def initialize(fragment_name: nil, inline: false)
         if !inline && fragment_name.blank?

@@ -3,9 +3,13 @@ require_relative "../type/klass_factory.rb"
 module RailsQL
   module Builder
     class TypeBuilder
+      attr_accessor :name
+
       attr_reader(
+        :aliased_as
         :arg_type_builder,
         :child_builders,
+        :root,
         :variables,
         :fragments,
       )
@@ -79,7 +83,7 @@ module RailsQL
       #     end
       #   end
       # end
-    #
+
     #   def resolve_fragments!(type_klass)
     #     @fragment_builders.each do |name, fragment_builder|
     #       if fragment_builder.type_builder.blank?
