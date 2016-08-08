@@ -136,17 +136,16 @@ module RailsQL
     #     end
     #   end
     #
-    #   def annotate_exceptions
-    #     yield
-    #   rescue Exception => e
-    #     ## XXX rob: this doesn't compile
-    #     # if @name?
-    #     #   raise e, "#{e.message} on #{@name}", e.backtrace
-    #     # else
-    #       raise e
-    #     # end
-    #   end
-    #
+      def annotate_exceptions
+        yield
+      rescue Exception => e
+        if @name.present?
+          raise e, "#{e.message} on #{@name}", e.backtrace
+        else
+          raise e
+        end
+      end
+
     end
   end
 end
