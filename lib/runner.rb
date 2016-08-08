@@ -10,15 +10,9 @@ module RailsQL
 
     def execute!(
       query:,
-      ctx: {}
+      ctx: {},
+      variables: {}
     )
-      opts = {
-        query: nil,
-        ctx: {}
-      }.merge opts
-      if opts[:query].nil?
-        raise "RailsQL::Runner.execute! requires a :query option"
-      end
 
       visitor = RailsQL::Visitor.new
       ast = GraphQL::Parser.parse opts[:query]
