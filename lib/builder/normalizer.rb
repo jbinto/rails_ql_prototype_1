@@ -13,7 +13,7 @@ module RailsQL
       )
         # normalize fragments
         inline_fragment_builders!(
-          builder: builder
+          builder: builder,
           type_klass: type_klass
         )
         # normalize directives (inlining)
@@ -72,8 +72,11 @@ module RailsQL
             # for directives on spreads and fragment definitions a
             # first-class fragment spread type may need to be created at they
             # type level and used in the query tree.
-            builder.child_builders << *fragment_builder.child_builders
+
+            ## XXX *?
+            builder.child_builders << fragment_builder.child_builders
           end
+        end
       end
 
       def self.validate_fragment_builder!(
