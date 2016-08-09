@@ -5,6 +5,7 @@ module RailsQL
     class TypeBuilder
       attr_accessor(
         :name,
+        :arg_type_builder,
         :aliased_as,
         :directive_name,
         :first_directive_builder,
@@ -13,7 +14,6 @@ module RailsQL
 
       attr_reader(
         :root,
-        :arg_type_builder,
         :is_input,
         :is_directive,
         :child_builders,

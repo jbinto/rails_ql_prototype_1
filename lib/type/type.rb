@@ -10,17 +10,15 @@ module RailsQL
     delegate :type_name, to: :class
 
     def initialize(
-      aliased_as:,
-      args_type:,
+      args_type: nil,
+      aliased_as: nil,
       ctx: {},
       root: false,
       anonymous: false,
       field_definition: nil,
       field_types: {}
     )
-      raise "args_type cannot be nil" if args_type.nil?
-      raise "aliased_as cannot be nil" if aliased_as.nil?
-      @ctx = HashWithIndifferentAccess.new ctx
+      @ctx = ctx
       @root = root
       @anonymous = anonymous
       @field_definition = field_definition
@@ -83,7 +81,6 @@ module RailsQL
 
     def as_json
       kind = self.class.type_definition.kind
-      binding.pry
       if kind == :OBJECT
         json = field_types.reduce({}) do |json, (k, child_type)|
           if child_type.omit_from_json?

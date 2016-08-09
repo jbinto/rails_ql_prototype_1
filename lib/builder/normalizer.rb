@@ -11,6 +11,8 @@ module RailsQL
         type_klass:,
         builder:
       )
+        # TODO: pending dev time
+        return
         # normalize fragments
         inline_fragment_builders!(
           builder: builder,

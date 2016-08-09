@@ -14,12 +14,12 @@ module RailsQL
       # children based on the builder, field definition and ctx.
       def build!(field_definition: nil, type_klass:, builder:, ctx:)
         # Build ctx and opts to be passed to the `type_klass` constructor
-        child_ctx = ctx.merge(field_definition.try(child_ctx) || {})
+        child_ctx = ctx.merge(field_definition.try(:child_ctx) || {})
         opts = {
           ctx: child_ctx,
           root: builder.try(:root) || false,
           field_definition: field_definition,
-          field_alias: @field_alias || @name
+          aliased_as: builder.aliased_as || builder.name
         }
         # Fields have an arg type builder. Recursively build the fields
         # arguments and their nested input objects (if any exist).
@@ -32,7 +32,7 @@ module RailsQL
         end
         # Build the children for modifier types (ie. lists and non-nullable)
         # and directives
-        if type_klass.responds_to?(:of_type) || builder.directive?
+        if type_klass.respond_to?(:of_type) || builder.directive?
           opts = opts.merge build_modifier_type_opts!(
             type_klass: type_klass,
             builder: builder,
@@ -129,9 +129,10 @@ module RailsQL
         # Basically take 2 or more type builders, compare them and then
         # combine them and their child type builders recursively into new objects
         child_builders.each do |child_builder|
+          ap type_klass.field_definitions
           field_definition = type_klass.field_definitions[child_builder.name]
           if field_definition.blank?
-            raise "Invalid key #{type_builder.name}"
+            raise "Invalid key #{child_builder.name}"
           end
 
           fields[child_builder.aliased_as] = build!(

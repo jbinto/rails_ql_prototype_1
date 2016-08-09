@@ -57,7 +57,7 @@ module RailsQL
           )
         end
 
-        self[name] = RailsQL::Field::FieldDefinition.new name.to_sym, opts
+        self[name] = RailsQL::Field::FieldDefinition.new name, opts
       end
 
       def add_plural_field_definition(name, opts)
