@@ -333,6 +333,7 @@ describe RailsQL::Builder::Visitor do
         hero_builder = root_builder.child_builders.first
         args_builder = hero_builder.arg_type_builder
         id_builder = args_builder.child_builders.first
+        input_builders = [args_builder, id_builder]
 
         expect(names_and_aliases_in hero_builder).to eq []
         expect(names_and_aliases_in args_builder).to eq [{
@@ -340,7 +341,6 @@ describe RailsQL::Builder::Visitor do
           aliased_as: "id"
         }]
         expect(id_builder.model).to eq "3"
-        input_builders = [args_builder, id_builder]
         expect(input_builders.all? &:is_input?).to eq true
       end
 
@@ -351,7 +351,7 @@ describe RailsQL::Builder::Visitor do
         args_builder = hero_builder.arg_type_builder
         stuff_builder = args_builder.child_builders.first
         reasons_builder = stuff_builder.child_builders.first
-        input_builders = [args_builder, stuff_builder, stuff_builder]
+        input_builders = [args_builder, stuff_builder, reasons_builder]
 
         expect(names_and_aliases_in hero_builder).to eq []
         expect(names_and_aliases_in args_builder).to eq [{

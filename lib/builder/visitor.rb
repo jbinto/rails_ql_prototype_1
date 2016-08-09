@@ -283,14 +283,14 @@ module RailsQL
 
       def visit_node!(sym, node)
         @node_stack.push(sym)
-        puts "#{tabbing}<#{sym}>"
-        if [:name, :arg_value].include?(sym) && node.try(:value).present?
-          puts "#{tabbing}  #{node.value}"
-        end
+        # puts "#{tabbing}<#{sym}>"
+        # if [:name, :arg_value].include?(sym) && node.try(:value).present?
+        #   puts "#{tabbing}  #{node.value}"
+        # end
       end
 
       def end_visit_node!
-        puts tabbing + "</#{@node_stack.last}>"
+        # puts tabbing + "</#{@node_stack.last}>"
         @node_stack.pop
       end
 
