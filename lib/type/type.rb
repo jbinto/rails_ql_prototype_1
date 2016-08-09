@@ -30,8 +30,6 @@ module RailsQL
     end
 
     def field_or_arg_name
-      # XXX: ??? was self.field_definition?
-      # TypeBuilder will give this to us? even for args?
       @field_definition.name
     end
 
@@ -54,18 +52,14 @@ module RailsQL
     end
 
     def query_lambda
-      # FAIL:
-      # the RailsQL::Field::FieldDefinition class does not implement the instance method: query_lambda
       @field_definition.try :query_lambda
     end
 
     def resolve_lambda
-      @field_definition.try :resolve
+      @field_definition.try :resolve_lambda
     end
 
     def args
-      # that this works when @args_type is nil is just a massive rails-driven
-      # coincidence
       @args_type.as_json
     end
 
@@ -83,8 +77,7 @@ module RailsQL
 
     def as_json
       kind = self.class.type_definition.kind
-      binding.pry
-      if kind == :OBJECT
+      if kind == :object
         json = field_types.reduce({}) do |json, (k, child_type)|
           if child_type.omit_from_json?
             json
@@ -94,7 +87,7 @@ module RailsQL
             )
           end
         end
-      elsif kind == :ENUM || kind == :SCALAR
+      elsif kind == :enum || kind == :scalar
         json = model.as_json
       else
         raise "Kind #{kind} is not yet supported :("

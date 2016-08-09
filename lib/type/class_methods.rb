@@ -96,20 +96,6 @@ module RailsQL
         field_definitions[field_name].can action, on: on
       end
 
-      # Adds a FieldDefinition to the data type
-      #
-      #   class UserType <
-      #
-      #     field(:email,
-      #       type: RailsQL::Type::String
-      #     )
-      #   end
-      #
-      # Options:
-      # * <tt>:type</tt> - Specifies the type
-      # * <tt>:description</tt> - A description of the field
-      # * <tt>:accessible_args</tt> - Arguments that can be passed to the resolve method
-      # * <tt>:nullable</tt> -
       def field(name, opts)
         field_definitions.add_field_definition(name, opts)
       end

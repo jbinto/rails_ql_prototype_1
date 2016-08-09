@@ -1,12 +1,20 @@
 require "spec_helper"
 
 describe RailsQL::Type do
-  def new_type(aliased_as: "top10", args_type: nil, **rest)
+  def new_type(
+    aliased_as: "top10",
+    args_type: (instance_double RailsQL::Type),
+    **rest
+  )
     opts = {
       aliased_as: aliased_as,
       args_type: args_type
     }.merge(rest)
     described_class.new opts
+  end
+
+  def empty_type
+    instance_double RailsQL::Type
   end
 
   describe "#new" do
@@ -22,37 +30,42 @@ describe RailsQL::Type do
       expect(type.model).to eq "foo"
     end
 
-    it "does something with parse_value!" do
-      # TODO: see type instances, they override this
-      pending
-      fail
+    it "sets with result of parse_value! instance method" do
+      Foo = Class.new RailsQL::Type do
+        def parse_value!(value)
+          value.upcase
+        end
+      end
+
+      type = Foo.new aliased_as: "foo", args_type: empty_type
+      type.model = "should_become_uppercase"
+
+      expect(type.model).to eq("SHOULD_BECOME_UPPERCASE")
     end
   end
 
   describe "#type_name" do
-    it "fails" do
-      # TODO: test that type_name delegates
-      pending
+    it "does not explode when accessed" do
       type = new_type
-      type.type_name   # XXX fails
+      type.type_name
     end
   end
 
   describe "#initial_query" do
     context "when type class sets initial_query lambda" do
       it "returns the result of the lambda" do
-        Foo = Class.new RailsQL::Type do
+        foo_klass = Class.new RailsQL::Type do
           initial_query ->{"foo_initial_query"}
         end
-        foo = Foo.new aliased_as: "foo", args_type: nil
+        foo = foo_klass.new aliased_as: "foo", args_type: empty_type
         expect(foo.initial_query).to eq("foo_initial_query")
       end
     end
 
     context "when type class has no initial_query call" do
       it "returns nil" do
-        Foo = Class.new RailsQL::Type
-        foo = Foo.new aliased_as: "foo", args_type: nil
+        foo_klass = Class.new RailsQL::Type
+        foo = foo_klass.new aliased_as: "foo", args_type: empty_type
         expect(foo.initial_query).to eq nil
       end
     end
@@ -77,20 +90,33 @@ describe RailsQL::Type do
   end
 
   describe "#can?" do
-    it "should xxx" do
-      # undefined local variable or method `field_definitions' for #<RailsQL::Type:0x007f861c68b3f8>
-      pending
-      fail
+    it "delegates to self.class.can?" do
+      foo_klass = Class.new RailsQL::Type
+      foo = foo_klass.new aliased_as: "foo", args_type: empty_type
 
-      type = new_type
-      type.can?(:query, "foo")
+      # stub out call to class method
+      expect(foo_klass).to receive(:can?).with(:query, "bar", on: foo)
+        .and_return(true)
+
+      result = foo.can?(:query, "bar")
+      expect(result).to eq true
     end
   end
 
   describe "#as_json" do
-    it "should xxx" do
-      type = new_type
-      type.as_json
+    context "when it is a scalar" do
+      it "should return #model untouched" do
+        string_klass = Class.new RailsQL::Type do
+          kind :scalar
+        end
+        string = string_klass.new(
+          aliased_as: "string",
+          args_type: empty_type
+        )
+
+        string.model = "scalar"
+        expect(string.as_json).to eq "scalar"
+      end
     end
   end
 
@@ -109,17 +135,11 @@ describe RailsQL::Type do
 
     describe "#query_lambda" do
       it "calls FieldDefinition#query_lambda" do
-        pending
-        fail
-
         empty_lambda = ->(){}
         field_definition = instance_double RailsQL::Field::FieldDefinition,
           query_lambda: empty_lambda
 
         type = new_type field_definition: field_definition
-
-        # FAIL:
-        # the RailsQL::Field::FieldDefinition class does not implement the instance method: query_lambda
         expect(type.query_lambda).to eq empty_lambda
       end
     end
@@ -128,7 +148,7 @@ describe RailsQL::Type do
       it "calls FieldDefinition#resolve" do
         empty_lambda = ->(){}
         field_definition = instance_double RailsQL::Field::FieldDefinition,
-          resolve: empty_lambda
+          resolve_lambda: empty_lambda
 
         type = new_type field_definition: field_definition
         expect(type.resolve_lambda).to eq empty_lambda
@@ -145,11 +165,6 @@ describe RailsQL::Type do
 
         type = new_type args_type: args_type
         expect(type.args).to eq hash
-      end
-
-      it "should not explode when args_type is empty" do
-        type = new_type
-        expect(type.args).to eq nil
       end
     end
   end
@@ -170,7 +185,6 @@ describe RailsQL::Type do
     end
 
     describe "#resolve_tree_children" do
-      # XXX: really exactly the same as #query_tree_children?
       it "returns @field_types.values" do
         child1 = new_type
         child2 = new_type
@@ -184,8 +198,6 @@ describe RailsQL::Type do
       end
     end
   end
-
-
 end
 
 
