@@ -92,6 +92,10 @@ module RailsQL
         raise e, "#{e.message} on #{self}", e.backtrace
       end
 
+      def can?(action, field_name, on:)
+        field_definitions[field_name].can action, on: on
+      end
+
       # Adds a FieldDefinition to the data type
       #
       #   class UserType <

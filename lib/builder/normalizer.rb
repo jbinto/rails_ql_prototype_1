@@ -36,6 +36,19 @@ module RailsQL
 
       private
 
+      # For this query:
+      #   hero {
+      #     fiends @skip @include @whatever {
+      #       name
+      #     }
+      #   }
+      #
+      # Changes this:
+      #   hero -> friends -> names
+      #            #first_directive = @skip -> @include -> @whatever
+      #
+      # to this:
+      #   hero -> @skip -> @include -> @whatever -> friends -> name
       def self.wrap_child_in_directives!(parent_builder:, child_builder:)
         # Normalize directives by wrapping the child builder in it's
         # directive builder(s).

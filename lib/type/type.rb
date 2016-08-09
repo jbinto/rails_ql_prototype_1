@@ -7,6 +7,8 @@ module RailsQL
     attr_reader :args, :ctx, :anonymous, :model, :aliased_as, :args_type
     attr_accessor :field_types, :query
 
+    delegate :type_name, to: :class
+
     def initialize(
       aliased_as:,
       args_type:,
@@ -16,6 +18,8 @@ module RailsQL
       field_definition: nil,
       field_types: {}
     )
+      raise "args_type cannot be nil" if args_type.nil?
+      raise "aliased_as cannot be nil" if aliased_as.nil?
       @ctx = HashWithIndifferentAccess.new ctx
       @root = root
       @anonymous = anonymous
@@ -23,12 +27,6 @@ module RailsQL
       @args_type = args_type
       @field_types = field_types
       @aliased_as = aliased_as
-    end
-
-    def type_name
-      # XXX: ??? no class method called #field_definition
-      # there is #field_definitions, but that only has some introspection stuff in it.
-      self.class.field_definition.name
     end
 
     def field_or_arg_name
@@ -76,27 +74,24 @@ module RailsQL
     end
 
     def resolve_tree_children
-      ## XXX really? same as query_tree_children???
       field_types.values
     end
 
     def can?(action, field_name)
-      # undefined local variable or method `field_definitions'
-      field_definitions[field_name].permissions[action].any? do |permission|
-        instance_exec &permission
-      end
+      self.class.can? action, field_name, on: self
     end
 
     def as_json
       kind = self.class.type_definition.kind
       binding.pry
       if kind == :OBJECT
-        json = field_types.reduce({}) do |json, (k, field)|
-          if field.type.omit_from_json?
+        json = field_types.reduce({}) do |json, (k, child_type)|
+          if child_type.omit_from_json?
             json
           else
-            child_json = field.type.as_json
-            json.merge k.to_s => field.singular? ? child_json.first : child_json
+            json.merge(
+              k.to_s => child_type.as_json
+            )
           end
         end
       elsif kind == :ENUM || kind == :SCALAR
@@ -110,7 +105,6 @@ module RailsQL
     private
 
     def parse_value!(value)
-      # XXX: TODO: parse what?
       value
     end
 

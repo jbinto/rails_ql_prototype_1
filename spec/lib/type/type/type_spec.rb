@@ -23,7 +23,7 @@ describe RailsQL::Type do
     end
 
     it "does something with parse_value!" do
-      # not sure what it should do exactly.
+      # TODO: see type instances, they override this
       pending
       fail
     end
@@ -31,6 +31,7 @@ describe RailsQL::Type do
 
   describe "#type_name" do
     it "fails" do
+      # TODO: test that type_name delegates
       pending
       type = new_type
       type.type_name   # XXX fails

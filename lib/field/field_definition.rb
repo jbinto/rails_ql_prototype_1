@@ -83,6 +83,12 @@ module RailsQL
         @permissions[action] << permission_lambda
       end
 
+      def can?(action, on:)
+        @permissions[action].any? do |permission|
+          on.instance_exec &permission
+        end
+      end
+
     end
   end
 end
