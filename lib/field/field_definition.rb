@@ -10,8 +10,8 @@ module RailsQL
           type: nil,
           description: nil,
           args: nil,
-          resolve: nil,
-          query: nil,
+          resolve_lambda: nil,
+          query_lambda: nil,
           deprecated: false,
           deprecation_reason: "",
           child_ctx: {},
@@ -38,7 +38,7 @@ module RailsQL
           raise "ctx must be a Hash"
         end
 
-        opts.slice(:args, :resolve, :query).each do |k, v|
+        opts.slice(:args, :resolve_lambda, :query_lambda).each do |k, v|
           next if v.blank? || v.respond_to?(:call)
           raise ":#{k} must be either nil or a Lambda"
         end
