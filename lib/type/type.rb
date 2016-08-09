@@ -8,29 +8,32 @@ module RailsQL
     attr_accessor :field_types, :query
 
     def initialize(
+      aliased_as:,
+      args_type:,
       ctx: {},
       root: false,
       anonymous: false,
       field_definition: nil,
-      aliased_as:,
-      args_type:,
       field_types: {}
     )
-      @ctx = HashWithIndifferentAccess.new opts[:ctx]
+      @ctx = HashWithIndifferentAccess.new ctx
       @root = root
       @anonymous = anonymous
       @field_definition = field_definition
       @args_type = args_type
       @field_types = field_types
-      @name = name
       @aliased_as = aliased_as
     end
 
     def type_name
+      # XXX: ??? no class method called #field_definition
+      # there is #field_definitions, but that only has some introspection stuff in it.
       self.class.field_definition.name
     end
 
     def field_or_arg_name
+      # XXX: ??? @field_definition?
+      # TypeBuilder will give this to us? even for args?
       self.field_definition.name
     end
 
@@ -100,6 +103,7 @@ module RailsQL
     private
 
     def parse_value!(value)
+      # XXX: TODO: parse what?
       value
     end
 
