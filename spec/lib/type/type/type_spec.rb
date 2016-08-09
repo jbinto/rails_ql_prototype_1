@@ -210,6 +210,22 @@ describe RailsQL::Type do
         })
       end
     end
+
+    context "when it is an unsupported kind" do
+      it "should raise" do
+        interface_klass = Class.new RailsQL::Type do
+          kind :interface
+        end
+        interface = interface_klass.new(
+          aliased_as: "interface",
+          args_type: fake_type
+        )
+
+        expect{
+          interface.as_json
+        }.to raise_error
+      end
+    end
   end
 
   context "methods delegated to FieldDefinition" do
