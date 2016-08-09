@@ -18,7 +18,8 @@ module RailsQL
         :is_directive,
         :child_builders,
         :fragment_builders,
-        :variables
+        :variables,
+        :model
       )
 
       def initialize(

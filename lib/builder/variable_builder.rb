@@ -1,6 +1,15 @@
 # Pending dev time
 
-# require_relative "./type_builder.rb"
+require_relative "./type_builder.rb"
+
+module RailsQL
+  module Builder
+    class VariableBuilder < TypeBuilder
+      attr_accessor :variable_name, :of_type
+    end
+  end
+end
+
 #
 # module RailsQL
 #   module Builder
