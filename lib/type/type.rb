@@ -32,9 +32,9 @@ module RailsQL
     end
 
     def field_or_arg_name
-      # XXX: ??? @field_definition?
+      # XXX: ??? was self.field_definition?
       # TypeBuilder will give this to us? even for args?
-      self.field_definition.name
+      @field_definition.name
     end
 
     def initial_query
@@ -56,6 +56,8 @@ module RailsQL
     end
 
     def query_lambda
+      # FAIL:
+      # the RailsQL::Field::FieldDefinition class does not implement the instance method: query_lambda
       @field_definition.try :query_lambda
     end
 
@@ -64,6 +66,8 @@ module RailsQL
     end
 
     def args
+      # that this works when @args_type is nil is just a massive rails-driven
+      # coincidence
       @args_type.as_json
     end
 
@@ -72,10 +76,12 @@ module RailsQL
     end
 
     def resolve_tree_children
+      ## XXX really? same as query_tree_children???
       field_types.values
     end
 
     def can?(action, field_name)
+      # undefined local variable or method `field_definitions'
       field_definitions[field_name].permissions[action].any? do |permission|
         instance_exec &permission
       end
@@ -83,6 +89,7 @@ module RailsQL
 
     def as_json
       kind = self.class.type_definition.kind
+      binding.pry
       if kind == :OBJECT
         json = field_types.reduce({}) do |json, (k, field)|
           if field.type.omit_from_json?

@@ -21,7 +21,7 @@ module RailsQL
       end
 
       attr_reader(
-        *self.default_opts.except(:args).keys,
+        *self.default_opts.except(:args).keys,   # XXX why?
         :name,
         :permissions
       )
