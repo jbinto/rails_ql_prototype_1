@@ -45,6 +45,7 @@ module RailsQL
       # ========================================================================
 
       def visit_argument(node)
+        create_type_builder_if_within_field!
         @builder_stack.push current_builder.arg_type_builder
         visit_node! :argument, node
       end
@@ -56,11 +57,13 @@ module RailsQL
         #   visit_variable_definition_default_value node
         # else
         if true
-          input_builder = current_builder.child_builders << TypeBuilder.new(
+          input_builder = TypeBuilder.new(
             name: @current_name,
+            aliased_as: @current_name,
             model: node.try(:value),
             is_input: true
           )
+          current_builder.child_builders << input_builder
           @builder_stack.push input_builder
         end
         @current_name = nil
@@ -149,6 +152,13 @@ module RailsQL
         current_operation.name = node.value
       end
 
+      def end_visit_operation_definition(node)
+        if @operations.length > 1 && @operations.any?{|op| op.name == nil}
+          raise "cannot have multiple anonomous operations in a query document"
+        end
+        end_visit_builder_node node
+      end
+
       # Variables
       # ========================================================================
 
@@ -160,7 +170,7 @@ module RailsQL
       end
 
       def variable_builder
-        ap current_builder
+        # ap current_builder
         unless current_builder.is_a? VariableBuilder
           raise "not a variable definition builder"
         end
@@ -178,7 +188,7 @@ module RailsQL
       end
 
       def visit_variable_definition_named_type(node)
-        variable_builder.type_klass = node.value
+        variable_builder.of_type = node.value
       end
 
       def visit_variable_definition_default_value(node)
@@ -212,13 +222,14 @@ module RailsQL
         # alias and name is only present if a type builder has not yet been
         # defined
         if @node_stack.last == :field && @alias_and_name.present?
-          child_builder = current_builder.child_builders << TypeBuilder.new(
+          child_builder = TypeBuilder.new(
             name: @alias_and_name.name,
-            aliased_as: @alias_and_name.aliased_as,
+            aliased_as: @alias_and_name.aliased_as || @alias_and_name.name,
             arg_type_builder: TypeBuilder.new(
               is_input: true
             )
           )
+          current_builder.child_builders <<  child_builder
           @builder_stack.push child_builder
           @alias_and_name = nil
         end
@@ -227,11 +238,6 @@ module RailsQL
       def visit_selection_set(node)
         create_type_builder_if_within_field!
         visit_node! :selection_set, node
-      end
-
-      def visit_argument(node)
-        create_type_builder_if_within_field!
-        visit_node! :argument, node
       end
 
       def end_visit_field(node)
@@ -297,7 +303,6 @@ module RailsQL
       (INPUT_VALUE_SYMS + [
         :inline_fragment,
         :fragment_definition,
-        :operation_definition,
         :variable_definition,
         :directive,
         :argument

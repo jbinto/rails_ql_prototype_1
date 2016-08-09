@@ -2,66 +2,57 @@ require "spec_helper"
 require_relative "./visitor_spec_helper"
 
 describe RailsQL::Builder::Visitor do
-  let(:query_root_builder) { instance_double "RailsQL::Builder::TypeBuilder" }
-  let(:mutation_root_builder) { instance_double "RailsQL::Builder::TypeBuilder" }
-  let(:visitor) {RailsQL::Builder::Visitor.new(
-    query_root_builder: query_root_builder,
-    mutation_root_builder: mutation_root_builder
-  )}
+  let(:visitor) {RailsQL::Builder::Visitor.new}
+  let(:root_builder) {visitor.operations.first.root_builder}
 
   def visit_graphql(graphql)
-    ast = GraphQL::Parser.parse(graphql)
+    ast = GraphQL::Parser.parse graphql
     visitor.accept ast
   end
 
-  before :each do
-    allow_any_instance_of(double.class).to receive(
-      :fragments
-    ).and_return []
-    allow_any_instance_of(query_root_builder.class).to receive(
-      :fragments
-    ).and_return []
-    allow(mutation_root_builder).to receive(
-      :fragments
-    ).and_return []
+  def names_and_aliases_in(parent_builder)
+    parent_builder.child_builders.map do |child_builder|
+      {
+        name: child_builder.name,
+        aliased_as: child_builder.aliased_as
+      }
+    end
   end
 
   describe "#accept" do
-    it "calls builder#add_child_builder! for each child field node" do
-      expect(query_root_builder).to receive(:add_child_builder!).with(
-        name: 'hero',
-        aliased_as: nil
-      )
-
+    it "adds a builder for a field" do
       visit_graphql "query { hero }"
+
+      expect(names_and_aliases_in root_builder).to eq [{
+        name: "hero",
+        aliased_as: "hero"
+      }]
     end
 
     context "aliases" do
-      it "calls builder#add_child_builder! for each child field node" do
-        expect(query_root_builder).to receive(:add_child_builder!).with(
+      it "adds a builder for a field" do
+        visit_graphql "query { megaman: hero }"
+
+        expect(names_and_aliases_in root_builder).to eq [{
           name: "hero",
           aliased_as: "megaman"
-        )
-        visit_graphql "query { megaman: hero }"
+        }]
       end
 
-      it "parses nested fields" do
-        type_builder = instance_double "RailsQL::Builder::TypeBuilder"
-
-        expect(query_root_builder).to receive(:add_child_builder!).with(
-          name: "hero",
-          aliased_as: "megaman"
-        ).and_return type_builder
-        expect(type_builder).to receive(:add_child_builder!).with(
-          name: "reasons",
-          aliased_as: "stuff"
-        )
-        expect(type_builder).to receive(:add_child_builder!).with(
-          name: "wat",
-          aliased_as: nil
-        )
-
+      it "adds nested builders for nested fields" do
         visit_graphql "query { megaman: hero {stuff: reasons, wat} }"
+        hero_builder = root_builder.child_builders.first
+
+        expect(names_and_aliases_in hero_builder).to eq [
+          {
+            name: "reasons",
+            aliased_as: "stuff"
+          },
+          {
+            name: "wat",
+            aliased_as: "wat"
+          }
+        ]
       end
     end
 
@@ -321,94 +312,92 @@ describe RailsQL::Builder::Visitor do
     end
 
     context "when mutations are present" do
-      it "follows query workflow but applies it to the mutation_root_builder" do
-        expect(query_root_builder).to_not receive(:add_child_builder!)
-        expect(mutation_root_builder).to receive(:add_child_builder!).with(
-          name: 'createHero',
-          aliased_as: nil
-        )
+      it "follows query workflow" do
+        visit_graphql <<-GRAPHQL
+          mutation { createHero }
+        GRAPHQL
 
-        visit_graphql <<-GraphQL
-          mutation {
-            createHero
-          }
-        GraphQL
+        expect(names_and_aliases_in root_builder).to eq [{
+          name: "createHero",
+          aliased_as: "createHero"
+        }]
       end
     end
 
     context "with args" do
-      it "adds input objects" do
-        hero_builder = instance_double "RailsQL::Type::Builder"
-        stuff_builder = instance_double "RailsQL::Type::Builder"
-        allow(query_root_builder).to receive(:add_child_builder!).and_return(
-          hero_builder
-        )
-        allow(hero_builder).to receive(:is_input?).and_return false
-        expect(hero_builder).to receive(:add_arg_builder!).with(
-          name: "stuff",
-          model: nil
-        ).and_return stuff_builder
-        expect(stuff_builder).to receive(:add_child_builder!).with(
-          name: "reasons",
-          model: "5"
-        )
-        allow(stuff_builder).to receive(:is_input?).and_return true
+      it "adds type builders for scalars" do
+        visit_graphql <<-GRAPHQL
+          query { hero(id: 3) }
+        GRAPHQL
 
-        visit_graphql "query { hero(stuff: {reasons: 5}) }"
+        hero_builder = root_builder.child_builders.first
+        args_builder = hero_builder.arg_type_builder
+        id_builder = args_builder.child_builders.first
+
+        expect(names_and_aliases_in hero_builder).to eq []
+        expect(names_and_aliases_in args_builder).to eq [{
+          name: "id",
+          aliased_as: "id"
+        }]
+        expect(id_builder.model).to eq "3"
+        input_builders = [args_builder, id_builder]
+        expect(input_builders.all? &:is_input?).to eq true
       end
 
-      it "calls builder#add_arg_builder! for each arg" do
-        hero_builder = instance_double "RailsQL::Type::Builder"
-        allow(query_root_builder).to receive(:add_child_builder!).and_return(
-          hero_builder
-        )
-        allow(hero_builder).to receive(:is_input?).and_return false
-        expect(hero_builder).to receive(:add_arg_builder!).with(
-          name: "id",
-          model: "3"
-        )
+      it "adds type builders for input objects" do
+        visit_graphql "query { hero(stuff: {reasons: 5}) }"
 
-        visit_graphql "query { hero(id: 3) }"
+        hero_builder = root_builder.child_builders.first
+        args_builder = hero_builder.arg_type_builder
+        stuff_builder = args_builder.child_builders.first
+        reasons_builder = stuff_builder.child_builders.first
+        input_builders = [args_builder, stuff_builder, stuff_builder]
+
+        expect(names_and_aliases_in hero_builder).to eq []
+        expect(names_and_aliases_in args_builder).to eq [{
+          name: "stuff",
+          aliased_as: "stuff"
+        }]
+        expect(names_and_aliases_in stuff_builder).to eq [{
+          name: "reasons",
+          aliased_as: "reasons"
+        }]
+        expect(reasons_builder.model).to eq "5"
+        expect(input_builders.all? &:is_input?).to eq true
       end
     end
 
     context "containing lists" do
-      it "calls builder#add_arg_builder! for each scalar in the list" do
-        hero_builder = instance_double "RailsQL::Type::Builder"
-        allow(query_root_builder).to receive(:add_child_builder!).and_return(
-          hero_builder
-        )
-        allow(hero_builder).to receive(:is_input?).and_return false
-        # expect(hero_builder).to receive(:add_arg_builder!).with(
-        #   name: "ids",
-        #   model: "[1, 2, 3]"
-        # )
-        allow(hero_builder).to receive(:add_arg_builder!)
-
+      it "adds type builders for each scalar in the list" do
         visit_graphql "query { hero(ids: [1, 2, 3]) }"
+
+        hero_builder = root_builder.child_builders.first
+        args_builder = hero_builder.arg_type_builder
+        ids_builder = args_builder.child_builders.first
+
+        expect(ids_builder.child_builders.length).to eq 3
+        expect(ids_builder.child_builders.map &:model).to eq ["1", "2", "3"]
+        expect(ids_builder.child_builders.all? &:is_input?).to eq true
       end
 
-      it "calls builder#add_arg_builder! for each input object in the list" do
-        hero_builder = instance_double "RailsQL::Type::Builder"
-        allow(query_root_builder).to receive(:add_child_builder!).and_return(
-          hero_builder
-        )
-        allow(hero_builder).to receive(:is_input?).and_return false
-        # expect(hero_builder).to receive(:add_arg_builder!).with(
-        #   name: "ids",
-        #   model: "[1, 2, 3]"
-        # )
-        allow(hero_builder).to receive(:add_arg_builder!)
+      it "adds type builders for each input object in the list" do
+        visit_graphql "query { hero(id_objs: [{id: 1}, {id: 2}]) }"
 
-        visit_graphql "query { hero(heroes: [{id: 1}, {id: 2}]) }"
+        hero_builder = root_builder.child_builders.first
+        args_builder = hero_builder.arg_type_builder
+        id_objs_builder = args_builder.child_builders.first
+        scalar_builders = id_objs_builder.child_builders
+          .map(&:child_builders)
+          .flatten
+
+        expect(id_objs_builder.child_builders.length).to eq 2
+        expect(id_objs_builder.child_builders.all? &:is_input?).to eq true
+        expect(scalar_builders.map &:name).to eq ["id", "id"]
+        expect(scalar_builders.map &:model).to eq ["1", "2"]
       end
     end
 
     context "operations" do
-      before :each do
-        allow(query_root_builder).to receive :add_child_builder!
-        allow(mutation_root_builder).to receive :add_child_builder!
-      end
 
       it "sets the operation name to nil for anonomous operations" do
         visit_graphql <<-GraphQL
@@ -490,11 +479,6 @@ describe RailsQL::Builder::Visitor do
       context "multiple operations in a single query document" do
         context "without names" do
           it "throws an error" do
-            hero_builder = instance_double "RailsQL::Type::Builder"
-            allow(query_root_builder).to(
-              receive(:add_child_builder!).and_return hero_builder
-            )
-
             expect{ visit_graphql <<-GraphQL }.to raise_error
               query {
                 hero {name}
@@ -508,15 +492,6 @@ describe RailsQL::Builder::Visitor do
 
         context "with names" do
           it "instantiates a root builder for each operation" do
-            expect(mutation_root_builder).to receive(:add_child_builder!).with(
-              name: 'createHero',
-              aliased_as: nil
-            )
-            expect(query_root_builder).to receive(:add_child_builder!).with(
-              name: 'name',
-              aliased_as: nil
-            )
-
             visit_graphql <<-GraphQL
               mutation A {
                 createHero
@@ -533,22 +508,15 @@ describe RailsQL::Builder::Visitor do
       end
     end
 
-    context "with variable references" do
-      it "adds variables references to the builder" do
-        @hero_builder = instance_double "RailsQL::Type::Builder"
-        expect(query_root_builder).to receive(:add_child_builder!).with(
-          name: 'createHero',
-          aliased_as: nil
-        ).and_return @hero_builder
-        expect(@hero_builder).to receive(:add_variable).with(
-          argument_name: "hero",
-          variable_name: "cow"
-        )
+    context "with variable definitions" do
+      it "adds variables definitions to the builder" do
         visit_graphql <<-GraphQL
-          query {
-            createHero(hero: $cow)
-          }
+          query($cow: HeroType) { moo }
         GraphQL
+
+        variable_builders = visitor.operations.first.variable_builders
+        expect(variable_builders["cow"].variable_name).to eq "cow"
+        expect(variable_builders["cow"].of_type).to eq "HeroType"
       end
     end
 
