@@ -8,7 +8,7 @@ module RailsQL
       # fragments and making fragments on unioned types explicit
       def self.normalize!(
         field_definition: nil,
-        type_klass: nil,
+        type_klass:,
         builder:
       )
         # normalize fragments
@@ -36,7 +36,7 @@ module RailsQL
 
       private
 
-      def wrap_child_in_directives!(parent_builder:, child_builder:)
+      def self.wrap_child_in_directives!(parent_builder:, child_builder:)
         # Normalize directives by wrapping the child builder in it's
         # directive builder(s).
         directive_builder = child_builder.first_directive_builder
@@ -52,7 +52,7 @@ module RailsQL
         end
       end
 
-      def inline_fragment_builders!(
+      def self.inline_fragment_builders!(
         type_klass:,
         builder:
       )
@@ -76,7 +76,7 @@ module RailsQL
           end
       end
 
-      def validate_fragment_builder!(
+      def self.validate_fragment_builder!(
         type_klass:,
         builder:
       )

@@ -18,25 +18,26 @@ module RailsQL
       ast = GraphQL::Parser.parse opts[:query]
       visitor.accept ast
 
+      # TODO: parse variables and create builders
+      variable_builders = []
+
       # the visitor returns one root builder per operation in the query document
       if visitor.operations.length > 1
         raise "Can not execute multiple operations in one query document"
       end
       operation = visitor.operations.first
       root_builder = operation.root_builder
-      # Normalize variable and fragment builders into type builders (TODO!)
-      # root = root_builder
-      #   .normalize_fragments!
-      #   .normalize_variables!
-      # OR
-      # RailQL::Builder::FragmentNormalizer.normalize!(operation)
-      # RailQL::Builder::VariablesNormalizer.normalize!(operation)
-
+      # Normalize directives and fragments into type builders
+      Builder::Normalizer.normalize!(
+        type_klass: root_types[operation.operation_type],
+        builder: root_builder
+      )
       # Build types
       root = RailQL::Builder::TypeFactory.build!(
         type_klass: root_types[operation.operation_type],
         builder: root_builder,
-        ctx: opts[:ctx]
+        ctx: opts[:ctx],
+        variable_builders: variable_builders
       )
       # Execution:
       # 1. Permissions check
