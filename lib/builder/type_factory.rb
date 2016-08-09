@@ -32,8 +32,14 @@ module RailsQL
         end
         # Build the children for modifier types (ie. lists and non-nullable)
         # and directives
-        if type_klass.responds_to?(:of_type) || builder.is_a?(DirectiveBuilder)
+        if type_klass.responds_to?(:of_type) || builder.directive?
           opts = opts.merge build_modifier_type_opts!(
+            type_klass: type_klass,
+            builder: builder,
+            child_ctx: child_ctx
+          )
+        elsif type_klass.is_a? Union
+          opts[:unioned_types] = build_unioned_types!(
             type_klass: type_klass,
             builder: builder,
             child_ctx: child_ctx
@@ -83,6 +89,20 @@ module RailsQL
           )
         end
         return opts
+      end
+
+      def build_unioned_types!(
+        type_klass:,
+        builder:,
+        child_ctx:
+      )
+        raise "Unions are not currently supported"
+        # builder.child_builders.each do |child_builder|
+        #   next if child_builder.try(:defined_on).blank?
+        #   unioned_type = type_klass.find_unioned_type(
+        #     fragment_builder.defined_on
+        #   )
+        # end
       end
 
       def build_fields_or_args!(

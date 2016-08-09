@@ -7,7 +7,8 @@ module RailsQL
         :name,
         :aliased_as,
         :directive_name,
-        :first_directive_builder
+        :first_directive_builder,
+        :unioned_type_klass
       )
 
       attr_reader(
@@ -89,7 +90,7 @@ module RailsQL
       #     unless valid
       #       msg = <<-ERROR.strip_heredoc
       #         #{variable_name} is of the wrong type #{variable_type_name} for
-      #         #{argument_name} on #{type_klass.type_definition.type_name}"
+      #         #{argument_name} on #{type_klass.type_name}"
       #       ERROR
       #       raise ArgTypeError, msg
       #     end
@@ -107,13 +108,13 @@ module RailsQL
     #       # Union fragments get applied to the child builders for the applicable
     #       # type inside the Union unless they are requesting the __typename meta
     #       # field
-    #       if type_klass.is_a?(RailsQL::Union) && fragment_klass != type_klass
+          if type_klass.is_a?(RailsQL::Union) && fragment_klass != type_klass
     #         # ap "UNION"
     #         # ap fragment_klass
     #         # ap type_klass
-    #         fragment_type_name = fragment_klass.type_name
-    #         child_builder = add_child_builder! fragment_type_name
-    #         child_builder.add_fragment_builder! builder
+            fragment_type_name = fragment_klass.type_name
+            child_builder = add_child_builder! fragment_type_name
+            child_builder.add_fragment_builder! builder
     #       # Non-union types simply add the fragment to the builder for later
     #       # resolution (see TypeBuilder#resolve_fragments!)
     #       elsif fragment_klass == type_klass
@@ -124,7 +125,7 @@ module RailsQL
     #         msg = <<-ERROR.strip_heredoc.gsub("\n", "").strip
     #           Fragment is defined on #{fragment_type_name}
     #           but fragment spread is on an incompatible type
-    #           (#{type_klass.type_definition.type_name})
+    #           (#{type_klass.type_name})
     #         ERROR
     #         raise InvalidFragment, msg
     #       end

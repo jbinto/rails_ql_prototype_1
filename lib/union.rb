@@ -28,6 +28,20 @@ module RailsQL
       resolve_tree_children.first.as_json
     end
 
+    def self.valid_fragment_type_names
+      type_names = [type_definition.type_name]
+      type_names << union_definitions.map do |definition|
+        definition.type_klass.type_name
+      end
+      return type_names
+    end
+
+    def self.find_unioned_type(name)
+      union_definitions
+        .select {|definition| definition.type_name == name}
+        .type_klass
+    end
+
     def self.union_definitions
       @union_definitions ||= {}
     end

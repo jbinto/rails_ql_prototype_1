@@ -4,8 +4,14 @@ require_relative "../field/field_definition_collection.rb"
 module RailsQL
   class Type
     module ClassMethods
-      def type_name(next_name)
-        @type_name = next_name.try :strip
+      def type_name(*args)
+        if args.length == 1
+          @type_name = args.first.try :strip
+        elsif args.length == 0
+          @type_name
+        else
+          raise "type_name takes 0 or 1 argument"
+        end
       end
 
       def description(description=nil)
@@ -51,6 +57,10 @@ module RailsQL
           enum_values: @enum_values || {},
           description: @description,
         )
+      end
+
+      def self.valid_fragment_type_names
+        [type_definition.type_name]
       end
 
       def type?

@@ -28,6 +28,8 @@ module RailsQL
 
       alias_method :deprecated?, :deprecated
 
+      delegate :type_name to: :type_klass
+
       def initialize(name, opts)
         defaults = self.class.default_opts
         opts = defaults.merge opts.slice *defaults.keys
