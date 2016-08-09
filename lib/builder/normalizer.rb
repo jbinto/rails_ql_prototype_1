@@ -73,8 +73,7 @@ module RailsQL
             # first-class fragment spread type may need to be created at they
             # type level and used in the query tree.
 
-            ## XXX *?
-            builder.child_builders << fragment_builder.child_builders
+            builder.child_builders.concat fragment_builder.child_builders
           end
         end
       end
