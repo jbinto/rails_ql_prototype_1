@@ -53,7 +53,7 @@ module RailsQL
       def type_definition
         return OpenStruct.new(
           name: @type_name || to_s,
-          kind: @kind || :OBJECT,
+          kind: @kind || :object,
           enum_values: @enum_values || {},
           description: @description,
         )

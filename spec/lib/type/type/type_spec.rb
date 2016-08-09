@@ -13,8 +13,18 @@ describe RailsQL::Type do
     described_class.new opts
   end
 
-  def empty_type
+  def fake_type
     instance_double RailsQL::Type
+  end
+
+  def object_klass
+    Class.new RailsQL::Type
+  end
+
+  def string_klass
+    Class.new RailsQL::Type do
+      kind :scalar
+    end
   end
 
   describe "#new" do
@@ -31,13 +41,13 @@ describe RailsQL::Type do
     end
 
     it "sets with result of parse_value! instance method" do
-      Foo = Class.new RailsQL::Type do
+      foo_klass = Class.new RailsQL::Type do
         def parse_value!(value)
           value.upcase
         end
       end
 
-      type = Foo.new aliased_as: "foo", args_type: empty_type
+      type = foo_klass.new aliased_as: "foo", args_type: fake_type
       type.model = "should_become_uppercase"
 
       expect(type.model).to eq("SHOULD_BECOME_UPPERCASE")
@@ -57,7 +67,7 @@ describe RailsQL::Type do
         foo_klass = Class.new RailsQL::Type do
           initial_query ->{"foo_initial_query"}
         end
-        foo = foo_klass.new aliased_as: "foo", args_type: empty_type
+        foo = foo_klass.new aliased_as: "foo", args_type: fake_type
         expect(foo.initial_query).to eq("foo_initial_query")
       end
     end
@@ -65,7 +75,7 @@ describe RailsQL::Type do
     context "when type class has no initial_query call" do
       it "returns nil" do
         foo_klass = Class.new RailsQL::Type
-        foo = foo_klass.new aliased_as: "foo", args_type: empty_type
+        foo = foo_klass.new aliased_as: "foo", args_type: fake_type
         expect(foo.initial_query).to eq nil
       end
     end
@@ -92,7 +102,7 @@ describe RailsQL::Type do
   describe "#can?" do
     it "delegates to self.class.can?" do
       foo_klass = Class.new RailsQL::Type
-      foo = foo_klass.new aliased_as: "foo", args_type: empty_type
+      foo = foo_klass.new aliased_as: "foo", args_type: fake_type
 
       # stub out call to class method
       expect(foo_klass).to receive(:can?).with(:query, "bar", on: foo)
@@ -106,21 +116,97 @@ describe RailsQL::Type do
   describe "#as_json" do
     context "when it is a scalar" do
       it "should return #model untouched" do
-        string_klass = Class.new RailsQL::Type do
-          kind :scalar
-        end
         string = string_klass.new(
           aliased_as: "string",
-          args_type: empty_type
+          args_type: fake_type
         )
 
-        string.model = "scalar"
-        expect(string.as_json).to eq "scalar"
+        string.model = "lazers"
+        expect(string.as_json).to eq "lazers"
+      end
+    end
+
+    context "when it is an object that has scalar fields" do
+      it "calls as_json on the scalars" do
+        hello = string_klass.new(
+          aliased_as: "hello",
+          args_type: fake_type
+        )
+        world = string_klass.new(
+          aliased_as: "world",
+          args_type: fake_type
+        )
+        hello.model = "bonjour"
+        world.model = "monde"
+
+        object = object_klass.new(
+          aliased_as: "object",
+          args_type: fake_type,
+          field_types: {
+            "hello" => hello,
+            "world" => world
+          }
+        )
+
+        expect(object.as_json).to eq({
+          "hello" => "bonjour",
+          "world" => "monde"
+        })
+      end
+    end
+
+    context "when it is an object that has #omit_from_json? => true" do
+      it "returns json untouched" do
+        omitted_klass = Class.new RailsQL::Type do
+          def omit_from_json?
+            true
+          end
+        end
+        hello = string_klass.new aliased_as: "hello", args_type: fake_type
+        hello.model = "bonjour"
+        omitted = omitted_klass.new(
+          aliased_as: "omitted",
+          args_type: fake_type
+        )
+        root = object_klass.new(
+          aliased_as: "root",
+          args_type: fake_type,
+          field_types: { "omitted" => omitted, "hello" => hello }
+        )
+
+        expect(root.as_json).to eq({
+          "hello" => "bonjour"
+        })
+      end
+    end
+
+    context "when it is an object that has object fields" do
+      it "recursively calls as_json on objects until it reaches a scalar" do
+        # e.g. { products { hats { images { url }}}}
+        def new_string_klass(name)
+          string_klass.new(aliased_as: name, args_type: fake_type)
+        end
+
+        def new_object_klass(name, field_types: {})
+          object_klass.new(
+            aliased_as: name,
+            args_type: fake_type,
+            field_types: field_types
+          )
+        end
+
+        url = new_string_klass "url"
+        images = new_object_klass "images", field_types: { "url" => url }
+        hats = new_object_klass "hats", field_types: { "images" => images }
+        products = new_object_klass "products", field_types: { "hats" => hats }
+
+        pending
+        fail
+
+
       end
     end
   end
-
-
 
   context "methods delegated to FieldDefinition" do
     describe "#field_or_arg_name" do
