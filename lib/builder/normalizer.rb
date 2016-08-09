@@ -11,7 +11,7 @@ module RailsQL
         type_klass: nil,
         builder:
       )
-        # normalize fragments on non-unions (inlining)
+        # normalize fragments
         inline_fragment_builders!(
           builder: builder
           type_klass: type_klass
@@ -23,10 +23,15 @@ module RailsQL
             child_builder: child_builder
           )
         end
-        # normalize fragments on unions (nested builder instantiation)
-        if type_klass.is_a? RailsQL::Union
+        # recurse into children
+        builder.child_builders.each do |child_builder|
+          field_definition = type_klass.field_definitions[child_builder.name],
+          normalize!(
+            field_definition: field_definition,
+            type_klass: field_definition.type_klass,
+            builder: child_builder
+          )
         end
-        # TODO: recurse into children
       end
 
       private
