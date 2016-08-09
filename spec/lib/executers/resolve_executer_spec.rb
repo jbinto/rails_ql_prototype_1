@@ -48,11 +48,14 @@ describe RailsQL::Executers::ResolveExecuter do
 
   context "given `products(only_in_stock: true, top: 50) { image { ... }`" do
     it "calls model= on child with result of resolve_lambda" do
-      # e.g. { products(only_in_stock: true, top: 50) { image { ... } }}
+      # e.g. { products(only_in_stock: true, top: 50) { upc, image { ... } }}
       image = node_with_no_children name: "Image"
-      products = node_with_children [image], name: "Products"
+      upc = node_with_no_children name: "UPC"
+      products = node_with_children [upc, image], name: "Products"
       root = node_with_children [products], name: "Root"
 
+      # Ensure that resolve_lambda is called with correct args,
+      # child_query, and self reference.
       stub_args on: products, args: { only_in_stock: true, top: 50 }
       stub_query on: products, query: "query_for_products"
       stub_resolve_lambda on: products
@@ -62,6 +65,17 @@ describe RailsQL::Executers::ResolveExecuter do
         self: root
       })
 
+      # It should recurse the tree downwards...
+      stub_empty_args on: upc
+      stub_query on: upc, query: "query_for_upc"
+      stub_resolve_lambda on: upc
+      expect(upc).to receive(:model=).with({
+        args: {},
+        child_query: "query_for_upc",
+        self: products
+      })
+
+      # ..and should also walk the tree side-to-side.
       stub_empty_args on: image
       stub_query on: image, query: "query_for_image"
       stub_resolve_lambda on: image
@@ -72,6 +86,13 @@ describe RailsQL::Executers::ResolveExecuter do
       })
 
       run_resolve_executer_test(root: root)
+    end
+  end
+
+  context "when there is no resolve lambda" do
+    ## TODO
+    it "fails" do
+      fail
     end
   end
 end
