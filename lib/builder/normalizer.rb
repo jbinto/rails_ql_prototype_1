@@ -56,7 +56,6 @@ module RailsQL
             type_klass: builder.type_klass,
             builder: fragment_builder
           )
-
           if (
             type_klass.is_a?(RailsQL::Union) &&
             fragment_builder.defined_on != type_klass.type_name
@@ -64,6 +63,10 @@ module RailsQL
             raise "Unions are not currently supported"
             # builder.child_builders << fragment_builder
           else
+            # TODO: this will not work for fragment spread with directives.
+            # for directives on spreads and fragment definitions a
+            # first-class fragment spread type may need to be created at they
+            # type level and used in the query tree.
             builder.child_builders << *fragment_builder.child_builders
           end
       end
