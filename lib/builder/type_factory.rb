@@ -13,55 +13,59 @@ module RailsQL
       # Recursively build and return an instance of `type_klass` and it's
       # children based on the builder, field definition and ctx.
       def build!(field_definition: nil, type_klass:, builder:, ctx:)
-        # Build ctx and opts to be passed to the `type_klass` constructor
-        child_ctx = ctx.merge(field_definition.try(:child_ctx) || {})
-        opts = {
-          ctx: child_ctx,
-          root: builder.try(:root) || false,
-          field_definition: field_definition,
-          aliased_as: builder.aliased_as || builder.name
-        }
-        # Fields have an arg type builder. Recursively build the fields
-        # arguments and their nested input objects (if any exist).
-        if builder.try(:arg_type_builder).present?
-          opts[:args_type] = build!(
-            type_klass: field_definition.args_type_klass,
-            builder: builder.arg_type_builder,
-            ctx: child_ctx
-          )
+        raise "Type klass cannot be nil" if type_klass.nil?
+        raise "ctx cannot be nil" if ctx.nil?
+        begin
+          # Build ctx and opts to be passed to the `type_klass` constructor
+          child_ctx = ctx.merge(field_definition.try(:child_ctx) || {})
+          opts = {
+            ctx: child_ctx,
+            root: builder.try(:root) || false,
+            field_definition: field_definition,
+            aliased_as: builder.aliased_as || builder.name
+          }
+          # Fields have an arg type builder. Recursively build the fields
+          # arguments and their nested input objects (if any exist).
+          if builder.try(:arg_type_builder).present?
+            opts[:args_type] = build!(
+              type_klass: field_definition.args_type_klass,
+              builder: builder.arg_type_builder,
+              ctx: child_ctx
+            )
+          end
+          # Build the children for modifier types (ie. lists and non-nullable)
+          # and directives
+          if type_klass.respond_to?(:of_type) || builder.directive?
+            opts = opts.merge build_modifier_type_opts!(
+              type_klass: type_klass,
+              builder: builder,
+              child_ctx: child_ctx
+            )
+          elsif type_klass.is_a? Union
+            opts[:unioned_types] = build_unioned_types!(
+              type_klass: type_klass,
+              builder: builder,
+              child_ctx: child_ctx
+            )
+          # Build fields for non-modifier types
+          else
+            opts[:field_types] = build_fields_or_args!(
+              type_klass: type_klass,
+              builder: builder,
+              child_ctx: child_ctx
+            )
+          end
+          # Once recursion is complete instantiate and return the type klass
+          type = type_klass.new opts
+          type.model = builder.try :model
+          return type
+        rescue Exception => e
+          name = field_definition.try(:name) || type_klass.type_name
+          msg = <<-ERROR.strip_heredoc
+             #{e.message} on #{name}
+           ERROR
+           raise e, msg, e.backtrace
         end
-        # Build the children for modifier types (ie. lists and non-nullable)
-        # and directives
-        if type_klass.respond_to?(:of_type) || builder.directive?
-          opts = opts.merge build_modifier_type_opts!(
-            type_klass: type_klass,
-            builder: builder,
-            child_ctx: child_ctx
-          )
-        elsif type_klass.is_a? Union
-          opts[:unioned_types] = build_unioned_types!(
-            type_klass: type_klass,
-            builder: builder,
-            child_ctx: child_ctx
-          )
-        # Build fields for non-modifier types
-        else
-          opts[:field_types] = build_fields_or_args!(
-            type_klass: type_klass,
-            builder: builder,
-            child_ctx: child_ctx
-          )
-        end
-        # Once recursion is complete instantiate and return the type klass
-        type = type_klass.new opts
-        type.model = builder.try :model
-        return type
-      rescue Exception => e
-        name = field_definition.try(:name) || type_klass.type_name
-        msg = <<-ERROR.strip_heredoc
-           #{e.message} on #{name}
-         ERROR
-         raise e, msg, e.backtrace
       end
 
       private
