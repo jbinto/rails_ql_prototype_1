@@ -14,16 +14,18 @@ describe RailsQL::Executers::ResolveExecuter do
 
   def node_with_no_children(name: "NodeWithNoChildren")
     node = make_node name
-    expect(node).to receive(:resolve_tree_children).and_return([])
+    allow(node).to receive(:resolve_tree_children).and_return([])
     return node
   end
 
   def node_with_children(children, name: "NodeWithChildren")
     node = make_node name
-    expect(node).to receive(:resolve_tree_children).and_return(children)
+    allow(node).to receive(:resolve_tree_children).and_return(children)
     return node
   end
 
+  # This lambda just returns a canned response of the args it was called
+  # with and the current context of `self`.
   def stub_resolve_lambda(on:)
     allow(on).to receive(:resolve_lambda).and_return(
       ->(args, child_query){{
@@ -34,8 +36,12 @@ describe RailsQL::Executers::ResolveExecuter do
     )
   end
 
+  def stub_empty_resolve_lambda(on:)
+    allow(on).to receive(:resolve_lambda).and_return nil
+  end
+
   def stub_args(on:, args:)
-    expect(on).to receive(:args).and_return(args)
+    allow(on).to receive(:args).and_return(args)
   end
 
   def stub_empty_args(on:)
@@ -43,7 +49,7 @@ describe RailsQL::Executers::ResolveExecuter do
   end
 
   def stub_query(on:, query:)
-    expect(on).to receive(:query).and_return(query)
+    allow(on).to receive(:query).and_return(query)
   end
 
   context "given `products(only_in_stock: true, top: 50) { image { ... }`" do
@@ -90,9 +96,73 @@ describe RailsQL::Executers::ResolveExecuter do
   end
 
   context "when there is no resolve lambda" do
-    ## TODO
-    it "fails" do
-      fail
+    context "and there is no default implementation" do
+      it "raises an error" do
+        # Mock: Scalar field `url`
+        url = node_with_no_children name: "URL"
+        stub_empty_args on: url
+        stub_query on: url, query: "query_for_url"
+        stub_empty_resolve_lambda on: url
+        expect(url).to receive(:field_or_arg_name).and_return "url"
+
+        # Mock: Normal Root object (i.e. with no #url method)
+        root = node_with_children [url], name: "Root"
+        allow(root).to receive(:model)
+
+        expect{
+          run_resolve_executer_test(root: root)
+        }.to raise_error /does not have an explicit resolve/
+      end
+    end
+
+    context "parent type responds_to $FIELD_NAME" do
+      it "resolves using that method" do
+        # Mock: Scalar field `url`
+        url = node_with_no_children name: "URL"
+        stub_empty_args on: url
+        stub_query on: url, query: "query_for_url"
+        stub_empty_resolve_lambda on: url
+        expect(url).to receive(:field_or_arg_name).and_return "url"
+
+        # Mock: Root object that has #url method
+        #   (Note: Due to verifying doubles, need to subclass in order to
+        #   not have RSpec warn about #url not existing on RailsQL::Type)
+        root_klass = Class.new RailsQL::Type do
+          def url
+          end
+        end
+        root = instance_double root_klass, "Root"
+        allow(root).to receive(:resolve_tree_children).and_return([url])
+        allow(root).to receive(:url).and_return "http://google.com"
+
+        # The ResolveExecuter should set #model= on the URL type with
+        # the result of the call to Root#url.
+        allow(url).to receive(:model=).with "http://google.com"
+        run_resolve_executer_test(root: root)
+      end
+    end
+
+    context "parent type's model responds_to $FIELD_NAME" do
+      it "resolves using that method" do
+        # Mock: Scalar field `url`
+        url = node_with_no_children name: "URL"
+        stub_empty_args on: url
+        stub_query on: url, query: "query_for_url"
+        stub_empty_resolve_lambda on: url
+        expect(url).to receive(:field_or_arg_name).and_return "url"
+
+        # Mock: Root object that has #model.url method
+        root = node_with_children [url], name: "Root"
+        allow(root).to receive_message_chain(
+          :model,
+          :url
+        ).and_return "http://example.org"
+
+        # The ResolveExecuter should set #model= on the URL type with
+        # the result of the call to Root#url.
+        allow(url).to receive(:model=).with "http://example.org"
+        run_resolve_executer_test(root: root)
+      end
     end
   end
 end

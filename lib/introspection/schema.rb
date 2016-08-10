@@ -11,11 +11,11 @@ module RailsQL
         the entry points for query and mutation operations.
       eos
 
-      has_many(:types,
+      field(:types,
         description: <<-eos,
           A list of all types supported by this server.
         eos
-        type: "RailsQL::Introspection::Type",
+        type: "[RailsQL::Introspection::Type]",
         resolve: ->(args, child_query){
           self.class.all_type_klasses_in(model)
         }

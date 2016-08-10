@@ -19,13 +19,13 @@ module RailsQL
           type: :String
         )
 
-        has_many(:locations,
-          type: "RailsQL::Introspection::DirectiveLocation",
+        field(:locations,
+          type: "[RailsQL::Introspection::DirectiveLocation]",
           nullable: false
         )
 
-        has_many(:args,
-          type: "RailsQL::Introspection::InputValue",
+        field(:args,
+          type: "[RailsQL::Introspection::InputValue]",
           nullable: false,
           resolve: ->(args, child_query){
             model.args.map{|k, v|
