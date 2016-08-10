@@ -5,40 +5,39 @@ module RailsQL
   class Type
     module ClassMethods
       def type_name(*args)
-        if args.length == 1
-          @type_name = args.first.try :strip
-        elsif args.length == 0
-          @type_name
-        else
-          raise "type_name takes 0 or 1 argument"
+        getter_and_setter_for(:type_name, args) do |type_name|
+          @type_name = type_name.try :strip
         end
       end
 
-      def description(description=nil)
-        @description = description.strip_heredoc
+      def description(*args)
+        getter_and_setter_for(:description, args) do |description|
+          @description = description.strip_heredoc
+        end
       end
 
       # Excludes the type from the schema in the introspection API.
       # (e.g. for wrapping modifier types, anon. input objects)
       def anonymous(*args)
-        if args.length == 1
-          @anonymous = args.first
-        elsif args.length == 0
-          @anonymous || false
-        else
-          raise "anonymous takes 0 or 1 argument"
+        @anonymous ||= false
+        getter_and_setter_for(:anonymous, args) do |anonymous|
+          @anonymous = anonymous
         end
       end
 
-      def kind(kind)
-        kind_values = Kind.enum_values.map{|v| v.to_s.downcase.to_sym}
-        if kind_values.include? kind
-          @kind = kind
-        else
-          raise <<-eos.strip_heredoc
-            #{kind} is not a valid kind. Must be one of
-            #{kind_values.join ", "}
-          eos
+      def kind(*args)
+        @kind ||= :object
+        getter_and_setter_for(:kind, args) do |kind|
+          kind = args.first
+          kind_values = Kind.enum_values.map{|v| v.to_s.downcase.to_sym}
+          if kind_values.include? kind
+            @kind = kind
+          else
+            raise <<-eos.strip_heredoc
+              #{kind} is not a valid kind. Must be one of
+              #{kind_values.join ", "}
+            eos
+          end
         end
       end
 
@@ -106,6 +105,18 @@ module RailsQL
 
       def field(name, opts)
         field_definitions.add_field_definition(name, opts)
+      end
+
+      private
+
+      def getter_and_setter_for(attr_sym, args)
+        if args.length == 1
+          yield args.first
+        elsif args.length == 0
+          instance_variable_get :"@#{attr_sym}"
+        else
+          raise "#{attr_sym} takes 0 or 1 argument"
+        end
       end
 
     end
