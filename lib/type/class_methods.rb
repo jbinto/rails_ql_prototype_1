@@ -18,8 +18,16 @@ module RailsQL
         @description = description.strip_heredoc
       end
 
-      def anonymous(anonymous)
-        @anonymous = anonymous
+      # Currently used for anonymous input objects only.
+      # May be used for other types in the future.
+      def anonymous(*args)
+        if args.length == 1
+          @anonymous = args.first
+        elsif args.length == 0
+          @anonymous
+        else
+          raise "anonymous takes 0 or 1 argument"
+        end
       end
 
       def kind(kind)
