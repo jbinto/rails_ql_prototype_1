@@ -23,14 +23,14 @@ module RailsQL
               &child.resolve_lambda
             )
           else
-            default_resolve_for! node
+            default_resolve_for! parent: parent, child: child
           end
         # add the children to the stack after the parent has been resolved
         child_resolve_nodes_for(child).each {|node| recurse_into_child! node}
       end
 
-      def default_resolve_for!(child:, parent:)
-        name = child.name
+      def default_resolve_for!(parent:, child:)
+        name = child.field_or_arg_name
         if parent.respond_to? name
           parent.send name
         elsif parent.model.respond_to? name
