@@ -15,24 +15,32 @@ module RailsQL
       def build!(field_definition: nil, type_klass:, builder:, ctx:)
         raise "Type klass cannot be nil" if type_klass.nil?
         raise "ctx cannot be nil" if ctx.nil?
-        begin
-          # Build ctx and opts to be passed to the `type_klass` constructor
-          child_ctx = ctx.merge(field_definition.try(:child_ctx) || {})
-          opts = {
-            ctx: child_ctx,
-            root: builder.try(:root) || false,
-            field_definition: field_definition,
-            aliased_as: builder.aliased_as || builder.name
-          }
-          # Fields have an arg type builder. Recursively build the fields
-          # arguments and their nested input objects (if any exist).
-          if builder.try(:arg_type_builder).present?
+        # Build ctx and opts to be passed to the `type_klass` constructor
+        child_ctx = ctx.merge(field_definition.try(:child_ctx) || {})
+        opts = {
+          ctx: child_ctx,
+          root: builder.try(:root) || false,
+          field_definition: field_definition,
+          aliased_as: builder.aliased_as || builder.name
+        }
+        # Fields have an arg type builder. Recursively build the fields
+        # arguments and their nested input objects (if any exist).
+        if builder.try(:arg_type_builder).present?
+          begin
             opts[:args_type] = build!(
               type_klass: field_definition.args_type_klass,
               builder: builder.arg_type_builder,
               ctx: child_ctx
             )
+          rescue Exception => e
+            name = field_definition.try(:name) || type_klass.type_name
+            msg = <<-ERROR.strip_heredoc.gsub("\n", " ").strip
+               #{e.message} on #{name} args
+             ERROR
+             raise e, msg, e.backtrace
           end
+        end
+        begin
           # Build the children for modifier types (ie. lists and non-nullable)
           # and directives
           if type_klass.respond_to?(:of_type) || builder.directive?
