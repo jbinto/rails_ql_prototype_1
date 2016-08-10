@@ -11,10 +11,10 @@ module RailsQL
         if [Symbol, String].include? klass.class
           klass_name = klass.to_s
           # eg. ![[ would be a non-nullable array of arrays of the klass
-          modifier_prefix = klass_name.gsub(/[^\!\[\]].*/, "")
+          modifier_suffix = klass_name.gsub(/[^\!\]]/, "")
           klass = klass_name.gsub(/[\!\[\]]/, "").classify.constantize
           # Wrap the klass in it's modifiers from the inside out
-          modifier_prefix.reverse.each_char do |char|
+          modifier_suffix.each_char do |char|
             modifier_klass = Class.new char == "!" ? NonNullable : List
             modifier_klass.of_type = klass
             klass = modifier_klass

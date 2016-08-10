@@ -21,7 +21,7 @@ describe RailsQL::Type::KlassFactory do
       end
 
       it "wraps the klass in modifier types" do
-        level_1 = described_class.find "[![RailsQL::Type]]"
+        level_1 = described_class.find "[[RailsQL::Type]!]"
         level_2 = level_1.of_type
         level_3 = level_2.of_type
         level_4 = level_3.of_type
