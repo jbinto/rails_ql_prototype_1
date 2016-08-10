@@ -100,12 +100,6 @@ module RailsQL
         field_definitions.add_field_definition(name, opts)
       end
 
-      alias_method :has_one, :field
-
-      def has_many(name, opts)
-        field_definitions.add_plural_field_definition(name, opts)
-      end
-
     end
   end
 end

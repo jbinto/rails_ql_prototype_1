@@ -13,13 +13,13 @@ module RailsQL
 
       field :name, type: :String
       field :description, type: :String
-      has_many(:args,
-        type: "RailsQL::Introspection::InputValue",
+      field(:args,
+        type: "[RailsQL::Introspection::InputValue]",
         resolve: ->(args, child_query){
           model.args.input_field_definitions
         }
       )
-      has_one(:type,
+      field(:type,
         type: "RailsQL::Introspection::Type",
         query: nil,
         resolve: ->(args, child_query){
