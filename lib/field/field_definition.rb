@@ -62,16 +62,19 @@ module RailsQL
         RailsQL::Type::KlassFactory.find @type
       end
 
+      # TODO: test that if the args lambda returns :whatever the args_type_klass
+      # still returns the anonymous_input_object
       def args_type_klass
         if @args_type_klass.present?
           @args_type_klass
         else
           args_lambda = @args || ->(aio) {aio}
           anonymous_input_object = Class.new RailsQL::Type::AnonymousInputObject
-          @args_type_klass = type_klass.instance_exec(
+          type_klass.instance_exec(
             anonymous_input_object,
             &args_lambda
           )
+          @args_type_klass = anonymous_input_object
         end
       end
 
