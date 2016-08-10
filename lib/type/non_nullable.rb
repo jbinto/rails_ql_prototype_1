@@ -2,6 +2,8 @@ module RailsQL
   class Type
     class NonNullable < Type
 
+      anonymous true
+
       def initialize(opts={})
         @modified_type = opts[:modified_type]
         super opts

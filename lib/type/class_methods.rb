@@ -18,8 +18,8 @@ module RailsQL
         @description = description.strip_heredoc
       end
 
-      # Currently used for anonymous input objects only.
-      # May be used for other types in the future.
+      # Excludes the type from the schema in the introspection API.
+      # (e.g. for wrapping modifier types, anon. input objects)
       def anonymous(*args)
         if args.length == 1
           @anonymous = args.first

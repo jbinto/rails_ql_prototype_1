@@ -2,6 +2,8 @@ module RailsQL
   class Type
     class List < Type
 
+      anonymous true
+
       def initialize(opts={})
         @modified_type = opts[:modified_type]
         @list = opts[:list_of_resolved_types]

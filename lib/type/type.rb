@@ -4,7 +4,7 @@ module RailsQL
   class Type
     extend RailsQL::Type::ClassMethods
 
-    attr_reader :args, :ctx, :anonymous, :model, :aliased_as, :args_type
+    attr_reader :args, :ctx, :model, :aliased_as, :args_type
     attr_accessor :field_types, :query, :field_definition
 
     delegate :type_name, to: :class
@@ -14,13 +14,11 @@ module RailsQL
       aliased_as: nil,
       ctx: {},
       root: false,
-      anonymous: false,
       field_definition: nil,
       field_types: {}
     )
       @ctx = ctx
       @root = root
-      @anonymous = anonymous
       @field_definition = field_definition
       @args_type = args_type
       @field_types = field_types
