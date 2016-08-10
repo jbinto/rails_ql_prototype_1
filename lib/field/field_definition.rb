@@ -46,8 +46,6 @@ module RailsQL
         @name = name
         @permissions = {query: [], mutate: [], input: []}.freeze
 
-        opts[:type] ||= "#{name.to_s.singularize.classify}Type"
-
         opts[:description] = opts[:description].try :strip_heredoc
 
         opts.each do |key, value|

@@ -9,7 +9,16 @@ module RailsQL
           klass = RailsQL::Scalar.const_get klass.to_s
         end
         if [Symbol, String].include? klass.class
-          klass = klass.to_s.classify.constantize
+          klass_name = klass.to_s
+          # eg. ![[ would be a non-nullable array of arrays of the klass
+          modifier_prefix = klass_name.gsub(/[^\!\[\]].*/, "")
+          klass = klass_name.gsub(/[\!\[\]]/, "").classify.constantize
+          # Wrap the klass in it's modifiers from the inside out
+          modifier_prefix.reverse.each do |char|
+            modifier_klass = Class.new char == "!" ? NonNullable : List
+            modifier_klass.of_type = klass
+            klass = modifier_klass
+          end
         end
         unless klass.try(:type?)
           raise "#{klass} is not a valid Type"
