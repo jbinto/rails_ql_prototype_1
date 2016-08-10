@@ -61,7 +61,7 @@ module RailsQL
           return type
         rescue Exception => e
           name = field_definition.try(:name) || type_klass.type_name
-          msg = <<-ERROR.strip_heredoc
+          msg = <<-ERROR.strip_heredoc.gsub("\n", " ").strip
              #{e.message} on #{name}
            ERROR
            raise e, msg, e.backtrace
