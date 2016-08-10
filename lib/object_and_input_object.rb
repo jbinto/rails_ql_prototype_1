@@ -1,5 +1,5 @@
 module RailsQL
-  def object_and_input_object(&block)
+  def self.object_and_input_object(&block)
     container = Module.new
     container.const_set :ObjectType, Class.new(RailsQL::Type) do
       kind :object
