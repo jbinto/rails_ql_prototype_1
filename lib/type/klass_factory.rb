@@ -14,9 +14,10 @@ module RailsQL
           modifier_prefix = klass_name.gsub(/[^\!\[\]].*/, "")
           klass = klass_name.gsub(/[\!\[\]]/, "").classify.constantize
           # Wrap the klass in it's modifiers from the inside out
-          modifier_prefix.reverse.each do |char|
+          modifier_prefix.reverse.each_char do |char|
             modifier_klass = Class.new char == "!" ? NonNullable : List
             modifier_klass.of_type = klass
+            modifier_klass.anonymous true
             klass = modifier_klass
           end
         end

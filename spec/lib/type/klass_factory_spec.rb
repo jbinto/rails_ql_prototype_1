@@ -19,6 +19,21 @@ describe RailsQL::Type::KlassFactory do
 
         expect(results).to eq RailsQL::Type
       end
+
+      it "wraps the klass in modifier types" do
+        level_1 = described_class.find "[![RailsQL::Type]]"
+        level_2 = level_1.of_type
+        level_3 = level_2.of_type
+        level_4 = level_3.of_type
+
+        expect([level_1, level_2, level_3].all? &:anonymous).to eq true
+        expect(level_4.anonymous).to eq false
+
+        expect(level_1.superclass).to eq RailsQL::Type::List
+        expect(level_2.superclass).to eq RailsQL::Type::NonNullable
+        expect(level_3.superclass).to eq RailsQL::Type::List
+        expect(level_4).to eq RailsQL::Type
+      end
     end
 
     context "when klass is a built-in scalar type without a namespace" do

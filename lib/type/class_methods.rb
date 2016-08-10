@@ -24,7 +24,7 @@ module RailsQL
         if args.length == 1
           @anonymous = args.first
         elsif args.length == 0
-          @anonymous
+          @anonymous || false
         else
           raise "anonymous takes 0 or 1 argument"
         end
