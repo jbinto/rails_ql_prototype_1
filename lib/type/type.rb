@@ -5,7 +5,7 @@ module RailsQL
     extend RailsQL::Type::ClassMethods
 
     attr_reader :args, :ctx, :anonymous, :model, :aliased_as, :args_type
-    attr_accessor :field_types, :query
+    attr_accessor :field_types, :query, :field_definition
 
     delegate :type_name, to: :class
 

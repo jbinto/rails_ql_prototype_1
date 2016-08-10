@@ -26,8 +26,8 @@ describe RailsQL::Runner do
       GRAPHQL
 
       expect(root_type.as_json).to eq(
-        fuzzy_teh_cat: {
-          name: "Fuzzy The Cat"
+        "fuzzy_teh_cat" => {
+          "name" => "Fuzzy The Cat"
         }
       )
     end

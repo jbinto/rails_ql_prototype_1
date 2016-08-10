@@ -129,7 +129,6 @@ module RailsQL
         # Basically take 2 or more type builders, compare them and then
         # combine them and their child type builders recursively into new objects
         child_builders.each do |child_builder|
-          ap type_klass.field_definitions
           field_definition = type_klass.field_definitions[child_builder.name]
           if field_definition.blank?
             raise "Invalid key #{child_builder.name}"

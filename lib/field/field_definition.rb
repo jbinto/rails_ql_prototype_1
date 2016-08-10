@@ -10,8 +10,8 @@ module RailsQL
           type: nil,
           description: nil,
           args: nil,
-          resolve_lambda: nil,
-          query_lambda: nil,
+          resolve: nil,
+          query: nil,
           deprecated: false,
           deprecation_reason: "",
           child_ctx: {},
@@ -21,9 +21,11 @@ module RailsQL
       end
 
       attr_reader(
-        *self.default_opts.except(:args).keys,   # XXX why not args?
+        *self.default_opts.except(:args, :resolve, :query).keys,   # XXX why not args?
         :name,
-        :permissions
+        :permissions,
+        :resolve_lambda,
+        :query_lambda
       )
 
       alias_method :deprecated?, :deprecated
@@ -38,10 +40,13 @@ module RailsQL
           raise "ctx must be a Hash"
         end
 
-        opts.slice(:args, :resolve_lambda, :query_lambda).each do |k, v|
+        opts.slice(:args, :resolve, :query).each do |k, v|
           next if v.blank? || v.respond_to?(:call)
           raise ":#{k} must be either nil or a Lambda"
         end
+
+        opts[:resolve_lambda] = opts.delete :resolve
+        opts[:query_lambda] = opts.delete :query
 
         @name = name
         @permissions = {query: [], mutate: [], input: []}.freeze
