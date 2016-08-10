@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe RailsQL::Type::Union do
+describe RailsQL::Union do
   let(:type_klass) {Class.new described_class}
 
 
@@ -23,10 +23,10 @@ describe RailsQL::Type::Union do
     before :each do
       Sword = Class.new
       Crossbow = Class.new
-      SwordType = Class.new 
+      SwordType = Class.new
       SwordType.field :damage, type: "Int"
       SwordType.can :query, fields: [:damage]
-      CrossbowType = Class.new 
+      CrossbowType = Class.new
       CrossbowType.field :damage, type: "Int"
       CrossbowType.field :range, type: "Int"
       CrossbowType.can :query, fields: [:damage, :range]

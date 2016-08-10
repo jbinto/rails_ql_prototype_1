@@ -45,8 +45,10 @@ describe RailsQL::Builder::TypeBuilder do
   end
 
   describe "#resolve_variables!" do
-    pending "dev time for variables"
-    fail
+    it "is pending" do
+      pending "dev time for variables"
+      fail
+    end
     # context "when variable_type_name exists as a type" do
     #   it "adds argument name, variable_name, and variable_type to vars" do
     #     CowType = Class.new RailsQL::Type
@@ -73,8 +75,10 @@ describe RailsQL::Builder::TypeBuilder do
   end
 
   describe "#resolve_fragments!" do
-    pending "dev time for fragments"
-    fail
+    it "is pending" do
+      pending "dev time for fragments"
+      fail
+    end
   end
 
 
