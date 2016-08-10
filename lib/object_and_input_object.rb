@@ -7,8 +7,8 @@ module RailsQL
     container.const_set :InputObjectType, Class.new(RailsQL::Type) do
       kind :input_object
     end
-    instance_eval container::ObjectType, &block
-    instance_eval container::InputObjectType, &block
+    container::ObjectType.instance_exec &block
+    container::InputObjectType.instance_exec &block
     return container
   end
 end
