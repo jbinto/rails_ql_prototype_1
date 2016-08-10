@@ -56,6 +56,12 @@ module RailsQL
         type = type_klass.new opts
         type.model = builder.try :model
         return type
+      rescue Exception => e
+        name = field_definition.try(:name) || type_klass.type_name
+        msg = <<-ERROR.strip_heredoc
+           #{e.message} on #{name}
+         ERROR
+         raise e, msg, e.backtrace
       end
 
       private
