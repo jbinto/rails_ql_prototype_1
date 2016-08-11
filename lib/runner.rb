@@ -14,24 +14,41 @@ module RailsQL
       variables: {}
     )
 
-      visitor = RailsQL::Builder::Visitor.new
+      ast_visitor = RailsQL::Builder::Visitor.new
       ast = GraphQL::Parser.parse query
-      visitor.accept ast
+      ast_visitor.accept ast
 
-      # TODO: parse variables and create builders
-      variable_builders = []
-
-      # the visitor returns one root builder per operation in the query document
-      if visitor.operations.length > 1
+      # the ast_visitor returns one root builder per operation in the query document
+      if ast_visitor.operations.length > 1
         raise "Can not execute multiple operations in one query document"
       end
-      operation = visitor.operations.first
-      root_builder = operation.root_builder
-      # Normalize directives and fragments into type builders
-      Builder::Normalizer.normalize!(
+      operation = ast_visitor.operations.first
+      root_builder = operation.root_builder.deep_freeze_everything!
+
+      # TODO: parse variables create builders and inject them into the operation
+      # variable_definition_builders
+      variable_value_builders = []
+
+      # Normalize directives, variables and fragments into type builders
+      normalizers = [
+        Builder::Normalizers::DirectiveNormalizer.new,
+        Builder::Normalizers::FragmentNormalizer.new,
+        Builder::Normalizers::VariableNormalizer.new(
+          variable_definition_builders: operation.variable_definition_builders
+        )
+      ]
+      builder_visitor = Builder::Normalizers::BuilderTreeVisitor.new
+      root_builder builder_visitor.tree_like_fold(
         type_klass: @root_types[operation.operation_type],
         builder: root_builder
-      )
+      ) do |node|
+        normalizers.each do |normalizer|
+          node.builder = normalizer.normalize! node
+        end
+        # The node builder is modified or replaced by the normalizers
+        node.builder
+      end
+
       # Build types
       root = RailsQL::Builder::TypeFactory.build!(
         type_klass: @root_types[operation.operation_type],

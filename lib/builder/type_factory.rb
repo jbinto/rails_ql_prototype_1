@@ -49,12 +49,6 @@ module RailsQL
               builder: builder,
               child_ctx: child_ctx
             )
-          elsif type_klass.is_a? Union
-            opts[:unioned_types] = build_unioned_types!(
-              type_klass: type_klass,
-              builder: builder,
-              child_ctx: child_ctx
-            )
           # Build fields for non-modifier types
           else
             opts[:field_types] = build_fields_or_args!(
@@ -109,39 +103,12 @@ module RailsQL
         return opts
       end
 
-      def build_unioned_types!(
-        type_klass:,
-        builder:,
-        child_ctx:
-      )
-        raise "Unions are not currently supported"
-        # builder.child_builders.each do |child_builder|
-        #   next if child_builder.try(:defined_on).blank?
-        #   unioned_type = type_klass.find_unioned_type(
-        #     fragment_builder.defined_on
-        #   )
-        # end
-      end
-
       def build_fields_or_args!(
         type_klass:,
         builder:,
         child_ctx:
       )
         fields = {}
-        # Inject variable builders into the list of args (do nothing for fields)
-        child_builders = builder.child_builders.clone
-        builder.variables.each do |argument_name, variable_name|
-          if @variable_builders[argument_name].blank?
-            raise MissingVariableDefinition, <<-ERROR
-              Variable not defined in operation: #{variable_name}
-            ERROR
-          end
-          variable_builder = @variable_builders[argument_name].dup
-          variable_builder.name = argument_name
-          variable_builder.aliased_as = argument_name
-          child_builders << variable_builder
-        end
         # Build fields (or args)
         # TODO: field merging should go here
         # Basically take 2 or more type builders, compare them and then

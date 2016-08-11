@@ -4,12 +4,12 @@ module RailsQL
       attr_accessor(
         :name,
         :operation_type,
-        :variable_builders,
+        :variable_definition_builders,
         :root_builder
       )
 
       def initialize
-        @variable_builders = {}
+        @variable_definition_builders = {}
       end
 
     end

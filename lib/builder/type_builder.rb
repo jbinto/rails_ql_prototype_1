@@ -5,6 +5,7 @@ module RailsQL
     class TypeBuilder
       attr_accessor(
         :name,
+        :child_builders,
         :arg_type_builder,
         :aliased_as,
         :directive_name,
@@ -16,7 +17,6 @@ module RailsQL
         :root,
         :is_input,
         :is_directive,
-        :child_builders,
         :fragment_builders,
         :variables,
         :model
@@ -45,6 +45,34 @@ module RailsQL
         @variables = {}
       end
 
+      def shallow_mutable_clone
+        clone = TypeBuilder.new(
+          name: @name,
+          aliased_as: @aliased_as,
+          root: @root,
+          arg_type_builder: @arg_type_builder.try(:create_mutable_clone),
+          is_input: @is_input,
+          model: @model
+        )
+        clone.first_directive_builder = first_directive_builder
+          .create_mutable_clone
+        clone.child_builders = [].concat child_builders
+        clone.fragment_builders = [].concat fragment_builders
+        return clone
+      end
+
+      def deep_freeze_everything!
+        freeze
+        @child_builders.freeze
+        @fragment_builders.freeze
+        @variables.freeze
+        @arg_type_builder.try :freeze_everything!
+        @first_directive_builder.try :freeze_everything!
+        @child_builders.each &:freeze_everything!
+        @fragment_builders.each &:freeze_everything!
+        return self
+      end
+
       def is_input?
         return @is_input
       end
@@ -66,7 +94,7 @@ module RailsQL
           # each directive builder can only have one child directive builder
           @child_builders.select(&:directive?).first.try :last_directive_builder
         else
-          first_directive_builder.try :last_directive_builder
+          ective_builder.try :last_directive_builder
         end
       end
 

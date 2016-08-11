@@ -163,27 +163,29 @@ module RailsQL
       # ========================================================================
 
       def visit_variable_name(node)
-        current_builder.add_variable(
-          argument_name: @last_argument_name,
-          variable_name: node.value,
+        child_builder = TypeBuilder.new(
+          name: @last_argument_name,
+          aliased_as: @last_argument_name,
+          variable_name: node.value
         )
+        current_builder.child_builders << child_builder
       end
 
-      def variable_builder
+      def variable_definition_builder
         # ap current_builder
-        unless current_builder.is_a? VariableBuilder
+        unless current_builder.is_a? VariableDefinitionBuilder
           raise "not a variable definition builder"
         end
         return current_builder
       end
 
       def visit_variable_definition(node)
-        @builder_stack.push VariableBuilder.new
+        @builder_stack.push VariableDefinitionBuilder.new
         visit_node! :variable_definition, node
       end
 
       def visit_variable_definition_name(node)
-        variable_builder.variable_name = node.value
+        variable_definition_builder.variable_name = node.value
         current_operation.variable_builders[node.value] = variable_builder
       end
 
@@ -193,7 +195,6 @@ module RailsQL
 
       def visit_variable_definition_default_value(node)
         builder = TypeBuilder.new(
-          type_klass: variable_builder.type_klass,
           model: node.try(:value),
           is_input: true
         )
