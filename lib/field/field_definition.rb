@@ -28,6 +28,8 @@ module RailsQL
         :query_lambda
       )
 
+      attr_writer :deprecated, :deprecation_reason
+
       alias_method :deprecated?, :deprecated
 
       delegate :type_name, to: :type_klass
