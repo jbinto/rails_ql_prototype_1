@@ -23,37 +23,34 @@ module RailsQL
         raise "Can not execute multiple operations in one query document"
       end
       operation = ast_visitor.operations.first
-      root_builder = operation.root_builder.deep_freeze_everything!
+      root_node = operation.root_node
+      root_node.ctx = ctx
 
       # TODO: parse variables create builders and inject them into the operation
       # variable_definition_builders
       variable_value_builders = []
 
       # Normalize directives, variables and fragments into type builders
-      normalizers = [
-        Builder::Normalizers::DirectiveNormalizer.new,
-        Builder::Normalizers::FragmentNormalizer.new,
-        Builder::Normalizers::VariableNormalizer.new(
-          variable_definition_builders: operation.variable_definition_builders
-        )
-      ]
-      builder_visitor = Builder::Normalizers::BuilderTreeVisitor.new
-      root_builder builder_visitor.tree_like_fold(
+      builder_visitor = Builder::Normalizers::BuilderTreeVisitor.new(
+        normalizers: [
+          Builder::Reducers::CircularReferenceChecker.new,
+          Builder::Reducers::DirectiveNormalizer.new,
+          Builder::Reducers::FragmentNormalizer.new,
+          Builder::Reducers::VariableNormalizer.new(
+            variable_definition_builders: operation.variable_definition_builders
+          )
+          RailsQL::Reducers::TypeFactory.new
+        ]
+      )
+      root_builder = builder_visitor.tree_like_fold(
         type_klass: @root_types[operation.operation_type],
-        builder: root_builder
-      ) do |node|
-        normalizers.each do |normalizer|
-          node.builder = normalizer.normalize! node
-        end
-        # The node builder is modified or replaced by the normalizers
-        node.builder
-      end
-
+        builder: root_builder,
+        reducers: normalizers
+      )
       # Build types
       root = RailsQL::Builder::TypeFactory.build!(
         type_klass: @root_types[operation.operation_type],
         builder: root_builder,
-        ctx: ctx,
         variable_builders: variable_builders
       )
       # Execution:
