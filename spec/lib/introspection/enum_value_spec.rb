@@ -19,7 +19,10 @@ describe RailsQL::Introspection::EnumValue do
   end
 
   let(:runner) {
-    RailsQL::Runner.new described_class
+    RailsQL::Runner.new(
+      query_root: described_class,
+      mutation_root: nil
+    )
   }
 
   describe "[:name]" do
