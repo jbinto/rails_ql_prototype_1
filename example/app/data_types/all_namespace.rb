@@ -1,4 +1,4 @@
-class AllNamespace < 
+class AllNamespace < RailsQL::Type
 
   has_many(:users,
     optional_args: {admin: "BooleanValue"},

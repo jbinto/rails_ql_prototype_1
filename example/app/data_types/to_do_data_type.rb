@@ -1,4 +1,4 @@
-class ToDoType < 
+class ToDoType < RailsQL::Type
   initial_query ->{ToDo.all}
 
   has_one(:user,

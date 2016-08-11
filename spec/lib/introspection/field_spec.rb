@@ -30,7 +30,10 @@ describe RailsQL::Introspection::Field do
       # TODO: this is obsolete
       # required_args: {how_many_cows: {type: :Int}},
       # optional_args: {allow_future_cows: {type: :Boolean}},
-      nullable: true,
+      args: ->(args) {
+        args.field :how_many_cows, type: "Int!"
+        args.field :allow_future_cows, type: "Boolean"
+      },
       deprecated: false,
     )
   end
@@ -60,7 +63,7 @@ describe RailsQL::Introspection::Field do
 
   describe "[:args]" do
     it "returns an array of args" do
-      fail "TODO: move to new args implementation"
+      # fail "TODO: move to new args implementation"
 
       results = runner.execute!(query: "query {args {name}}").as_json
       expect(results["args"].map{|h| h["name"]}).to eq [
