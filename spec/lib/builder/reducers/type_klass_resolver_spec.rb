@@ -65,33 +65,33 @@ describe RailsQL::Builder::Reducers::TypeKlassResolver do
       expect(result_node.field_definition).to eq field_definition
     end
 
-    # it "sets `node.field_definition` for a field and skips directive/fragment parents" do
-    #   node = new_node name: "AwesomeNode", field_or_input_field: true
-    #   parent_node = new_node
-    #
-    #   fragment_node_to_skip = new_node fragment: true
-    #   directive_node_to_skip = new_node directive: true
-    #
-    #   field_definition = instance_double RailsQL::Field::FieldDefinition
-    #
-    #   expect(parent_node).to receive_message_chain(
-    #     :child_field_definitions,
-    #     :[]
-    #   ).with("AwesomeNode").and_return field_definition
-    #
-    #   result_node = described_class.new.visit_node(
-    #     node: node,
-    #     parent_nodes: [
-    #       new_node,
-    #       new_node,
-    #       parent_node,
-    #       directive_node_to_skip,
-    #       fragment_node_to_skip
-    #     ]
-    #   )
-    #
-    #   expect(result_node.field_definition).to eq field_definition
-    # end
+    it "sets `node.field_definition` for a field and skips directive/fragment parents" do
+      node = new_node name: "AwesomeNode", field_or_input_field: true
+      parent_node = new_node
+
+      fragment_node_to_skip = new_node fragment: true
+      directive_node_to_skip = new_node directive: true
+
+      field_definition = instance_double RailsQL::Field::FieldDefinition
+
+      expect(parent_node).to receive_message_chain(
+        :child_field_definitions,
+        :[]
+      ).with("AwesomeNode").and_return field_definition
+
+      result_node = described_class.new.visit_node(
+        node: node,
+        parent_nodes: [
+          new_node,
+          new_node,
+          parent_node,
+          directive_node_to_skip,
+          fragment_node_to_skip
+        ]
+      )
+
+      expect(result_node.field_definition).to eq field_definition
+    end
 
 
 

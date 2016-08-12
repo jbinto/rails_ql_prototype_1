@@ -34,8 +34,6 @@ module RailsQL
             return node
           # Resolve fields and args
           elsif node.field_or_input_field?
-            ap "NODE!"
-            ap node
             node.field_definition = parent_type_node
               .child_field_definitions[node.name]
 
