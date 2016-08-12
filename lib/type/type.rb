@@ -47,18 +47,6 @@ module RailsQL
       @root
     end
 
-    def modifier_type?
-      false
-    end
-
-    def directive?
-      false
-    end
-
-    def union?
-      false
-    end
-
     def query_lambda
       @field_definition.try :query_lambda
     end

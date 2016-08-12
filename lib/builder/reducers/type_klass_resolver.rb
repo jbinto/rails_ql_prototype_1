@@ -37,12 +37,14 @@ module RailsQL
             node.field_definition = parent_type_node
               .child_field_definitions[node.name]
 
+            # If query requested field that does not exist
+            # (e.g. not present in parent FieldDefinitionCollection)
             if node.field_definition.nil?
               raise InvalidField, "invalid field #{child_node.name}"
             end
           # Resolve fields and args wrapped by modifiers
           elsif parent_type_node.modifier_type?
-            node.type_klass = parent_node.of_type
+            node.type_klass = parent_type_node.of_type
           # Resolve directives
           else
             raise "unsupported node"

@@ -14,7 +14,7 @@ module RailsQL
       super **opts
     end
 
-    def directive?
+    def self.directive?
       true
     end
 

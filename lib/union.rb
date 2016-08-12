@@ -12,7 +12,7 @@ module RailsQL
       super opts
     end
 
-    def union?
+    def self.union?
       true
     end
 

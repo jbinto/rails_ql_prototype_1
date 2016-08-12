@@ -74,6 +74,18 @@ module RailsQL
         true
       end
 
+      def modifier_type?
+        false
+      end
+
+      def directive?
+        false
+      end
+
+      def union?
+        false
+      end
+
       # TODO add specs
       def valid_child_type?(name:, type_name:)
         child_klass = field_definitions[name].try(:type_klass)

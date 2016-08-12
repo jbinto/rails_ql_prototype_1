@@ -12,10 +12,15 @@ module RailsQL
       delegate(
         :ctx,
         :child_types=,
-        :modifier_type?,
-        :union?,
         :list_of_resolved_types=,
         to: :type
+      )
+
+      delegate(
+        :modifier_type?,
+        :union?,
+        :of_type,
+        to: :type_klass
       )
 
       attr_accessor(

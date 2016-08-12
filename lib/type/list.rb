@@ -17,7 +17,7 @@ module RailsQL
         KlassFactory.find @of_type
       end
 
-      def modifier_type?
+      def self.modifier_type?
         true
       end
 
