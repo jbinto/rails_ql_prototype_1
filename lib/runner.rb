@@ -25,6 +25,7 @@ module RailsQL
       operation = ast_visitor.operations.first
       root_node = operation.root_node
       root_node.type = @root_types[operation.operation_type].new(
+        root: true
         ctx: ctx
       )
       root_node.ctx = ctx
@@ -37,30 +38,24 @@ module RailsQL
       builder_visitor = Builder::Normalizers::BuilderTreeVisitor.new(
         normalizers: [
           Builder::Reducers::CircularReferenceChecker.new,
-          Builder::Reducers::DirectiveNormalizer.new,
-          Builder::Reducers::FragmentNormalizer.new,
+          # Builder::Reducers::DirectiveNormalizer.new,
+          Builder::Reducers::FragmentTypeChecker.new,
           Builder::Reducers::VariableNormalizer.new(
             variable_definition_builders: operation.variable_definition_builders
           )
+          Builder::Reducers::TypeKlassResolver.new,
           RailsQL::Reducers::TypeFactory.new
         ]
       )
       root_node = builder_visitor.tree_like_fold(
-        type_klass: @root_types[operation.operation_type],
         node: root_node,
-      )
-      # Build types
-      root = RailsQL::Builder::TypeFactory.build!(
-        type_klass: @root_types[operation.operation_type],
-        builder: root_builder,
-        variable_builders: variable_builders
       )
       # Execution:
       # 1. Permissions check
       # 2. Query
       # 3. Resolve
       executer_opts = {
-        root: root,
+        root: root_node.type,
         operation_type: operation.operation_type
       }
       # Permissions check
@@ -76,7 +71,7 @@ module RailsQL
       # Query + Resolve
       Executers::QueryExecuter.new(executer_opts).execute!
       Executers::ResolveExecuter.new(executer_opts).execute!
-      return root
+      return root_node.type
     end
 
   end
