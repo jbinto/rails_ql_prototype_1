@@ -1,7 +1,7 @@
 module RailsQL
   class Type
     class List < Type
-
+      kind :list
       anonymous true
       attr_accessor :modified_type, :list_of_resolved_types
 

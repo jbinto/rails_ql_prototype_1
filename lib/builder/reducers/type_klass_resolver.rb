@@ -8,36 +8,32 @@ module RailsQL
         node:,
         parent_nodes:
       )
-        raise "node.ctx cannot be nil" if node.ctx.nil?
         return node if node.root?
 
-        # Build ctx and opts to be passed to the `type_klass` constructor
         node = node.shallow_clone_node
 
-        object_parent = parent_nodes.select do |parent|
-          [:object, :input_object].include? parent.kind
-        end.first
+        parent_type_node = parent_nodes.reject do |parent|
+          parent.directive? || parent.fragment?
+        end.last
 
-        # Fields and args
-        if node.name.present?
-          node.field_definition = object_parent.field_definitions[node.name]
+        # Skip fragments
+        if node.fragment?
+          return node
+        # Resolve fields and args
+        elsif node.name.present?
+          node.field_definition = parent_type_node.field_definitions[node.name]
           if node.field_definition.blank?
             raise InvalidField, "invalid field #{child_node.name}"
           end
-        # Fields and args wrapped by modifiers
-        elsif parent_nodes.last.modifier_type?
+        # Resolve fields and args wrapped by modifiers
+        elsif parent_type_node.modifier_type?
           node.type_klass = parent_node.of_type
-        # Directives
+        # Resolve directives
         else
           raise "unsupported node"
         end
 
-        node.child_nodes = node.child_nodes.map do |child_node|
-          if [:object, :input_object].include? node.kind
-          end
-
-        end
-
+        node
       end
 
     end

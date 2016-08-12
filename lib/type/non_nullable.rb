@@ -1,7 +1,7 @@
 module RailsQL
   class Type
     class NonNullable < Type
-
+      kind :non_null
       anonymous true
 
       def initialize(opts={})
