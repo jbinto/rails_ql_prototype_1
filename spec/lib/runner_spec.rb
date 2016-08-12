@@ -6,7 +6,7 @@ describe RailsQL::Runner do
     it "queries a type for a field" do
       cat_type_klass = Class.new(RailsQL::Type) do
         field(:names,
-          type: "[String]",
+          type: "[!String]",
           resolve: ->(args, child_query) {
             (0..1).map {|i|"Fuzzy #{model} #{i}"}
           }
