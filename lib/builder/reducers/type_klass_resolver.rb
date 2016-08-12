@@ -13,6 +13,7 @@ module RailsQL
 
           node = node.shallow_clone_node
 
+          # Find our closest concrete type parent (e.g. no fragments, directives)
           parent_type_node = parent_nodes.reject do |parent|
             parent.directive? || parent.fragment?
           end.last
@@ -32,9 +33,13 @@ module RailsQL
           if node.fragment?
             return node
           # Resolve fields and args
-          elsif node.name.present?
-            node.field_definition = parent_type_node.field_definitions[node.name]
-            if node.field_definition.blank?
+          elsif node.field_or_input_field?
+            ap "NODE!"
+            ap node
+            node.field_definition = parent_type_node
+              .child_field_definitions[node.name]
+
+            if node.field_definition.nil?
               raise InvalidField, "invalid field #{child_node.name}"
             end
           # Resolve fields and args wrapped by modifiers

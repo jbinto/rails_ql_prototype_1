@@ -44,6 +44,10 @@ module RailsQL
         @fragment_defined_on = val
       end
 
+      def field_or_input_field?
+        name.present?
+      end
+
       def fragment?
         fragment_name || inline_fragment
       end
