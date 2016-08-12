@@ -18,7 +18,7 @@ module RailsQL
         :is_anonymous_input_object,
         :variables,
         :model,
-        :fragment_name
+        :fragment_name,
         :inline_fragment
       )
 
@@ -28,8 +28,11 @@ module RailsQL
 
       alias_method :input?, :is_input
       alias_method :root?, :root
-      alias_method :defined_fragment?, :defined_fragment
       alias_method :inline_fragment?, :inline_fragment
+
+      def defined_fragment?
+        @defined_fragment
+      end
 
       def fragment_defined_on=(val)
         if @defined_fragment

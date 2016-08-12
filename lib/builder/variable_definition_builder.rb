@@ -1,30 +1,28 @@
 # # Pending dev time
 
-require_relative "./type_builder.rb"
-
 module RailsQL
   module Builder
-    class VariableDefinitionBuilder < TypeBuilder
+    class VariableDefinitionBuilder
       attr_accessor(
         :variable_name,
-        :of_type
+        :of_type,
         # TODO: default values
-        :default_value_builder
+        :default_value_builder,
         :value_builder
       )
 
-      (TypeBuilder.instance_methods - Object.methods).each do |method_sym|
-
-        define_method method_sym do
-          delegated_to = if value_builder.present?
-            value_builder
-          else
-            default_value_builder
-          end
-          delegated_to.send method_sym
-        end
-
-      end
+      # (TypeBuilder.instance_methods - Object.methods).each do |method_sym|
+      #
+      #   define_method method_sym do
+      #     delegated_to = if value_builder.present?
+      #       value_builder
+      #     else
+      #       default_value_builder
+      #     end
+      #     delegated_to.send method_sym
+      #   end
+      #
+      # end
 
     end
   end

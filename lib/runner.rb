@@ -25,7 +25,7 @@ module RailsQL
       operation = ast_visitor.operations.first
       root_node = operation.root_node
       root_node.type = @root_types[operation.operation_type].new(
-        root: true
+        root: true,
         ctx: ctx
       )
       root_node.ctx = ctx
@@ -42,7 +42,7 @@ module RailsQL
           Builder::Reducers::FragmentTypeChecker.new,
           Builder::Reducers::VariableNormalizer.new(
             variable_definition_builders: operation.variable_definition_builders
-          )
+          ),
           Builder::Reducers::TypeKlassResolver.new,
           RailsQL::Reducers::TypeFactory.new
         ]

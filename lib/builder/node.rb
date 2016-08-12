@@ -1,9 +1,11 @@
+require_relative "./annotation.rb"
+
 module RailsQL
   module Builder
     class Node < Array
 
       delegate(
-        *(Annotation.instance_methods - Object.methods),
+        *Annotation.instance_methods(false),
         to: :annotation
       )
 
@@ -18,7 +20,7 @@ module RailsQL
       )
 
       attr_accessor(
-        :child_nodes
+        :child_nodes,
         :annotation,
         :ctx,
         :field_definition,
@@ -29,17 +31,17 @@ module RailsQL
         :type_klass
       )
 
-      def initialize(child_nodes:, annotation:, **annotation_attrs)
-        @child_nodes = child_nodes || []
+      def initialize(child_nodes: [], annotation:, **annotation_attrs)
+        @child_nodes = child_nodes
         @annotation = annotation
-        if annotation_opts.present?
+        if annotation_attrs.present?
           @annotation ||= Annotation.new
           annotation_attrs.each {|k, v| @annotation.send(:"#{k}=", v)}
         end
       end
 
       def type_klass
-        @type_klass || field_definition.try :type_klass
+        @type_klass || field_definition.try(:type_klass)
       end
 
       def shallow_clone_node

@@ -13,9 +13,7 @@ module RailsQL
       # Recursively build and return an instance of `type_klass` and it's
       # children based on the builder, field definition and ctx.
       def visit_node(
-        field_definition: nil,
-        type_klass:,
-        node:
+        node:,
         parent_nodes:
       )
         raise "node.type cannot be nil" if node.type.nil?
@@ -38,11 +36,11 @@ module RailsQL
       end
 
       def end_visit_node(
-        node:
+        node:,
         parent_nodes:
       )
         child_types = node.child_nodes.map &:type
-        if node.input? && node.is_a? RailsQL::Type::List
+        if node.input? && node.is_a?(RailsQL::Type::List)
           node.list_of_resolved_types = child_types
         end
         if node.modifier_type?

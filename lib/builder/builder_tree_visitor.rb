@@ -14,7 +14,7 @@ module RailsQL
 
         # Each reducer returns a node which is used as the node by the next
         # reducer
-        node = run_reducers_for(:visit_node
+        node = run_reducers_for(:visit_node,
           node: node,
           parent_nodes: parent_nodes
         )
@@ -46,7 +46,7 @@ module RailsQL
         # reducer
         @reducers.each do |reducer|
           if reducer.respond_to? method_sym
-            node = reducer.send(method_sym
+            node = reducer.send(method_sym,
               type_klass: type_klass,
               node: node
             )

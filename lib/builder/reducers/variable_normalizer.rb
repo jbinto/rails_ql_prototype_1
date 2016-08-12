@@ -14,10 +14,7 @@ module RailsQL
           node:,
           parent_nodes:
         )
-          node = Node.new(
-            annotation: node.annotation
-            child_nodes: [].concat node.child_nodes
-          )
+          node = node.shallow_clone_node
           # Inject variable builders into the list of args (no-op for fields)
           node.variables.each do |argument_name, variable_name|
             variable_def_node = @variable_definition_builders[argument_name]

@@ -5,7 +5,7 @@ module RailsQL
       # Recursively build and return an instance of `type_klass` and it's
       # children based on the builder, field definition and ctx.
       def visit_node(
-        node:
+        node:,
         parent_nodes:
       )
         raise "node.ctx cannot be nil" if node.ctx.nil?

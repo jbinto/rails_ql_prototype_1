@@ -7,8 +7,7 @@ module RailsQL
 
         # Throws an exception if the fragment is a circular reference
         #
-        # Should be called recursively on each builder/type_klass/
-        # field_definition.
+        # Should be called recursively on each node
         #
         # Examples
         #
@@ -32,11 +31,12 @@ module RailsQL
         # ```
         #
         def visit_node(
-          node:
+          node:,
           parent_nodes:
         )
           is_circular_reference = parent_nodes.any? do |parent_node|
-            parent_node.annotation == node.annotation
+            # true if these are the same fragment
+            node.fragment? && parent_node.annotation == node.annotation
           end
           if is_circular_reference
             raise InvalidFragment, <<-ERROR.strip_heredoc.gsub("\n", " ").strip
