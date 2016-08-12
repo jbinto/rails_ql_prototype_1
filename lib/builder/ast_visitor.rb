@@ -226,15 +226,17 @@ module RailsQL
         # alias and name is only present if a type builder has not yet been
         # defined
         if @node_stack.last == :field && @alias_and_name.present?
-          child_builder = Node.new(
+          args_node = Node.new(
+            is_input: true
+          )
+          node = Node.new(
             name: @alias_and_name.name,
             aliased_as: @alias_and_name.aliased_as || @alias_and_name.name,
-            arg_type_builder: Node.new(
-              is_input: true
-            )
+            args_node: args_node,
+            child_nodes: [args_node]
           )
-          current_builder_node.child_builders <<  child_builder
-          @builder_node_stack.push child_builder
+          current_builder_node.child_nodes <<  node
+          @builder_node_stack.push node
           @alias_and_name = nil
         end
       end

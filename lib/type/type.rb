@@ -4,8 +4,8 @@ module RailsQL
   class Type
     extend RailsQL::Type::ClassMethods
 
-    attr_reader :args, :ctx, :model, :aliased_as, :args_type
-    attr_accessor :field_types, :query, :field_definition
+    attr_reader :args, :ctx, :model, :aliased_as
+    attr_accessor :field_types, :query, :field_definition, :args_type
 
     delegate :type_name, to: :class
 
@@ -45,6 +45,18 @@ module RailsQL
 
     def root?
       @root
+    end
+
+    def modifier_type?
+      false
+    end
+
+    def directive?
+      false
+    end
+
+    def union?
+      false
     end
 
     def query_lambda

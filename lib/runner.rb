@@ -24,6 +24,9 @@ module RailsQL
       end
       operation = ast_visitor.operations.first
       root_node = operation.root_node
+      root_node.type = @root_types[operation.operation_type].new(
+        ctx: ctx
+      )
       root_node.ctx = ctx
 
       # TODO: parse variables create builders and inject them into the operation
@@ -42,10 +45,9 @@ module RailsQL
           RailsQL::Reducers::TypeFactory.new
         ]
       )
-      root_builder = builder_visitor.tree_like_fold(
+      root_node = builder_visitor.tree_like_fold(
         type_klass: @root_types[operation.operation_type],
-        builder: root_builder,
-        reducers: normalizers
+        node: root_node,
       )
       # Build types
       root = RailsQL::Builder::TypeFactory.build!(

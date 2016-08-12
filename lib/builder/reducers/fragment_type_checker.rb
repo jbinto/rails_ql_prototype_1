@@ -40,7 +40,7 @@ module RailsQL
           original_node.annotation.fragment_spread_nodes.each do |fragment_node|
             validate_fragment_builder!(
               type_klass: type_klass,
-              fragment_annotation: fragment_node.annotation
+              fragment_annotation: fragment_node
             )
           end
 

@@ -7,12 +7,26 @@ module RailsQL
         to: :annotation
       )
 
+      delegate(
+        :ctx,
+        :child_types=,
+        :modifier_type?,
+        :union?,
+        :directive?,
+        :list_of_resolved_types=,
+        to: :type
+      )
+
       attr_accessor(
         :child_nodes
         :annotation,
         :ctx,
-        :type_klass,
+        :field_definition,
         :type
+      )
+
+      attr_writer(
+        :type_klass
       )
 
       def initialize(child_nodes:, annotation:, **annotation_attrs)
@@ -22,6 +36,10 @@ module RailsQL
           @annotation ||= Annotation.new
           annotation_attrs.each {|k, v| @annotation.send(:"#{k}=", v)}
         end
+      end
+
+      def type_klass
+        @type_klass || field_definition.try :type_klass
       end
 
       def shallow_clone_node
@@ -49,6 +67,12 @@ module RailsQL
         else
           [self]
         end
+      end
+
+      def find_field_nodes
+        field_nodes = child_nodes.map(&:find_feild_nodes).flatten
+        field_nodes << self if field_definition.present?
+        field_nodes
       end
 
     end

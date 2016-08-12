@@ -3,10 +3,9 @@ module RailsQL
     class List < Type
 
       anonymous true
+      attr_accessor :modified_type, :list_of_resolved_types
 
       def initialize(opts={})
-        @modified_type = opts[:modified_type]
-        @list = opts[:list_of_resolved_types]
         super opts
       end
 
@@ -16,6 +15,10 @@ module RailsQL
 
       def self.of_type
         KlassFactory.find @of_type
+      end
+
+      def modifier_type?
+        true
       end
 
       def query_tree_children

@@ -17,6 +17,10 @@ module RailsQL
         KlassFactory.find @of_type
       end
 
+      def modifier_type?
+        true
+      end
+
       def query_tree_children
         [@modified_type]
       end
