@@ -21,7 +21,7 @@ describe RailsQL::Introspection::Type do
   end
 
   let(:type_klass) do
-    klass = class_double 
+    klass = class_double RailsQL::Type
     allow(klass).to receive(:type_definition).and_return OpenStruct.new(
       name: "Panda",
       kind: :OBJECT,
@@ -36,7 +36,10 @@ describe RailsQL::Introspection::Type do
   end
 
   let(:runner) {
-    RailsQL::Runner.new described_class
+    RailsQL::Runner.new(
+      query_root: described_class,
+      mutation_root: nil
+    )
   }
 
   describe "[:kind]" do

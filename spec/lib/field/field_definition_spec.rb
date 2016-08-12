@@ -5,8 +5,8 @@ describe RailsQL::Field::FieldDefinition do
     {
       args: :hash,
       child_ctx: :hash,
-      resolve_lambda: :lambda,
-      query_lambda: :lambda
+      resolve: :lambda,
+      query: :lambda
     }.each do |opt_name, type|
       it "throws an error if :#{opt_name} is not a #{type}" do
         type_object = instance_double RailsQL::Type
@@ -14,6 +14,10 @@ describe RailsQL::Field::FieldDefinition do
           described_class.new "things", type: type_object, opt_name => "dinosaur"
         }.to raise_error(RuntimeError, /must be/)
       end
+    end
+
+    it "throws an error if :type is blank" do
+      expect{described_class.new "foo", {}}.to raise_error /:type is required/
     end
   end
 
@@ -24,20 +28,16 @@ describe RailsQL::Field::FieldDefinition do
 
       field.type_klass
     end
-
-    it "guesses the type if one is not provided" do
-      field = described_class.new "villian", {}
-      expect(RailsQL::Type::KlassFactory).to receive(:find).with("VillianType")
-
-      field.type_klass
-    end
   end
 
   describe "#args_klass" do
     it "returns an anonymous input object if no :args_klass lambda is provided" do
+      pending
+      fail
+
       villian_type = instance_double RailsQL::Type
       input_object = class_double RailsQL::Type::AnonymousInputObject
-      field = described_class.new "villian", {}
+      field = described_class.new "villian"
 
       expect(field).to(
         receive(:type_klass).and_return villian_type
@@ -54,6 +54,9 @@ describe RailsQL::Field::FieldDefinition do
       evaluates the :args lambda passed to the initializer in the context of
       the type passing it the anonymous input object as an argument
     END_IT
+      pending
+      fail
+
       villian_type = instance_double RailsQL::Type
       input_object = class_double RailsQL::Type::AnonymousInputObject
       args_lambda = ->(args){:input_object_would_go_here}
@@ -74,7 +77,7 @@ describe RailsQL::Field::FieldDefinition do
   describe "#add_permission!" do
     context "for a valid operation" do
       it "appends the permissions to #permissions[operation]" do
-        field = described_class.new "villian", {}
+        field = described_class.new "villian", type: :String
         true_lambda = ->(){true}
         field.add_permission!(:query, true_lambda)
 
@@ -85,7 +88,7 @@ describe RailsQL::Field::FieldDefinition do
 
     context "for an invalid operation" do
       it "raises an error" do
-        field = described_class.new "villian", {}
+        field = described_class.new "villian", type: :String
         expect{
           field.add_permission!(:delete, ->(){true})
         }.to raise_error(RuntimeError, /Cannot add delete to villian/)

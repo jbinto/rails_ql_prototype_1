@@ -9,7 +9,7 @@ describe RailsQL::Introspection::Schema do
   end
 
   let(:user_type) do
-    klass = Class.new 
+    klass = Class.new RailsQL::Type
     klass.class_eval do
       type_name "User"
       field :email, type: :String
@@ -20,7 +20,7 @@ describe RailsQL::Introspection::Schema do
   end
 
   let(:root_type) do
-    klass = Class.new 
+    klass = Class.new RailsQL::Type
     klass.field :user, type: user_type
     klass.class_eval do
       type_name "Root"
@@ -30,7 +30,10 @@ describe RailsQL::Introspection::Schema do
   end
 
   let(:runner) {
-    RailsQL::Runner.new described_class
+    RailsQL::Runner.new(
+      query_root: described_class,
+      mutation_root: nil
+    )
   }
 
   describe "[:types]" do

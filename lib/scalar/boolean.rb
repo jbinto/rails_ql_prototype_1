@@ -8,7 +8,7 @@ module RailsQL
       DESC
 
       def parse_value!(value)
-        if [true, false, nil].include value
+        if [true, false, nil].include? value
           return value
         else
           raise ArgTypeError.new, "#{value} is not a boolean"

@@ -28,6 +28,8 @@ module RailsQL
         :query_lambda
       )
 
+      attr_writer :deprecated, :deprecation_reason
+
       alias_method :deprecated?, :deprecated
 
       delegate :type_name, to: :type_klass
@@ -37,7 +39,11 @@ module RailsQL
         opts = defaults.merge opts.slice *defaults.keys
 
         unless opts[:child_ctx].respond_to?(:keys)
-          raise "ctx must be a Hash"
+          raise ":child_ctx must be a Hash"
+        end
+
+        if opts[:type].blank?
+          raise ":type is required when defining a field"
         end
 
         opts.slice(:args, :resolve, :query).each do |k, v|

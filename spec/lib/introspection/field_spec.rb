@@ -9,7 +9,7 @@ describe RailsQL::Introspection::Field do
   end
 
   let(:type) do
-    type_klass = class_double 
+    type_klass = class_double RailsQL::Type
     allow(type_klass).to receive(:type?).and_return true
     allow(type_klass).to receive(:type_definition).and_return(
       OpenStruct.new(
@@ -27,15 +27,22 @@ describe RailsQL::Introspection::Field do
     RailsQL::Field::FieldDefinition.new("mooCows",
       type: type,
       description: "cows are awesome",
-      required_args: {how_many_cows: {type: :Int}},
-      optional_args: {allow_future_cows: {type: :Boolean}},
-      nullable: true,
+      # TODO: this is obsolete
+      # required_args: {how_many_cows: {type: :Int}},
+      # optional_args: {allow_future_cows: {type: :Boolean}},
+      args: ->(args) {
+        args.field :how_many_cows, type: "Int!"
+        args.field :allow_future_cows, type: "Boolean"
+      },
       deprecated: false,
     )
   end
 
   let(:runner) {
-    RailsQL::Runner.new described_class
+    RailsQL::Runner.new(
+      query_root: described_class,
+      mutation_root: nil
+    )
   }
 
   describe "[:name]" do
@@ -56,6 +63,8 @@ describe RailsQL::Introspection::Field do
 
   describe "[:args]" do
     it "returns an array of args" do
+      # fail "TODO: move to new args implementation"
+
       results = runner.execute!(query: "query {args {name}}").as_json
       expect(results["args"].map{|h| h["name"]}).to eq [
         :allow_future_cows,

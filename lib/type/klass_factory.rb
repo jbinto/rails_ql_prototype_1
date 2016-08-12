@@ -2,6 +2,8 @@ module RailsQL
   class Type
     module KlassFactory
       def self.find(klass)
+        raise "klass is required" if klass.nil?
+
         if (
           !klass.try(:type?) &&
           Scalar::Util.type_names.include?(klass.to_s.to_sym)
