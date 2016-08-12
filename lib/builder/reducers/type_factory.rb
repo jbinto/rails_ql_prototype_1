@@ -38,20 +38,19 @@ module RailsQL
       end
 
       def end_visit_node(
-        field_definition: nil,
-        type_klass:,
         node:
         parent_nodes:
       )
         child_types = node.child_nodes.map &:type
         if node.input? && node.is_a? RailsQL::Type::List
-          node.list_of_resolved_types = child_type
+          node.list_of_resolved_types = child_types
         end
         if node.modifier_type?
           node.modified_type = child_types.first
         elsif node.directive?
-          node.args_type = node.args_node.type
-          node.modified_type = node.child_nodes.reject{|n| n.input?}.map &:type
+          raise "TODO: directives"
+          # node.args_type = node.args_node.type
+          # node.modified_type = node.child_nodes.reject{|n| n.input?}.map &:type
         elsif node.union?
           raise "TODO: unions"
         else

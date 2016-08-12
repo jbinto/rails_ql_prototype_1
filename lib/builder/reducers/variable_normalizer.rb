@@ -9,11 +9,8 @@ module RailsQL
 
         # Injects the values of variables into the child builders of this
         # type builder
-        # Should be called recursively on each builder/type_klass/
-        # field_definition.
+        # Should be called recursively on each node
         def visit_node(
-          field_definition: nil,
-          type_klass:,
           node:,
           parent_nodes:
         )

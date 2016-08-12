@@ -23,8 +23,6 @@ module RailsQL
         # to this:
         #   hero -> @skip -> @include -> @whatever -> friends -> name
         def visit_node(
-          field_definition: nil,
-          type_klass:,
           node:,
           parent_nodes:
         )

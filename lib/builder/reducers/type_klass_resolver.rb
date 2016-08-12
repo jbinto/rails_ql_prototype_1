@@ -24,9 +24,12 @@ module RailsQL
           if node.field_definition.blank?
             raise InvalidField, "invalid field #{child_node.name}"
           end
-        # Fragments
-        elsif node.fragment?
-          node.type_klass = RailsQL::FragmentSpread
+        # Fields and args wrapped by modifiers
+        elsif parent_nodes.last.modifier_type?
+          node.type_klass = parent_node.of_type
+        # Directives
+        else
+          raise "unsupported node"
         end
 
         node.child_nodes = node.child_nodes.map do |child_node|

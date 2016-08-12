@@ -32,8 +32,6 @@ module RailsQL
         # ```
         #
         def visit_node(
-          field_definition: nil,
-          type_klass:,
           node:,
           parent_nodes:
         )
