@@ -31,7 +31,12 @@ module RailsQL
 
       def default_resolve_for!(parent:, child:)
         name = child.field_or_arg_name
-        if parent.respond_to? name
+        if parent.is_a? RailsQL::Type::List
+          index = parent.resolve_tree_children.find_index child
+          parent.model[index]
+        elsif parent.is_a? RailsQL::Type::NonNullable
+          parent.model
+        elsif parent.respond_to? name
           parent.send name
         elsif parent.model.respond_to? name
           parent.model.send name

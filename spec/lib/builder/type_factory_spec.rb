@@ -222,8 +222,49 @@ describe RailsQL::Builder::TypeFactory do
     end
 
     context "creates lists of input object types" do
-      it "creates the nested types" do
+      let :child_builder do
+        RailsQL::Builder::TypeBuilder.new(
+          name: "child_stuff",
+          aliased_as: "child_stuff"
+        )
+      end
 
+      let :root_type do
+        field_definition = instance_double(RailsQL::Field::FieldDefinition,
+          args_type_klass: args_type_klass
+        )
+        described_class.build!(
+          variable_builders: [],
+          type_klass: root_type_klass,
+          field_definition: field_definition,
+          builder: root_builder,
+          ctx: {}
+        )
+      end
+
+      let :list_type do
+        root_type.args_type.field_types["child_stuff"]
+      end
+
+      let :child_type do
+        list_type.query_tree_children.first
+      end
+
+      before :each do
+        args_type_klass.field(:child_stuff,
+          type: RailsQL::Type::List.of(child_type_klass)
+        )
+        root_builder.arg_type_builder = RailsQL::Builder::TypeBuilder.new(
+          is_input: true
+        )
+        root_builder.arg_type_builder.child_builders << child_builder
+
+      end
+
+      it "creates the list type" do
+        expect(child_type.class).to eq child_type_klass
+        expect(list_type.aliased_as).to eq "child_stuff"
+        expect(list_type.field_or_arg_name).to eq "child_stuff"
       end
     end
 

@@ -43,7 +43,7 @@ module RailsQL
       end
 
       def as_json
-        return @list_values.map &:as_json
+        return @list.map &:as_json
       end
 
     end
