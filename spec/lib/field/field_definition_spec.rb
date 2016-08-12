@@ -15,6 +15,10 @@ describe RailsQL::Field::FieldDefinition do
         }.to raise_error(RuntimeError, /must be/)
       end
     end
+
+    it "throws an error if :type is blank" do
+      expect{described_class.new "foo", {}}.to raise_error /:type is required/
+    end
   end
 
   describe "#type_klass" do
