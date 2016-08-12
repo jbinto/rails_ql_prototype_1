@@ -25,7 +25,7 @@ module RailsQL
         }
         # Fields have an arg type builder. Recursively build the fields
         # arguments and their nested input objects (if any exist).
-        if builder.try(:arg_type_builder).present?
+        if builder.try(:arg_type_builder).try(:child_builders).present?
           begin
             opts[:args_type] = build!(
               type_klass: field_definition.args_type_klass,
@@ -84,8 +84,9 @@ module RailsQL
         child_ctx:
       )
         opts = {}
+        ap type_klass
         # build the list of types for input lists
-        if type_klass.is_a? RailsQL::Type::List && builder.is_input?
+        if type_klass.is_a?(RailsQL::Type::List) && builder.is_input?
           list = builder.child_builders.map do |child_builder|
             build!(
               type_klass: type_klass.of_type,
@@ -131,18 +132,19 @@ module RailsQL
         fields = {}
         # Inject variable builders into the list of args (do nothing for fields)
         child_builders = builder.child_builders.clone
-        builder.variables.each do |argument_name, variable_name|
-          if @variable_builders[argument_name].blank?
-            raise MissingVariableDefinition, <<-ERROR
-              Variable not defined in operation: #{variable_name}
-            ERROR
-          end
-          variable_builder = @variable_builders[argument_name].dup
-          variable_builder.name = argument_name
-          variable_builder.aliased_as = argument_name
-          child_builders << variable_builder
-        end
-        # Build fields (or args)
+        # TODO: variables
+        # builder.variables.each do |argument_name, variable_name|
+        #   if @variable_builders[argument_name].blank?
+        #     raise MissingVariableDefinition, <<-ERROR
+        #       Variable not defined in operation: #{variable_name}
+        #     ERROR
+        #   end
+        #   variable_builder = @variable_builders[argument_name].dup
+        #   variable_builder.name = argument_name
+        #   variable_builder.aliased_as = argument_name
+        #   child_builders << variable_builder
+        # end
+        # # Build fields (or args)
         # TODO: field merging should go here
         # Basically take 2 or more type builders, compare them and then
         # combine them and their child type builders recursively into new objects

@@ -4,9 +4,15 @@ module RailsQL
 
       anonymous true
 
-      def initialize(opts={})
-        @modified_type = opts[:modified_type]
-        @list = opts[:list_of_resolved_types]
+      def self.of(modified_klass)
+        subclass = Class.new List
+        subclass.of_type = modified_klass
+        subclass
+      end
+
+      def initialize(modified_type:, list_of_resolved_types: nil, **opts)
+        @modified_type = modified_type
+        @list = list_of_resolved_types
         super opts
       end
 

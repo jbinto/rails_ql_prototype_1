@@ -9,6 +9,12 @@ module RailsQL
         super opts
       end
 
+      def self.of(modified_klass)
+        subclass = Class.new NonNullable
+        subclass.of_type = modified_klass
+        subclass
+      end
+
       def self.of_type=(of_type)
         @of_type = of_type
       end
