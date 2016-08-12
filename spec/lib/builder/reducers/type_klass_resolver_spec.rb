@@ -3,10 +3,12 @@ require "spec_helper"
 describe RailsQL::Builder::Reducers::TypeKlassResolver do
 
   def new_node(root: false, fragment: false)
-    root_node = instance_double(RailsQL::Builder::Node,
+    node = instance_double(RailsQL::Builder::Node,
       root?: root,
       fragment?: fragment
     )
+    allow(node).to receive(:shallow_clone_node).and_return node
+    node
   end
 
   describe "#visit_node" do

@@ -9,7 +9,7 @@ module RailsQL
           node:,
           parent_nodes:
         )
-          return node if node.root? || node.fragment?
+          return node if node.root?
 
           node = node.shallow_clone_node
 
@@ -17,8 +17,22 @@ module RailsQL
             parent.directive? || parent.fragment?
           end.last
 
+          # Note: unions should have a seperate resolver that collects and moves
+          # fragment nodes under nodes for each unioned type
+          # fragment_on_unioned_type = (
+          #   node.fragment? &&
+          #   parent_type_node.union? &&
+          #   fragment.of_type != parent_type_node.type_name
+          # )
+
+          # Assign the unioned type klass to fragments on unions
+          # if fragment_on_unioned_type
+          #   raise "TODO: unions"
+          # Skip non-union fragments
+          if node.fragment?
+            return node
           # Resolve fields and args
-          if node.name.present?
+          elsif node.name.present?
             node.field_definition = parent_type_node.field_definitions[node.name]
             if node.field_definition.blank?
               raise InvalidField, "invalid field #{child_node.name}"
