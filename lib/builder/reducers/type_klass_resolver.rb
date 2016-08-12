@@ -9,7 +9,7 @@ module RailsQL
           node:,
           parent_nodes:
         )
-          return node if node.root?
+          return node if node.root? || node.fragment?
 
           node = node.shallow_clone_node
 
@@ -17,11 +17,8 @@ module RailsQL
             parent.directive? || parent.fragment?
           end.last
 
-          # Skip fragments
-          if node.fragment?
-            return node
           # Resolve fields and args
-          elsif node.name.present?
+          if node.name.present?
             node.field_definition = parent_type_node.field_definitions[node.name]
             if node.field_definition.blank?
               raise InvalidField, "invalid field #{child_node.name}"
