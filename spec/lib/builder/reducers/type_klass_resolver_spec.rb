@@ -19,6 +19,10 @@ describe RailsQL::Builder::Reducers::TypeKlassResolver do
       )
     }
 
+    it "does nothing to root nodes" do
+
+    end
+
     it "does nothing to fragments" do
 
     end
