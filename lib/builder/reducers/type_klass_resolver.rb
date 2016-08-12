@@ -17,7 +17,18 @@ module RailsQL
             parent.directive? || parent.fragment?
           end.last
 
-          # Skip fragments
+          # Note: unions should have a seperate resolver that collects and moves
+          # fragment nodes under nodes for each unioned type
+          # fragment_on_unioned_type = (
+          #   node.fragment? &&
+          #   parent_type_node.union? &&
+          #   fragment.of_type != parent_type_node.type_name
+          # )
+
+          # Assign the unioned type klass to fragments on unions
+          # if fragment_on_unioned_type
+          #   raise "TODO: unions"
+          # Skip non-union fragments
           if node.fragment?
             return node
           # Resolve fields and args
