@@ -20,7 +20,15 @@ describe RailsQL::Builder::Reducers::TypeKlassResolver do
     }
 
     it "does nothing to root nodes" do
+      root_node = instance_double(RailsQL::Builder::Node,
+        root?: true
+      )
+      result = described_class.new.visit_node(
+        node: root_node,
+        parent_nodes: []
+      )
 
+      expect(result).to eq root_node
     end
 
     it "does nothing to fragments" do
