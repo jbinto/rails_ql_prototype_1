@@ -102,7 +102,7 @@ module RailsQL
             type_klass: type_klass.of_type,
             builder: OpenStruct.new(
               is_input: builder.is_input,
-              child_builders: []
+              child_builders: builder.child_builders.deep_dup
             ),
             ctx: child_ctx
           )

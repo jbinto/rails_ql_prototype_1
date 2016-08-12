@@ -4,8 +4,8 @@ module RailsQL
 
       anonymous true
 
-      def initialize(opts={})
-        @modified_type = opts[:modified_type]
+      def initialize(modified_type:, **opts)
+        @modified_type = modified_type
         super opts
       end
 
@@ -32,8 +32,8 @@ module RailsQL
       end
 
       def model=(value)
-        raise_cannot_be_nil! if value.nil?
-        type.model = value
+        raise_cannot_be_nil! if value.nil? && self.class.kind == :input
+        @model = value
       end
 
       def as_json
@@ -50,7 +50,7 @@ module RailsQL
 
       def raise_cannot_be_nil!
         raise NullField, <<-ERROR.strip_heredoc.gsub("\n", " ").strip
-          NonNullable Type #{type.class.type_definition.name}!
+          NonNullable Type #{self.type_name}!
           on field @name cannot be null
         ERROR
       end

@@ -12,18 +12,20 @@ module RailsQL
       def recurse_into_child!(parent:, child:)
         # Iterate top down - from the root type to the scalar leaves of the
         # type tree
-        child.model =
-          if child.resolve_lambda.present?
-            # todo: Directives could make use of around_resolve hooks to
-            # stop resolution if there were hooks here.
-            # eg. parent.trigger :around_resolve do ... end
-            parent.instance_exec(
-              child.args,
-              child.query,
-              &child.resolve_lambda
-            )
-          else
-            default_resolve_for! parent: parent, child: child
+        unless parent.is_a? RailsQL::Type::List
+          child.model =
+            if child.resolve_lambda.present?
+              # todo: Directives could make use of around_resolve hooks to
+              # stop resolution if there were hooks here.
+              # eg. parent.trigger :around_resolve do ... end
+              parent.instance_exec(
+                child.args,
+                child.query,
+                &child.resolve_lambda
+              )
+            else
+              default_resolve_for! parent: parent, child: child
+            end
           end
         # add the children to the stack after the parent has been resolved
         child_resolve_nodes_for(child).each {|node| recurse_into_child! node}
@@ -31,10 +33,7 @@ module RailsQL
 
       def default_resolve_for!(parent:, child:)
         name = child.field_or_arg_name
-        if parent.is_a? RailsQL::Type::List
-          index = parent.resolve_tree_children.find_index child
-          parent.model[index]
-        elsif parent.is_a? RailsQL::Type::NonNullable
+        if parent.is_a? RailsQL::Type::NonNullable
           parent.model
         elsif parent.respond_to? name
           parent.send name
