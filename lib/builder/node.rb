@@ -69,9 +69,14 @@ module RailsQL
         end
       end
 
-      def find_field_nodes
-        field_nodes = child_nodes.map(&:find_feild_nodes).flatten
-        field_nodes << self if field_definition.present?
+      def find_field_nodes_for_type(include_self: false)
+        if field_definition.present? && include_self
+          field_nodes << self if field_definition.present?
+        else
+          field_nodes = child_nodes.map do |child_node|
+            child_node.find_feild_nodes include_self: true
+          end.flatten
+        end
         field_nodes
       end
 

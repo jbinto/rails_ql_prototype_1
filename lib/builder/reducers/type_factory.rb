@@ -54,7 +54,7 @@ module RailsQL
         elsif node.union?
           raise "TODO: unions"
         else
-          node.field_types = node.child_nodes.map &:type
+          node.field_types = node.find_field_nodes_for_type.map &:type
         end
       end
 
