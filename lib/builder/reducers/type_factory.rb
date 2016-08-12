@@ -11,7 +11,7 @@ module RailsQL
       end
 
       # Recursively build and return an instance of `type_klass` and it's
-      # children based on the builder, field definition and ctx.
+      # children based on the XXX TODO
       def visit_node(
         node:,
         parent_nodes:
@@ -21,14 +21,21 @@ module RailsQL
         # Skip the root, it's already instantiated
         return node if node.root?
 
+        # XXX: shouldn't we shallow clone the node here?
+        # eg.
+        # node = node.shallow_clone_node
+
         parent_ctx = parent_nodes.last.ctx
 
+        # XXX type_klass is not defined
         type = type_klass.new(
+          # XXX field_definition is not defined
           ctx: parent_ctx.merge(field_definition.try(:child_ctx) || {}),
           root: node.root?,
           field_definition: field_definition,
           aliased_as: node.aliased_as || node.name
         )
+        # XXX model is not defined
         type.model = model
         node.type = type
 
@@ -52,6 +59,9 @@ module RailsQL
         elsif node.union?
           raise "TODO: unions"
         else
+          # XXX: can we be more explicit with this `else` block here?
+          # e.g. currently it reads "when it is not a modifier, directive, or union"
+          # (which implicitly means "if it is a fragment, field, or object type")
           node.field_types = node.find_field_nodes_for_type.map &:type
         end
       end
