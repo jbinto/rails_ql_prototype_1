@@ -95,12 +95,24 @@ describe RailsQL::Builder::Reducers::TypeKlassResolver do
 
 
 
-    it "sets `node.type_klass` for the modified type of a list" do
+    it "sets `node.type_klass` for the modified type of a modifier type" do
+      node = new_node name: "AwesomeNode"
+      parent_node = new_node
 
-    end
+      of_type = Class.new(RailsQL::Type)
+      parent_node.type_klass = class_double(RailsQL::Type::List,
+        of_type: of_type,
+        modifier_type?: true
+      )
 
-    it "sets `node.type_klass` for the modified type of a non null" do
+      result_node = described_class.new.visit_node(
+        node: node,
+        parent_nodes: [
+          parent_node
+        ]
+      )
 
+      expect(result_node.type_klass).to eq of_type
     end
 
     it "sets `node.type_klass` for a directive" do
