@@ -26,7 +26,7 @@ module RailsQL
     end
 
     def field_or_arg_name
-      @field_definition.name
+      @field_definition.try :name
     end
 
     def initial_query

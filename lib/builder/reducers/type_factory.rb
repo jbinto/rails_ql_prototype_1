@@ -42,7 +42,7 @@ module RailsQL
             node.list_of_resolved_types = child_types
           end
           if node.modifier_type?
-            node.modified_type = child_types.first
+            node.type.modified_type = child_types.first
           elsif node.directive?
             raise "TODO: directives"
             # node.args_type = node.args_node.type
