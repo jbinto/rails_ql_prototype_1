@@ -17,9 +17,7 @@ module RailsQL
           raise "node.type_klass cannot be nil" if node.type_klass.nil?
           raise "node.ctx cannot be nil" if parent_ctx.nil?
 
-          # XXX: shouldn't we shallow clone the node here?
-          # eg.
-          # node = node.shallow_clone_node
+          node = node.shallow_clone_node
 
           node.type = node.type_klass.new(
             # XXX field_definition is not defined
