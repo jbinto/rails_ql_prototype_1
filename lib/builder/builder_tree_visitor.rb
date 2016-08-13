@@ -67,6 +67,7 @@ module RailsQL
         if !parent_nodes.any?(&:input?) && node.input?
           name = "#{name} args"
         end
+        name ||= "root" if node.root?
         msg = <<-ERROR.strip_heredoc.gsub("\n", " ").strip
            #{e.message} on #{name}
         ERROR
