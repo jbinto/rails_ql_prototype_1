@@ -35,6 +35,8 @@ module RailsQL
           node:,
           parent_nodes:
         )
+          node = node.shallow_clone_node
+
           child_types = node.child_nodes.map &:type
           if node.input? && node.is_a?(RailsQL::Type::List)
             node.list_of_resolved_types = child_types
@@ -51,8 +53,10 @@ module RailsQL
             # XXX: can we be more explicit with this `else` block here?
             # e.g. currently it reads "when it is not a modifier, directive, or union"
             # (which implicitly means "if it is a fragment, field, or object type")
-            node.field_types = node.find_field_nodes_for_type.map &:type
+            node.type.field_types = node.find_field_nodes_for_type.map &:type
           end
+
+          node
         end
 
       end

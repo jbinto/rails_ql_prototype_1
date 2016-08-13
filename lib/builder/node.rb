@@ -23,6 +23,11 @@ module RailsQL
         to: :type_klass
       )
 
+      delegate(
+        :args_type_klass,
+        to: :field_definition
+      )
+
       NODE_ATTRS = [
         :child_nodes,
         :annotation,

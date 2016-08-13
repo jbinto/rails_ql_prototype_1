@@ -60,11 +60,11 @@ module RailsQL
     end
 
     def query_tree_children
-      field_types.values
+      field_types
     end
 
     def resolve_tree_children
-      field_types.values
+      field_types
     end
 
     def can?(action, field_name)
@@ -74,12 +74,12 @@ module RailsQL
     def as_json
       kind = self.class.type_definition.kind
       if kind == :object
-        json = field_types.reduce({}) do |json, (k, child_type)|
+        json = field_types.reduce({}) do |json, child_type|
           if child_type.omit_from_json?
             json
           else
             json.merge(
-              k.to_s => child_type.as_json
+              child_type.aliased_as.to_s => child_type.as_json
             )
           end
         end

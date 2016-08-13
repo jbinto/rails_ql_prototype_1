@@ -32,8 +32,11 @@ module RailsQL
           # Skip non-union fragments
           if node.fragment?
             return node
-          # Resolve fields and args
+          elsif node.input? && !parent_nodes.any?(&:input?)
+            # resolve arg objects/annonomous input objects
+            node.type_klass = parent_type_node.args_type_klass
           elsif node.field_or_input_field?
+            # Resolve fields and args
             node.field_definition = parent_type_node
               .child_field_definitions[node.name]
             # If query requested field that does not exist
@@ -41,11 +44,11 @@ module RailsQL
             if node.field_definition.nil?
               raise InvalidField, "invalid field #{child_node.name}"
             end
-          # Resolve fields and args wrapped by modifiers
           elsif parent_type_node.modifier_type?
+            # Resolve fields and args wrapped by modifiers
             node.type_klass = parent_type_node.of_type
-          # Resolve directives
           else
+            # TODO: Resolve directives
             raise "unsupported node"
           end
 
