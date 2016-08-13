@@ -59,7 +59,6 @@ describe RailsQL::Builder::Reducers::TypeKlassResolver do
         parent_nodes: [new_node, new_node, parent_node]
       )
 
-      ap node
       expect(result_node).not_to eq node
       expect(result_node.annotation).to eq node.annotation
       expect(result_node.field_definition).to eq field_definition

@@ -2,7 +2,7 @@ require 'graphql/parser'
 
 module RailsQL
   module Builder
-    class Visitor < GraphQL::Parser::Visitor
+    class ASTVisitor < GraphQL::Parser::Visitor
 
       attr_reader :operations
 
@@ -53,7 +53,7 @@ module RailsQL
 
       def visit_argument(ast_node)
         create_type_builder_if_within_field!
-        @builder_node_stack.push current_builder_node.arg_type_builder
+        @builder_node_stack.push current_builder_node.args_node
         visit_ast_node! :argument, ast_node
       end
 
@@ -70,7 +70,7 @@ module RailsQL
             model: ast_node.try(:value),
             is_input: true
           )
-          current_builder_node.child_builders << input_builder
+          current_builder_node.child_nodes << input_builder
           @builder_node_stack.push input_builder
         end
         @current_name = nil
@@ -144,10 +144,10 @@ module RailsQL
           raise "Operation not supported: #{ast_node.operation}"
         end
         operation = Operation.new
-        operation.root_builder = TypeBuilder.new root: true
+        operation.root_node = Node.new root: true
         operation.operation_type = ast_node.operation.to_sym
         @operations << operation
-        @builder_node_stack = [operation.root_builder]
+        @builder_node_stack = [operation.root_node]
         visit_ast_node! :operation_definition, ast_node
       end
 
@@ -174,35 +174,36 @@ module RailsQL
         current_builder_node.variables[@last_argument_name] = ast_node.value
       end
 
-      def variable_definition_builder
+      def variable_definition
         # ap current_builder_node
-        unless current_builder_node.is_a? VariableDefinitionBuilder
+        unless current_builder_node.is_a? VariableDefinition
           raise "not a variable definition builder"
         end
         return current_builder_node
       end
 
       def visit_variable_definition(ast_node)
-        @builder_node_stack.push VariableDefinitionBuilder.new
+        @builder_node_stack.push VariableDefinition.new
         visit_ast_node! :variable_definition, ast_node
       end
 
       def visit_variable_definition_name(ast_node)
-        variable_definition_builder.variable_name = ast_node.value
-        current_operation.variable_builders[node.value] = variable_builder
+        name = ast_node.value
+        variable_definition.variable_name = name
+        current_operation.variable_definitions[name] = variable_definition
       end
 
       def visit_variable_definition_named_type(ast_node)
-        variable_builder.of_type = ast_node.value
+        variable_definition.of_type = ast_node.value
       end
 
       def visit_variable_definition_default_value(ast_node)
-        builder = Node.new(
+        node = Node.new(
           model: ast_node.try(:value),
           is_input: true
         )
-        variable_builder.default_value_builder = builder
-        @builder_node_stack.push builder
+        variable_definition.default_value_node = node
+        @builder_node_stack.push node
       end
 
       # Fields
@@ -268,7 +269,7 @@ module RailsQL
           )
         )
         if current_builder_node.directive?
-          current_builder_node.child_builders << directive_builder
+          current_builder_node.child_nodes << directive_builder
         else
           current_builder_node.first_directive_builder = directive_builder
         end
