@@ -9,48 +9,33 @@ describe RailsQL::Builder::BuilderTreeVisitor do
       )
     end
 
+    let(:reducer_klass) {
+      Class.new do
+        def initialize(name)
+          @name = name
+        end
+
+        def visit_node(
+          node:,
+          parent_nodes:
+        )
+          node.name = node.name + " | visit_#{@name}"
+          node
+        end
+
+        def end_visit_node(
+          node:,
+          parent_nodes:
+        )
+          node.name = node.name + " | end_visit_#{@name}"
+          node
+        end
+      }
+
     it "reduces through reducers' #visit_node and #end_visit_node methods" do
       node = new_node
-      reducer_klasses = []
-      reducer_klasses << Class.new do
-        def visit_node(
-          node:,
-          parent_nodes:
-        )
-          node.name = node.name + " | visit_r1"
-          node
-        end
+      reducers = (1..2).map {|n| reducer_klass.new "r#{n}"}
 
-        def end_visit_node(
-          node:,
-          parent_nodes:
-        )
-          node.name = node.name + " | end_visit_r1"
-          node
-        end
-
-      end
-
-      reducer_klasses << Class.new do
-        def visit_node(
-          node:,
-          parent_nodes:
-        )
-          node.name = node.name + " | visit_r2"
-          node
-        end
-
-        def end_visit_node(
-          node:,
-          parent_nodes:
-        )
-          node.name = node.name + " | end_visit_r2"
-          node
-        end
-
-      end
-
-      reducers = reducer_klasses.map(&:new)
       result = described_class.new(reducers: reducers).tree_like_fold(
         node: node
       )
