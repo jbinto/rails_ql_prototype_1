@@ -63,11 +63,11 @@ module RailsQL
 
       rescue Exception => e
         name = node.aliased_as
+        name ||= "root" if node.root?
         # Args
         if !parent_nodes.any?(&:input?) && node.input?
-          name = "#{name} args"
+          name = "#{parent_nodes.last.aliased_as} args"
         end
-        name ||= "root" if node.root?
         msg = <<-ERROR.strip_heredoc.gsub("\n", " ").strip
            #{e.message} on #{name}
         ERROR
