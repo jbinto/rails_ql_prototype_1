@@ -3,8 +3,8 @@ module RailsQL
     module Reducers
       class VariableNormalizer
 
-        def initialize(variable_definition_builders:)
-          @variable_definition_builders = variable_definition_builders
+        def initialize(variable_definitions:)
+          @variable_definitions = variable_definitions
         end
 
         # Injects the values of variables into the child builders of this
@@ -17,7 +17,7 @@ module RailsQL
           node = node.shallow_clone_node
           # Inject variable builders into the list of args (no-op for fields)
           node.variables.each do |argument_name, variable_name|
-            variable_def_node = @variable_definition_builders[argument_name]
+            variable_def_node = @variable_definitions[argument_name]
 
             if variable_def_node.blank?
               raise MissingVariableDefinition, <<-ERROR

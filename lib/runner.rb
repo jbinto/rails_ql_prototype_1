@@ -14,7 +14,7 @@ module RailsQL
       variables: {}
     )
 
-      ast_visitor = RailsQL::Builder::Visitor.new
+      ast_visitor = RailsQL::Builder::ASTVisitor.new
       ast = GraphQL::Parser.parse query
       ast_visitor.accept ast
 
@@ -31,20 +31,21 @@ module RailsQL
       root_node.ctx = ctx
 
       # TODO: parse variables create builders and inject them into the operation
-      # variable_definition_builders
+      # variable_definitions
       variable_value_builders = []
 
       # Normalize directives, variables and fragments into type builders
-      builder_visitor = Builder::Normalizers::BuilderTreeVisitor.new(
-        normalizers: [
+      builder_visitor = Builder::BuilderTreeVisitor.new(
+        reducers: [
           Builder::Reducers::CircularReferenceChecker.new,
+          # TODO: test + re-add reducers
           # Builder::Reducers::DirectiveNormalizer.new,
-          Builder::Reducers::FragmentTypeChecker.new,
+          # Builder::Reducers::FragmentTypeChecker.new,
           Builder::Reducers::VariableNormalizer.new(
-            variable_definition_builders: operation.variable_definition_builders
+            variable_definitions: operation.variable_definitions
           ),
           Builder::Reducers::TypeKlassResolver.new,
-          RailsQL::Reducers::TypeFactory.new
+          Builder::Reducers::TypeFactory.new
         ]
       )
       root_node = builder_visitor.tree_like_fold(

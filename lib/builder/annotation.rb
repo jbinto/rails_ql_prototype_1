@@ -30,6 +30,10 @@ module RailsQL
       alias_method :root?, :root
       alias_method :inline_fragment?, :inline_fragment
 
+      def initialize
+        @variables = []
+      end
+
       def defined_fragment?
         @defined_fragment
       end
