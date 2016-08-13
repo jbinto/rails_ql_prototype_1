@@ -24,11 +24,12 @@ module RailsQL
       end
       operation = ast_visitor.operations.first
       root_node = operation.root_node
+      root_node.type_klass = @root_types[operation.operation_type]
       root_node.type = @root_types[operation.operation_type].new(
         root: true,
         ctx: ctx
       )
-      root_node.ctx = ctx
+      ap root_node.type
 
       # TODO: parse variables create builders and inject them into the operation
       # variable_definitions

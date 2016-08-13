@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe RailsQL::Builder::TypeFactory do
+describe RailsQL::Builder::Reducers::TypeFactory do
   def new_node(
       name: "Moo #{Random.rand(100)}",
       root: false
@@ -21,8 +21,8 @@ describe RailsQL::Builder::TypeFactory do
     node
   end
 
-  def instance(variable_builders: nil)
-    described_class.new(variable_builders: variable_builders)
+  def instance
+    described_class.new
   end
 
   describe "#initialize" do

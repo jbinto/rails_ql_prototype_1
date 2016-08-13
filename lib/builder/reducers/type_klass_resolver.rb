@@ -34,9 +34,10 @@ module RailsQL
             return node
           # Resolve fields and args
           elsif node.field_or_input_field?
+            ap "field definition"
+            ap parent_type_node
             node.field_definition = parent_type_node
               .child_field_definitions[node.name]
-
             # If query requested field that does not exist
             # (e.g. not present in parent FieldDefinitionCollection)
             if node.field_definition.nil?

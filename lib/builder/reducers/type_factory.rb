@@ -9,28 +9,26 @@ module RailsQL
           node:,
           parent_nodes:
         )
-          raise "node.type cannot be nil" if node.type.nil?
-          raise "node.ctx cannot be nil" if node.ctx.nil?
           # Skip the root, it's already instantiated
           return node if node.root?
+
+          parent_ctx = parent_nodes.last.ctx
+
+          raise "node.type_klass cannot be nil" if node.type_klass.nil?
+          raise "node.ctx cannot be nil" if parent_ctx.nil?
 
           # XXX: shouldn't we shallow clone the node here?
           # eg.
           # node = node.shallow_clone_node
 
-          parent_ctx = parent_nodes.last.ctx
-
-          # XXX type_klass is not defined
-          type = type_klass.new(
+          node.type = node.type_klass.new(
             # XXX field_definition is not defined
             ctx: parent_ctx.merge(field_definition.try(:child_ctx) || {}),
             root: node.root?,
             field_definition: field_definition,
             aliased_as: node.aliased_as || node.name
           )
-          # XXX model is not defined
-          type.model = model
-          node.type = type
+          type.model = node.model
 
           node
         end

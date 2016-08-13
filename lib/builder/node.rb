@@ -26,7 +26,6 @@ module RailsQL
       attr_accessor(
         :child_nodes,
         :annotation,
-        :ctx,
         :field_definition,
         :type
       )
