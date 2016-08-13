@@ -9,7 +9,23 @@ describe RailsQL::Builder::BuilderTreeVisitor do
       )
     end
 
-    let(:reducer_klass) {
+    let(:visit_reducer_klass) {
+      Class.new do
+        def initialize(name)
+          @name = name
+        end
+
+        def visit_node(
+          node:,
+          parent_nodes:
+        )
+          node.name = node.name + " | visit_#{@name}"
+          node
+        end
+      end
+    }
+
+    let(:visit_and_end_visit_reducer_klass) {
       Class.new do
         def initialize(name)
           @name = name
@@ -30,11 +46,14 @@ describe RailsQL::Builder::BuilderTreeVisitor do
           node.name = node.name + " | end_visit_#{@name}"
           node
         end
-      }
+      end
+    }
 
     it "reduces through reducers' #visit_node and #end_visit_node methods" do
       node = new_node
-      reducers = (1..2).map {|n| reducer_klass.new "r#{n}"}
+      reducers = (1..2).map do |n|
+        visit_and_end_visit_reducer_klass.new "r#{n}"
+      end
 
       result = described_class.new(reducers: reducers).tree_like_fold(
         node: node
@@ -51,26 +70,20 @@ describe RailsQL::Builder::BuilderTreeVisitor do
 
     it "skips missing methods on reducers" do
       node = new_node
-      reducer_klasses = []
-      reducer_klasses << Class.new do
-        def visit_node(
-          node:,
-          parent_nodes:
-        )
-          node.name = node.name + " | visit_r1"
-          node
-        end
+      reducers = [
+        visit_reducer_klass.new("r1"),
+        visit_and_end_visit_reducer_klass.new("r2")
+      ]
 
-      end
-
-      reducers = reducer_klasses.map(&:new)
       result = described_class.new(reducers: reducers).tree_like_fold(
         node: node
       )
 
       expect(result.name).to eq <<-NAME.gsub(/[\n ]+/, " ").strip
         initial_state |
-        visit_r1
+        visit_r1 |
+        visit_r2 |
+        end_visit_r2
       NAME
     end
 
@@ -84,6 +97,45 @@ describe RailsQL::Builder::BuilderTreeVisitor do
       expect(result).not_to eq node
       expect(result.annotation).to eq node.annotation
     end
+
+    it "recurses into child nodes" do
+      child_node = RailsQL::Builder::Node.new(
+        name: "child_node"
+      )
+      parent_node = RailsQL::Builder::Node.new(
+        name: "parent_node",
+        child_nodes: [child_node]
+      )
+
+      reducers = (1..2).map do |n|
+        visit_and_end_visit_reducer_klass.new "r#{n}"
+      end
+
+      result = described_class.new(reducers: reducers).tree_like_fold(
+        node: parent_node
+      )
+
+      expect(result.child_nodes.length).to eq 1
+      expect(result.name).to eq(
+        <<-NAME.gsub(/[\n ]+/, " ").strip
+          parent_node |
+          visit_r1 |
+          visit_r2 |
+          end_visit_r2 |
+          end_visit_r1
+        NAME
+      )
+      expect(result.child_nodes.first.name).to eq(
+        <<-NAME.gsub(/[\n ]+/, " ").strip
+          child_node |
+          visit_r1 |
+          visit_r2 |
+          end_visit_r2 |
+          end_visit_r1
+        NAME
+      )
+    end
+
   end
 
 end

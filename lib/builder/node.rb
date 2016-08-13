@@ -63,7 +63,7 @@ module RailsQL
       def shallow_clone_node
         clone = Node.new(
           annotation: annotation,
-          child_nodes: Array.new(child_nodes),
+          child_nodes: [].concat(child_nodes),
           type_klass: type_klass,
           type: type
         )
