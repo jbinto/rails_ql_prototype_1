@@ -2,55 +2,134 @@ require "spec_helper"
 
 describe RailsQL::Builder::Reducers::TypeFactory do
   def new_node(
-      name: "Moo #{Random.rand(100)}",
-      root: false
-      # fragment: false,
-      # directive: false,
-      # field_or_input_field: false,
-    )
-    node = RailsQL::Builder::Node.new(
+    double_name: "annotation",
+    type_klass: nil,
+    type: nil,
+    field_definition: nil,
+    **annotation_attrs
+  )
+    RailsQL::Builder::Node.new(
+      type_klass: type_klass,
+      field_definition: field_definition,
+      type: type,
       annotation: instance_double(RailsQL::Builder::Annotation,
-        name,     # debug info for Rspec Instance double classname
-        name: name,
-        root?: root
-        # fragment?: fragment,
-        # directive?: directive,
-        # field_or_input_field?: field_or_input_field
+        double_name,
+        annotation_attrs || {}
       )
     )
-    node
   end
 
-  def instance
-    described_class.new
-  end
-
-  describe "#initialize" do
-    it "constructs without exploding" do
-      instance
-    end
-  end
+  let(:reducer) {described_class.new}
 
   describe "#visit_node" do
-    it "raises if any params are nil" do
-      expect{instance.visit_node(node: 0, parent_nodes: nil)}.to raise_error
-      expect{instance.visit_node(node: nil, parent_nodes: 0)}.to raise_error
+    context "invalid states" do
+
+      let(:valid_node) {
+        new_node(
+          type_klass: class_double(RailsQL::Type),
+          root?: false
+        )
+      }
+
+      let(:valid_parent) {
+        new_node(
+          type: instance_double(RailsQL::Type,
+            ctx: {}
+          )
+        )
+      }
+
+      it "errors if the immediate parent node's ctx is not set" do
+        expect{
+          reducer.visit_node(
+            node: valid_node,
+            parent_nodes: [
+              new_node(type: instance_double(RailsQL::Type, ctx: nil))
+            ]
+          )
+        }.to raise_error
+      end
+
+      it "errors if the node's type_klass is not set" do
+        expect{
+          reducer.visit_node(
+            node: new_node(
+              type_klass: nil,
+              root?: false
+            ),
+            parent_nodes: [
+              valid_parent
+            ]
+          )
+        }.to raise_error
+      end
     end
 
-    it "returns node untouched if it is a root node" do
-      node = new_node root: true
-      new_node = instance.visit_node(node: node, parent_nodes: [])
+    context "for a root node" do
+      it "returns node untouched" do
+        node = new_node root?: true
 
-      # XXX: if we do shallow_clone, this will need to change
-      expect(node).to eq(new_node)
+        result = reducer.visit_node(node: node, parent_nodes: [])
+
+        expect(result.annotation).to eq(node.annotation)
+      end
     end
 
-    describe "instantiates a type" do
-      it "sets node.type="
-      it ":ctx with merged parent/child context"
-      it ":root with node root"
-      it ":field_definition with node root"
-      it ":aliased_as with node.aliased_as or name"
+    context "for a non-root node" do
+      let(:type_klass) {Class.new(RailsQL::Type)}
+      let(:field_definition) {
+        instance_double(RailsQL::Field::FieldDefinition,
+          child_ctx: {a_thing_from_child_ctx: 5}
+        )
+      }
+      let(:node) {
+        new_node(
+          double_name: "node double",
+          aliased_as: "moo_alias",
+          model: "an actual cow",
+          type_klass: type_klass,
+          field_definition: field_definition,
+          root?: false
+        )
+      }
+      let(:parent_node) {
+        new_node(
+          double_name: "parent node double",
+          type: instance_double(RailsQL::Type,
+            ctx: {a_thing_from_parent_ctx: 3}
+          )
+        )
+      }
+      let(:result) {
+        reducer.visit_node(
+          node: node,
+          parent_nodes: [parent_node]
+        )
+      }
+
+      it "sets node.type= to a new instance of node.type_klass" do
+        expect(result.type.is_a? type_klass).to eq true
+      end
+
+      it "sets ctx by merging the parent/child contexts" do
+        expect(result.ctx).to eq(
+          a_thing_from_child_ctx: 5,
+          a_thing_from_parent_ctx: 3
+        )
+      end
+
+      it "sets type.root to node.root" do
+        expect(result.type.root?).to eq false
+      end
+
+      it "sets type.field_definition to node.field_definition" do
+        expect(result.type.field_definition).to eq field_definition
+      end
+
+      it "sets type.aliased_as to node.aliased_as" do
+        expect(result.type.aliased_as).to eq "moo_alias"
+      end
+
     end
 
     it "sets type.model using XXX???"

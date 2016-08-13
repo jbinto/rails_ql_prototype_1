@@ -23,12 +23,15 @@ module RailsQL
         to: :type_klass
       )
 
-      attr_accessor(
+      NODE_ATTRS = [
         :child_nodes,
         :annotation,
         :field_definition,
-        :type
-      )
+        :type,
+        :type_klass
+      ]
+
+      attr_accessor *(NODE_ATTRS - [:type_klass])
 
       attr_writer(
         :type_klass
@@ -39,12 +42,14 @@ module RailsQL
           child_nodes: [],
           type_klass: nil,
           type: nil,
+          field_definition: nil,
           **annotation_attrs
         )
         @annotation = annotation
         @child_nodes = child_nodes
         @type_klass = type_klass
         @type = type
+        @field_definition = field_definition
         if annotation_attrs.present?
           @annotation ||= Annotation.new
           annotation_attrs.each {|k, v| @annotation.send(:"#{k}=", v)}
@@ -60,12 +65,10 @@ module RailsQL
       end
 
       def shallow_clone_node
-        clone = Node.new(
-          annotation: annotation,
-          child_nodes: [].concat(child_nodes),
-          type_klass: type_klass,
-          type: type
-        )
+        clone_attrs = {}
+        NODE_ATTRS.each {|k| clone_attrs[k] = self.send k}
+        clone_attrs[:child_nodes] = [].concat child_nodes
+        clone = Node.new clone_attrs
       end
 
       def duplicate_tree

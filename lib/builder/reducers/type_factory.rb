@@ -19,14 +19,14 @@ module RailsQL
 
           node = node.shallow_clone_node
 
-          node.type = node.type_klass.new(
-            # XXX field_definition is not defined
-            ctx: parent_ctx.merge(field_definition.try(:child_ctx) || {}),
+          type = node.type_klass.new(
+            ctx: parent_ctx.merge(node.field_definition.try(:child_ctx) || {}),
             root: node.root?,
-            field_definition: field_definition,
+            field_definition: node.field_definition,
             aliased_as: node.aliased_as || node.name
           )
           type.model = node.model
+          node.type = type
 
           node
         end
