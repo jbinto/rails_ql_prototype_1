@@ -130,9 +130,12 @@ describe RailsQL::Builder::Reducers::TypeFactory do
         expect(result.type.aliased_as).to eq "moo_alias"
       end
 
+      it "sets type.model to node.model" do
+        expect(result.type.model).to eq "an actual cow"
+      end
+
     end
 
-    it "sets type.model using XXX???"
   end
 
   describe "#end_visit_node" do
