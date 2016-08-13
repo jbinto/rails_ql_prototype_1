@@ -41,17 +41,26 @@ module RailsQL
 
       private
 
-      def run_reducers_for(method_sym)
+      def run_reducers_for(method_sym, node: , parent_nodes:)
         # Each reducer returns a node which is used as the node by the next
         # reducer
-        @reducers.each do |reducer|
+        reducer_run_order =
+          if method_sym == :visit_node
+            @reducers
+          else
+            @reducers.reverse
+          end
+        reducer_run_order.each do |reducer|
           if reducer.respond_to? method_sym
             node = reducer.send(method_sym,
-              type_klass: type_klass,
-              node: node
+              node: node,
+              parent_nodes: parent_nodes
             )
           end
         end
+
+        node
+
       rescue Exception => e
         name = node.aliased_as
         # Args
