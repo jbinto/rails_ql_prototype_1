@@ -29,7 +29,6 @@ module RailsQL
         root: true,
         ctx: ctx
       )
-      ap root_node.type
 
       # TODO: parse variables create builders and inject them into the operation
       # variable_definitions

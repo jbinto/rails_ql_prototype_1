@@ -10,7 +10,7 @@ module RailsQL
           parent_nodes:
         )
           # Skip the root, it's already instantiated
-          return node if node.root?
+          return node if parent_nodes.length == 0
 
           parent_ctx = parent_nodes.last.ctx
 
@@ -38,11 +38,15 @@ module RailsQL
           node = node.shallow_clone_node
 
           child_types = node.child_nodes.map &:type
+
           if node.input? && node.is_a?(RailsQL::Type::List)
             node.list_of_resolved_types = child_types
           end
+
           if node.modifier_type?
-            node.type.modified_type = child_types.first
+            node.type.modified_type = child_types.reject do |child|
+              child.is_a? RailsQL::Type::AnonymousInputObject
+            end.first
           elsif node.directive?
             raise "TODO: directives"
             # node.args_type = node.args_node.type
@@ -54,6 +58,11 @@ module RailsQL
             # e.g. currently it reads "when it is not a modifier, directive, or union"
             # (which implicitly means "if it is a fragment, field, or object type")
             node.type.field_types = node.find_field_nodes_for_type.map &:type
+          end
+
+
+          unless node.type.is_a? RailsQL::Type
+            raise "type should be set by this resolver"
           end
 
           node

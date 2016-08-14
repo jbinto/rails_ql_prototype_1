@@ -5,12 +5,14 @@ describe RailsQL::Runner do
 
     it "queries a type for a field" do
       cat_type_klass = Class.new(RailsQL::Type) do
+        type_name "Cat"
         field(:names,
-          type: "[!String]",
-          resolve: ->(args, child_query) {(0..1).map{|n|"Fuzzy #{model} #{n}"}}
+          type: "[String]",
+          resolve: ->(args, child_query) {(1..2).map{|n|"Fuzzy #{model} #{n}"}}
         )
       end
       root_type_klass = Class.new(RailsQL::Type) do
+        type_name "Root"
         field(:my_cat,
           type: cat_type_klass,
           resolve: ->(args, child_query) {"The Cat"}

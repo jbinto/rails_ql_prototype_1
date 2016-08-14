@@ -39,6 +39,11 @@ module RailsQL
             # Resolve fields and args
             node.field_definition = parent_type_node
               .child_field_definitions[node.name]
+            if node.modifier_type?
+              node.child_nodes << Node.new(
+                annotation: Annotation.new
+              )
+            end
             # If query requested field that does not exist
             # (e.g. not present in parent FieldDefinitionCollection)
             if node.field_definition.nil?
@@ -50,6 +55,10 @@ module RailsQL
           else
             # TODO: Resolve directives
             raise "unsupported node"
+          end
+
+          if node.type_klass.nil?
+            raise "type_klass should be set by this resolver"
           end
 
           node

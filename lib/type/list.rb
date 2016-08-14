@@ -17,6 +17,10 @@ module RailsQL
         KlassFactory.find @of_type
       end
 
+      def self.type_name
+        "[#{of_type.type_name}]"
+      end
+
       def self.modifier_type?
         true
       end
@@ -26,7 +30,7 @@ module RailsQL
       end
 
       def resolve_tree_children
-        @list ||= model.map do |singular_model|
+        @list ||= (model || []).map do |singular_model|
           type = @modified_type.deep_dup
           # type.type = @modified_type.type.deep_dup
           # type.type.fields = @modified_type.type.fields.deep_dup
@@ -40,7 +44,8 @@ module RailsQL
       end
 
       def as_json
-        return @list_values.map &:as_json
+        list = resolve_tree_children
+        list.present? ? list.map(&:as_json) : nil
       end
 
     end

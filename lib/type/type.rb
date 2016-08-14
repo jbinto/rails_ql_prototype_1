@@ -7,7 +7,11 @@ module RailsQL
     attr_reader :args, :ctx, :model, :aliased_as
     attr_accessor :field_types, :query, :field_definition, :args_type
 
-    delegate :type_name, to: :class
+    delegate(
+      :type_name,
+      :modifier_type?,
+      to: :class
+    )
 
     def initialize(
       args_type: nil,
@@ -30,8 +34,8 @@ module RailsQL
     end
 
     def initial_query
-      if self.class.get_initial_query.present?
-        instance_exec &self.class.get_initial_query
+      if self.class.initial_query.present?
+        instance_exec &self.class.initial_query
       end
     end
 
