@@ -14,37 +14,49 @@ module RailsQL
       variables: {}
     )
 
-      visitor = RailsQL::Builder::Visitor.new
+      ast_visitor = RailsQL::Builder::ASTVisitor.new
       ast = GraphQL::Parser.parse query
-      visitor.accept ast
+      ast_visitor.accept ast
 
-      # TODO: parse variables and create builders
-      variable_builders = []
-
-      # the visitor returns one root builder per operation in the query document
-      if visitor.operations.length > 1
+      # the ast_visitor returns one root builder per operation in the query document
+      if ast_visitor.operations.length > 1
         raise "Can not execute multiple operations in one query document"
       end
-      operation = visitor.operations.first
-      root_builder = operation.root_builder
-      # Normalize directives and fragments into type builders
-      Builder::Normalizer.normalize!(
-        type_klass: @root_types[operation.operation_type],
-        builder: root_builder
+      operation = ast_visitor.operations.first
+      root_node = operation.root_node
+      root_node.type_klass = @root_types[operation.operation_type]
+      root_node.type = @root_types[operation.operation_type].new(
+        root: true,
+        ctx: ctx
       )
-      # Build types
-      root = RailsQL::Builder::TypeFactory.build!(
-        type_klass: @root_types[operation.operation_type],
-        builder: root_builder,
-        ctx: ctx,
-        variable_builders: variable_builders
+
+      # TODO: parse variables create builders and inject them into the operation
+      # variable_definitions
+      variable_value_builders = []
+
+      # Normalize directives, variables and fragments into type builders
+      builder_visitor = Builder::BuilderTreeVisitor.new(
+        reducers: [
+          Builder::Reducers::CircularReferenceChecker.new,
+          # TODO: test + re-add reducers
+          # Builder::Reducers::DirectiveNormalizer.new,
+          # Builder::Reducers::FragmentTypeChecker.new,
+          Builder::Reducers::VariableNormalizer.new(
+            variable_definitions: operation.variable_definitions
+          ),
+          Builder::Reducers::TypeKlassResolver.new,
+          Builder::Reducers::TypeFactory.new
+        ]
+      )
+      root_node = builder_visitor.tree_like_fold(
+        node: root_node,
       )
       # Execution:
       # 1. Permissions check
       # 2. Query
       # 3. Resolve
       executer_opts = {
-        root: root,
+        root: root_node.type,
         operation_type: operation.operation_type
       }
       # Permissions check
@@ -60,7 +72,7 @@ module RailsQL
       # Query + Resolve
       Executers::QueryExecuter.new(executer_opts).execute!
       Executers::ResolveExecuter.new(executer_opts).execute!
-      return root
+      return root_node.type
     end
 
   end

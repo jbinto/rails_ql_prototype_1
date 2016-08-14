@@ -5,15 +5,15 @@ describe RailsQL::Runner do
 
     it "queries a type for a field" do
       cat_type_klass = Class.new(RailsQL::Type) do
+        type_name "Cat"
         field(:names,
-          type: "[!String]",
-          resolve: ->(args, child_query) {
-            (0..1).map {|i|"Fuzzy #{model} #{i}"}
-          }
+          type: "[String]",
+          resolve: ->(args, child_query) {(1..2).map{|n|"Fuzzy #{model} #{n}"}}
         )
       end
       root_type_klass = Class.new(RailsQL::Type) do
-        field(:my_cats,
+        type_name "Root"
+        field(:my_cat,
           type: cat_type_klass,
           resolve: ->(args, child_query) {"The Cat"}
          )
@@ -24,17 +24,12 @@ describe RailsQL::Runner do
         mutation_root: nil
       )
       root_type = runner.execute! query: <<-GRAPHQL
-        {fuzzy_teh_cat: my_cats {names}}
+        {fuzzy_teh_cat: my_cat {names}}
       GRAPHQL
 
       expect(root_type.as_json).to eq(
-        "fuzzy_teh_cat" =>
-        {
-          "names" =>
-          [
-            "Fuzzy The Cat 0",
-            "Fuzzy The Cat 1"
-          ]
+        "fuzzy_teh_cat" => {
+          "names" => ["Fuzzy The Cat 1", "Fuzzy The Cat 2"]
         }
       )
     end

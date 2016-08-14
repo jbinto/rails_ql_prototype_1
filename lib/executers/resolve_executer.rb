@@ -33,8 +33,9 @@ module RailsQL
 
       def default_resolve_for!(parent:, child:)
         name = child.field_or_arg_name
-        if parent.is_a? RailsQL::Type::NonNullable
-          parent.model
+        if parent.modifier_type?
+          # lists and non null (no-op)
+          child.model
         elsif parent.respond_to? name
           parent.send name
         elsif parent.model.respond_to? name

@@ -1,20 +1,20 @@
 require "spec_helper"
 require_relative "./visitor_spec_helper"
 
-describe RailsQL::Builder::Visitor do
-  let(:visitor) {RailsQL::Builder::Visitor.new}
-  let(:root_builder) {visitor.operations.first.root_builder}
+describe RailsQL::Builder::ASTVisitor do
+  let(:visitor) {described_class.new}
+  let(:root_node) {visitor.operations.first.root_node}
 
   def visit_graphql(graphql)
     ast = GraphQL::Parser.parse graphql
     visitor.accept ast
   end
 
-  def names_and_aliases_in(parent_builder)
-    parent_builder.child_builders.map do |child_builder|
+  def names_and_aliases_in(parent_node)
+    parent_node.child_nodes.select(&:field_or_input_field?).map do |child_node|
       {
-        name: child_builder.name,
-        aliased_as: child_builder.aliased_as
+        name: child_node.name,
+        aliased_as: child_node.aliased_as
       }
     end
   end
@@ -23,7 +23,7 @@ describe RailsQL::Builder::Visitor do
     it "adds a builder for a field" do
       visit_graphql "query { hero }"
 
-      expect(names_and_aliases_in root_builder).to eq [{
+      expect(names_and_aliases_in root_node).to eq [{
         name: "hero",
         aliased_as: "hero"
       }]
@@ -33,7 +33,7 @@ describe RailsQL::Builder::Visitor do
       it "adds a builder for a field" do
         visit_graphql "query { megaman: hero }"
 
-        expect(names_and_aliases_in root_builder).to eq [{
+        expect(names_and_aliases_in root_node).to eq [{
           name: "hero",
           aliased_as: "megaman"
         }]
@@ -41,9 +41,9 @@ describe RailsQL::Builder::Visitor do
 
       it "adds nested builders for nested fields" do
         visit_graphql "query { megaman: hero {stuff: reasons, wat} }"
-        hero_builder = root_builder.child_builders.first
+        hero_node = root_node.child_nodes.first
 
-        expect(names_and_aliases_in hero_builder).to eq [
+        expect(names_and_aliases_in hero_node).to eq [
           {
             name: "reasons",
             aliased_as: "stuff"
@@ -61,7 +61,7 @@ describe RailsQL::Builder::Visitor do
       #   before :each do
       #     @hero_type_builder = instance_double RailsQL::Builder::TypeBuilder
       #
-      #     allow(query_root_builder).to receive(:add_child_builder!)
+      #     allow(query_root_node).to receive(:add_child_builder!)
       #       .and_return @hero_type_builder
       #   end
       #
@@ -74,7 +74,7 @@ describe RailsQL::Builder::Visitor do
       #   end
       #
       #   it "parses directive on an aliased field" do
-      #     expect(query_root_builder).to receive(:add_child_builder!).with(
+      #     expect(query_root_node).to receive(:add_child_builder!).with(
       #       name: "hero",
       #       aliased_as: "danceMaster"
       #     )
@@ -95,7 +95,7 @@ describe RailsQL::Builder::Visitor do
       #     allow(directive_builder).to receive(:arg_builder).and_return(
       #       arg_builder
       #     )
-      #     allow(arg_builder).to receive(:is_input?).and_return true
+      #     allow(arg_builder).to receive(:input?).and_return true
       #     expect(arg_builder).to receive(:add_child_builder!).with(
       #       name: "moo",
       #       model: "foo"
@@ -120,10 +120,10 @@ describe RailsQL::Builder::Visitor do
       #   it "adds the directive to the query" do
       #     directive_builder = expect_directive_builder(
       #       type_klass: "dancy",
-      #       on: query_root_builder
+      #       on: query_root_node
       #     )
       #
-      #     expect(query_root_builder).to receive(:add_child_builder!).with(
+      #     expect(query_root_node).to receive(:add_child_builder!).with(
       #       name: "hero",
       #       aliased_as: nil
       #     )
@@ -134,10 +134,10 @@ describe RailsQL::Builder::Visitor do
       #   it "adds the directive to the mutation" do
       #     directive_builder = expect_directive_builder(
       #       type_klass: "dancy",
-      #       on: mutation_root_builder
+      #       on: mutation_root_node
       #     )
       #
-      #     expect(mutation_root_builder).to receive(:add_child_builder!).with(
+      #     expect(mutation_root_node).to receive(:add_child_builder!).with(
       #       name: "createHero",
       #       aliased_as: nil
       #     )
@@ -174,7 +174,7 @@ describe RailsQL::Builder::Visitor do
       #     expect(RailsQL::Builder::DirectiveBuilder).to receive(:new).and_return(directive_builder)
       #
       #     ## don't overlap other tests / overtest: use allow instead of expect here to make rspec happy
-      #     allow(query_root_builder).to receive(:add_fragment_builder!)
+      #     allow(query_root_node).to receive(:add_fragment_builder!)
       #     allow(directive_builder).to receive(:arg_builder)
       #     allow(fragment_builder).to receive(:add_child_builder!)
       #     allow(fragment_builder).to receive(:type_builder=)
@@ -264,7 +264,7 @@ describe RailsQL::Builder::Visitor do
     #     expect(@fragment_builder).to receive(:type_builder=).with(
     #       type_builder
     #     )
-    #     expect(query_root_builder).to receive(:add_fragment_builder!).with(
+    #     expect(query_root_node).to receive(:add_fragment_builder!).with(
     #       @fragment_builder
     #     ).and_return @fragment_builder
     #   end
@@ -317,7 +317,7 @@ describe RailsQL::Builder::Visitor do
           mutation { createHero }
         GRAPHQL
 
-        expect(names_and_aliases_in root_builder).to eq [{
+        expect(names_and_aliases_in root_node).to eq [{
           name: "createHero",
           aliased_as: "createHero"
         }]
@@ -330,31 +330,31 @@ describe RailsQL::Builder::Visitor do
           query { hero(id: 3) }
         GRAPHQL
 
-        hero_builder = root_builder.child_builders.first
-        args_builder = hero_builder.arg_type_builder
-        id_builder = args_builder.child_builders.first
-        input_builders = [args_builder, id_builder]
+        hero_node = root_node.child_nodes.first
+        args_node = hero_node.args_node
+        id_builder = args_node.child_nodes.first
+        input_builders = [args_node, id_builder]
 
-        expect(names_and_aliases_in hero_builder).to eq []
-        expect(names_and_aliases_in args_builder).to eq [{
+        expect(names_and_aliases_in hero_node).to eq []
+        expect(names_and_aliases_in args_node).to eq [{
           name: "id",
           aliased_as: "id"
         }]
         expect(id_builder.model).to eq "3"
-        expect(input_builders.all? &:is_input?).to eq true
+        expect(input_builders.all? &:input?).to eq true
       end
 
       it "adds type builders for input objects" do
         visit_graphql "query { hero(stuff: {reasons: 5}) }"
 
-        hero_builder = root_builder.child_builders.first
-        args_builder = hero_builder.arg_type_builder
-        stuff_builder = args_builder.child_builders.first
-        reasons_builder = stuff_builder.child_builders.first
-        input_builders = [args_builder, stuff_builder, reasons_builder]
+        hero_node = root_node.child_nodes.first
+        args_node = hero_node.args_node
+        stuff_builder = args_node.child_nodes.first
+        reasons_builder = stuff_builder.child_nodes.first
+        input_builders = [args_node, stuff_builder, reasons_builder]
 
-        expect(names_and_aliases_in hero_builder).to eq []
-        expect(names_and_aliases_in args_builder).to eq [{
+        expect(names_and_aliases_in hero_node).to eq []
+        expect(names_and_aliases_in args_node).to eq [{
           name: "stuff",
           aliased_as: "stuff"
         }]
@@ -363,7 +363,7 @@ describe RailsQL::Builder::Visitor do
           aliased_as: "reasons"
         }]
         expect(reasons_builder.model).to eq "5"
-        expect(input_builders.all? &:is_input?).to eq true
+        expect(input_builders.all? &:input?).to eq true
       end
     end
 
@@ -371,27 +371,27 @@ describe RailsQL::Builder::Visitor do
       it "adds type builders for each scalar in the list" do
         visit_graphql "query { hero(ids: [1, 2, 3]) }"
 
-        hero_builder = root_builder.child_builders.first
-        args_builder = hero_builder.arg_type_builder
-        ids_builder = args_builder.child_builders.first
+        hero_node = root_node.child_nodes.first
+        args_node = hero_node.args_node
+        ids_builder = args_node.child_nodes.first
 
-        expect(ids_builder.child_builders.length).to eq 3
-        expect(ids_builder.child_builders.map &:model).to eq ["1", "2", "3"]
-        expect(ids_builder.child_builders.all? &:is_input?).to eq true
+        expect(ids_builder.child_nodes.length).to eq 3
+        expect(ids_builder.child_nodes.map &:model).to eq ["1", "2", "3"]
+        expect(ids_builder.child_nodes.all? &:input?).to eq true
       end
 
       it "adds type builders for each input object in the list" do
         visit_graphql "query { hero(id_objs: [{id: 1}, {id: 2}]) }"
 
-        hero_builder = root_builder.child_builders.first
-        args_builder = hero_builder.arg_type_builder
-        id_objs_builder = args_builder.child_builders.first
-        scalar_builders = id_objs_builder.child_builders
-          .map(&:child_builders)
+        hero_node = root_node.child_nodes.first
+        args_node = hero_node.args_node
+        id_objs_builder = args_node.child_nodes.first
+        scalar_builders = id_objs_builder.child_nodes
+          .map(&:child_nodes)
           .flatten
 
-        expect(id_objs_builder.child_builders.length).to eq 2
-        expect(id_objs_builder.child_builders.all? &:is_input?).to eq true
+        expect(id_objs_builder.child_nodes.length).to eq 2
+        expect(id_objs_builder.child_nodes.all? &:input?).to eq true
         expect(scalar_builders.map &:name).to eq ["id", "id"]
         expect(scalar_builders.map &:model).to eq ["1", "2"]
       end
@@ -514,9 +514,9 @@ describe RailsQL::Builder::Visitor do
           query($cow: HeroType) { moo }
         GraphQL
 
-        variable_builders = visitor.operations.first.variable_builders
-        expect(variable_builders["cow"].variable_name).to eq "cow"
-        expect(variable_builders["cow"].of_type).to eq "HeroType"
+        variable_definitions = visitor.operations.first.variable_definitions
+        expect(variable_definitions["cow"].variable_name).to eq "cow"
+        expect(variable_definitions["cow"].of_type).to eq "HeroType"
       end
     end
 

@@ -4,10 +4,14 @@ module RailsQL
   class Type
     extend RailsQL::Type::ClassMethods
 
-    attr_reader :args, :ctx, :model, :aliased_as, :args_type
-    attr_accessor :field_types, :query, :field_definition
+    attr_reader :args, :ctx, :model, :aliased_as
+    attr_accessor :field_types, :query, :field_definition, :args_type
 
-    delegate :type_name, to: :class
+    delegate(
+      :type_name,
+      :modifier_type?,
+      to: :class
+    )
 
     def initialize(
       args_type: nil,
@@ -30,8 +34,8 @@ module RailsQL
     end
 
     def initial_query
-      if self.class.get_initial_query.present?
-        instance_exec &self.class.get_initial_query
+      if self.class.initial_query.present?
+        instance_exec &self.class.initial_query
       end
     end
 
@@ -60,11 +64,11 @@ module RailsQL
     end
 
     def query_tree_children
-      field_types.values
+      field_types
     end
 
     def resolve_tree_children
-      field_types.values
+      field_types
     end
 
     def can?(action, field_name)
@@ -74,12 +78,12 @@ module RailsQL
     def as_json
       kind = self.class.type_definition.kind
       if kind == :object
-        json = field_types.reduce({}) do |json, (k, child_type)|
+        json = field_types.reduce({}) do |json, child_type|
           if child_type.omit_from_json?
             json
           else
             json.merge(
-              k.to_s => child_type.as_json
+              child_type.aliased_as.to_s => child_type.as_json
             )
           end
         end

@@ -14,6 +14,10 @@ module RailsQL
       super **opts
     end
 
+    def self.directive?
+      true
+    end
+
     def self.locations(locations)
       valid_locations = [
         :QUERY,

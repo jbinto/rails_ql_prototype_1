@@ -12,6 +12,10 @@ module RailsQL
       super opts
     end
 
+    def self.union?
+      true
+    end
+
     def query_tree_children
       @unioned_types
     end

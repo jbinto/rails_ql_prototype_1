@@ -1,7 +1,7 @@
 module RailsQL
   class Type
     class NonNullable < Type
-
+      kind :non_null
       anonymous true
 
       def initialize(modified_type:, **opts)
@@ -21,6 +21,10 @@ module RailsQL
 
       def self.of_type
         KlassFactory.find @of_type
+      end
+
+      def self.modifier_type?
+        true
       end
 
       def query_tree_children

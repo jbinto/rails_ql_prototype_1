@@ -74,6 +74,18 @@ module RailsQL
         true
       end
 
+      def modifier_type?
+        false
+      end
+
+      def directive?
+        false
+      end
+
+      def union?
+        false
+      end
+
       # TODO add specs
       def valid_child_type?(name:, type_name:)
         child_klass = field_definitions[name].try(:type_klass)
@@ -81,12 +93,10 @@ module RailsQL
         return child_klass.type_definition.name.to_s == type_name
       end
 
-      def initial_query(initial_query)
-        @initial_query = initial_query
-      end
-
-      def get_initial_query
-        @initial_query
+      def initial_query(*args)
+        getter_and_setter_for(:initial_query, args) do |initial_query|
+          @initial_query = initial_query
+        end
       end
 
       def field_definitions

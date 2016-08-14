@@ -133,6 +133,10 @@ class ExportDirective < RailsQL::Directive
 end
 
 class DeferDirective < RailsQL::Directive
+  def omit_from_json?
+    true
+  end
+
   # Do not resolve child types synchronously
   def resolve_child_types!
     RailsQL::AsyncProvider.perform do |provider|
@@ -147,6 +151,10 @@ class DeferDirective < RailsQL::Directive
 end
 
 class StreamDirective < RailsQL::Directive
+  def omit_from_json?
+    true
+  end
+
   # Do not resolve child types synchronously
   def resolve_child_types!
     index = 0
@@ -164,6 +172,10 @@ class StreamDirective < RailsQL::Directive
 end
 
 class LiveDirective < RailsQL::Directive
+  def omit_from_json?
+    true
+  end
+
   # Do not resolve child types synchronously
   def resolve_child_types!
     RailsQL::AsyncProvider.perform do |provider|
